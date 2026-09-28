@@ -9,5 +9,5 @@ export default defineConfig({
       "server-only": fileURLToPath(new URL("./src/test/empty.ts", import.meta.url)),
     },
   },
-  test: { environment: "node", include: ["src/**/*.test.ts?(x)"] },
+  test: { environment: "node", include: ["src/**/*.test.ts?(x)"], exclude: ["e2e/**", "node_modules/**"] },
 });
