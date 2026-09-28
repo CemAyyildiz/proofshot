@@ -43,7 +43,10 @@ The script writes `docs/spikes/spike-b-testnet.json` (gas per Seal, Signing Wind
 
 Open `/spike/passkey` over HTTPS on iPhone Safari and Android Chrome, create a passkey, then tap **Sign test Seal**. Save the JSON as `contracts/test/fixtures/webauthn-<device>.json` and add a test case that loads it.
 
-## Open decisions
+## Decisions (applied in Story 3.1, `contracts/src/Registry.sol`)
 
-- **Relayer-only vs permissionless `seal()`.** The signature check already proves Capturer authorship, so a permissionless `seal()` is safe against forgery. Spam is bounded by gas cost, and the relayer stays the fee sponsor. Leaning towards permissionless `seal()` with a relayer-only `registerDeviceKey()`. To be decided in Story 3.1.
-- **Go/no-go:** **go** for onchain verification, based on the local results. It becomes final once the testnet run confirms the gas figure with the live precompile.
+- **`seal()` is relayer-only in v1.** The Device Key signature proves the device took the photo. But the relayer attests `carrierId` and `claimRef`, after it validates the Claim Link. If `seal()` were permissionless, anyone holding a key could attribute Seals to any Carrier and pollute Duplicate Alerts. A permissionless `seal()` becomes possible once the Claim Link binding is itself signed onchain.
+- **`rpIdHash` allowlist.** The admin manages it, so dev, preview and production RP IDs can be enabled independently.
+- **Device Key revocation (T-7).** A revoked key cannot seal from the revocation block on. Earlier Seals stay valid.
+- **Production `seal()` gas: 98,159** with the precompile (Osaka). The ~7k increase over the spike comes from the RP ID and revocation checks.
+- **Go/no-go:** **go** for onchain verification. The testnet run will confirm it on the live precompile.
