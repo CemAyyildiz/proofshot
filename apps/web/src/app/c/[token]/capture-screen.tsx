@@ -20,7 +20,15 @@ async function openCamera(video: HTMLVideoElement): Promise<Camera> {
     });
     video.srcObject = stream;
     await video.play().catch(() => undefined);
-    return { state: "on" };
+    // The shutter is only enabled once the stream has real frames; before that a capture would be empty.
+    if (!video.videoWidth) {
+      await new Promise<void>((resolve) => {
+        const done = () => resolve();
+        video.addEventListener("loadeddata", done, { once: true });
+        setTimeout(done, 3_000);
+      });
+    }
+    return video.videoWidth ? { state: "on" } : { state: "unavailable" };
   } catch (e) {
     return { state: e instanceof DOMException && e.name === "NotAllowedError" ? "denied" : "unavailable" };
   }
@@ -115,10 +123,15 @@ export function CaptureScreen({ token, deviceKey }: { token: string; deviceKey: 
     if (!video || camera.state !== "on") return;
     const startedAt = performance.now();
     const createdAt = Date.now();
-    const [blob, location] = await Promise.all([grabFrame(video), currentLocationIfAllowed()]);
-    const capture: StoredCapture = { id: crypto.randomUUID(), token, createdAt, blob, status: "processing", location };
-    update(capture);
-    seal(capture, startedAt);
+    try {
+      const [blob, location] = await Promise.all([grabFrame(video), currentLocationIfAllowed()]);
+      const capture: StoredCapture = { id: crypto.randomUUID(), token, createdAt, blob, status: "processing", location };
+      update(capture);
+      seal(capture, startedAt);
+      setSendError("");
+    } catch {
+      setSendError("The camera didn't return a photo. Try again.");
+    }
   }
 
   async function discard(c: StoredCapture) {

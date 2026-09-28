@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
-import { type Page, expect } from "@playwright/test";
+import { existsSync, globSync, readFileSync } from "node:fs";
+import { type Browser, type Page, expect } from "@playwright/test";
 
 function outbox(): { to: string; url: string }[] {
   if (!existsSync(".data/outbox.jsonl")) return [];
@@ -66,4 +66,35 @@ export async function simulateSensorNoise(page: Page) {
       }
     } as typeof draw;
   });
+}
+
+/**
+ * UJ-1 end to end for one photo: a Carrier User (already signed in on `page`) creates a Claim File, a Capturer
+ * seals one live photo from its link and sends it. Returns the Claim File URL and the file the Carrier received.
+ */
+export async function sealAndSendPhoto(page: Page, browser: Browser, reference: string) {
+  await page.goto("/console");
+  const link = await createClaimLink(page, reference);
+  const claimUrl = page.url();
+  const phone = await (await browser.newContext({ permissions: ["camera"] })).newPage();
+  await addVirtualPasskeyAuthenticator(phone);
+  await simulateSensorNoise(phone);
+  await phone.goto(link);
+  await phone.getByRole("button", { name: "Continue" }).click();
+  await phone.getByRole("button", { name: "Take photo" }).click();
+  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
+  await phone.getByRole("button", { name: "Send 1 photo to insurer" }).click();
+  await expect(phone.getByRole("heading", { name: "Sent to your insurer" })).toBeVisible();
+  await phone.context().close();
+  await page.goto(claimUrl);
+  const href = await page.getByRole("link", { name: "Receipt" }).first().getAttribute("href");
+  const exactHash = href!.replace("/r/", "");
+  const [path] = globSync(`.data/storage/*/*/captures/${exactHash}.jpg`);
+  return { claimUrl, exactHash, file: readFileSync(path!) };
+}
+
+export async function signedInPage(browser: Browser, email: string) {
+  const page = await (await browser.newContext()).newPage();
+  await signIn(page, email);
+  return page;
 }

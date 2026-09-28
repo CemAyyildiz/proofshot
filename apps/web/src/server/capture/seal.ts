@@ -64,7 +64,22 @@ export async function sealContext(db: Db, relayer: () => Relayer, token: string)
   };
 }
 
-export async function sealCapture(db: Db, relayer: () => Relayer, token: string, input: unknown, now = new Date()): Promise<SealResponse> {
+export interface SealedCapture {
+  claimFileId: string;
+  claimRef: Hex;
+  carrierId: Hex;
+  record: CaptureRecord;
+}
+
+export async function sealCapture(
+  db: Db,
+  relayer: () => Relayer,
+  token: string,
+  input: unknown,
+  now = new Date(),
+  /** Runs after a successful Seal (Duplicate Alerts). Failures are logged, never surfaced to the Capturer. */
+  onSealed?: (c: SealedCapture) => Promise<unknown>,
+): Promise<SealResponse> {
   const parsed = sealBody.safeParse(input);
   if (!parsed.success) return { ok: false, status: 400, error: "Invalid request." };
   const { keyId, record, auth, locSalt } = parsed.data;
@@ -111,6 +126,14 @@ export async function sealCapture(db: Db, relayer: () => Relayer, token: string,
       locSalt: locSalt ?? null,
       sealedAt: now,
     });
+    if (onSealed) {
+      await onSealed({
+        claimFileId: link.claimFileId,
+        claimRef: record.claimRef,
+        carrierId: link.carrierPseudonymousId as Hex,
+        record: record as CaptureRecord,
+      }).catch((err) => console.error("[seal] post-seal hook failed", err));
+    }
     return { ok: true, txHash, blockNumber: blockNumber.toString(), receiptUrl: receiptUrlFor(record.exactHash) };
   } catch (err) {
     await db.update(claimLinks).set({ sealCount: sql`${claimLinks.sealCount} - 1` }).where(eq(claimLinks.token, token));

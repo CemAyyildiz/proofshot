@@ -1,5 +1,7 @@
 import { bigint, boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
+export const registryRecordKind = pgEnum("registry_record_kind", ["sealed", "imported"]);
+
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 
 /** Insurer organization. Onchain it is known only by `pseudonymousId` (bytes32 hex). */
@@ -114,9 +116,13 @@ export const uploads = pgTable(
       .notNull()
       .references(() => claimFiles.id),
     storageKey: text("storage_key").notNull(),
+    /** Browser-safe JPEG rendition (orientation applied, HEIC converted) for thumbnails and the Tile Map. */
+    previewKey: text("preview_key"),
+    contentType: text("content_type"),
     exactHash: text("exact_hash").notNull(),
     verdict: text("verdict").notNull(),
     matchedExactHash: text("matched_exact_hash"),
+    verificationId: text("verification_id").references(() => verifications.id),
     createdBy: uuid("created_by").references(() => users.id),
     createdAt: createdAt(),
   },
@@ -132,8 +138,13 @@ export const duplicateAlerts = pgTable(
       .references(() => claimFiles.id),
     sourceExactHash: text("source_exact_hash").notNull(),
     matchedExactHash: text("matched_exact_hash").notNull(),
+    /** Only what the Registry itself holds about the match: kind, time and a same/other-carrier flag (FR-12). */
+    matchedKind: registryRecordKind("matched_kind").notNull(),
+    matchedAt: timestamp("matched_at", { withTimezone: true }).notNull(),
     sameCarrier: boolean("same_carrier").notNull(),
+    exact: boolean("exact").notNull(),
     distance: integer("distance").notNull(),
+    tileMatches: integer("tile_matches").notNull(),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("duplicate_alerts_pair_idx").on(t.claimFileId, t.sourceExactHash, t.matchedExactHash)],
@@ -152,7 +163,6 @@ export const rateLimits = pgTable(
 
 // ─── Registry index (derived from chain events; rebuildable) ──────────────────────────────────────────────
 
-export const registryRecordKind = pgEnum("registry_record_kind", ["sealed", "imported"]);
 
 /** One row per `CaptureSealed` / `RecordImported` event. The chain is the source of truth. */
 export const registryRecords = pgTable(

@@ -1,6 +1,6 @@
 import sharp from "sharp";
 import { beforeAll, describe, expect, it } from "vitest";
-import { DEFAULT_THRESHOLDS, type RegistryEntry, computeVerdict, fingerprintFile, initNode, type Fingerprint } from "./node";
+import { DEFAULT_THRESHOLDS, type RegistryEntry, computeVerdict, findMatches, fingerprintFile, initNode, type Fingerprint } from "./node";
 
 const W = 800;
 const H = 600;
@@ -119,5 +119,16 @@ describe("computeVerdict", () => {
       minTileQuality: 10,
     });
     expect(lenient.kind).toBe("derived-copy");
+  });
+});
+
+describe("findMatches", () => {
+  it("returns every entry showing the same scene, exact copies first", async () => {
+    const copy = await fingerprintFile(await sharp(original).jpeg({ quality: 60 }).toBuffer());
+    const copyEntry = { ...entry(copy), kind: "imported" as const };
+    const matches = findMatches(sealed, [...registry, copyEntry]);
+    expect(matches.map((m) => m.record.exactHash)).toEqual([sealed.exactHash, copy.exactHash]);
+    expect(matches[0]).toMatchObject({ exact: true, distance: 0 });
+    expect(findMatches(await fingerprintFile(await jpeg(sceneSvg(99))), registry)).toEqual([]);
   });
 });

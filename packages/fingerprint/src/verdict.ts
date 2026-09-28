@@ -88,7 +88,9 @@ interface Candidate {
   tileMatches: number;
 }
 
-function score(fp: PerceptualFingerprint, record: RegistryEntry, t: Thresholds): Candidate {
+type Comparable = Pick<PerceptualFingerprint, "pHash" | "tiles" | "width" | "height">;
+
+function score(fp: Comparable, record: RegistryEntry, t: Thresholds): Candidate {
   const distance = hamming(fp.pHash, record.pHash);
   if (!aspectCompatible(fp, record, t.aspectTolerance) || record.tiles.length !== TILE_COUNT) {
     return { record, distance, tileMatches: 0 };
@@ -137,4 +139,31 @@ export function computeVerdict(
   if (alteredTiles.length > t.maxAlteredTiles) return { kind: "derived-copy", record, distance, alterationCheck: "unavailable", tileDistances };
   if (alteredTiles.length > 0) return { kind: "altered", record, distance, alterationCheck: "failed", alteredTiles, tileDistances };
   return { kind: "derived-copy", record, distance, alterationCheck: "passed", tileDistances };
+}
+
+export interface Match {
+  record: RegistryEntry;
+  /** Whole-image PDQ distance. */
+  distance: number;
+  /** Tiles within `tTile`, or 0 when the tiles are not comparable (aspect changed). */
+  tileMatches: number;
+  exact: boolean;
+}
+
+/**
+ * Every Registry entry that shows the same scene as `fp` (same matching rule as `computeVerdict`), best first.
+ * Used for Duplicate Alerts, where all matches matter, not just the best one.
+ */
+export function findMatches(
+  fp: Comparable & { exactHash: Hex32 },
+  records: Iterable<RegistryEntry>,
+  t: Thresholds = DEFAULT_THRESHOLDS,
+): Match[] {
+  const out: (Match & { c: Candidate })[] = [];
+  for (const record of records) {
+    const c = score(fp, record, t);
+    const exact = record.exactHash === fp.exactHash;
+    if (exact || isMatch(c, t)) out.push({ record, distance: c.distance, tileMatches: c.tileMatches, exact, c });
+  }
+  return out.sort((a, b) => (a.exact !== b.exact ? (a.exact ? -1 : 1) : better(a.c, b.c) ? -1 : better(b.c, a.c) ? 1 : 0)).map(({ c: _c, ...m }) => m);
 }

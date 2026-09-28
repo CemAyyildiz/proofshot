@@ -1,12 +1,11 @@
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, writeFileSync } from "node:fs";
-import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { E2E_REGISTRY, E2E_RPC } from "../playwright.config";
 import { expect, test } from "@playwright/test";
 import sharp from "sharp";
-import { addVirtualPasskeyAuthenticator, createClaimLink, signIn, simulateSensorNoise } from "./helpers";
+import { sealAndSendPhoto, signIn } from "./helpers";
 
 const TITLES = { original: "Original", "derived-copy": "Derived Copy", altered: "Altered", "no-record": "No Record" } as const;
 const tmp = mkdtempSync(join(tmpdir(), "ps-cli-"));
@@ -21,31 +20,10 @@ function cliVerdict(name: string, buffer: Buffer): string {
   return TITLES[(JSON.parse(out) as { verdict: keyof typeof TITLES }).verdict];
 }
 
-/** Seals and sends one photo through the real Capturer flow; returns the file the Carrier received. */
-async function sealOnePhoto(page: import("@playwright/test").Page, browser: import("@playwright/test").Browser) {
-  await signIn(page, "marcus@northwind.demo");
-  const link = await createClaimLink(page, `VERIFY-${Date.now()}`);
-  const claimUrl = page.url();
-  const phone = await (await browser.newContext({ permissions: ["camera"] })).newPage();
-  await addVirtualPasskeyAuthenticator(phone);
-  await simulateSensorNoise(phone);
-  await phone.goto(link);
-  await phone.getByRole("button", { name: "Continue" }).click();
-  await phone.getByRole("button", { name: "Take photo" }).click();
-  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
-  await phone.getByRole("button", { name: "Send 1 photo to insurer" }).click();
-  await expect(phone.getByRole("heading", { name: "Sent to your insurer" })).toBeVisible();
-  await page.goto(claimUrl);
-  const href = await page.getByRole("link", { name: "Receipt" }).getAttribute("href");
-  const exactHash = href!.replace("/r/", "");
-  const { globSync } = await import("node:fs");
-  const [path] = globSync(`.data/storage/*/*/captures/${exactHash}.jpg`);
-  return { exactHash, file: await readFile(path!) };
-}
-
 test("the Public Verifier returns one honest Verdict per copy and a public receipt", async ({ page, browser }) => {
   test.setTimeout(90_000);
-  const { exactHash, file } = await sealOnePhoto(page, browser);
+  await signIn(page, "marcus@northwind.demo");
+  const { exactHash, file } = await sealAndSendPhoto(page, browser, `VERIFY-${Date.now()}`);
   const visitor = await (await browser.newContext()).newPage();
 
   async function verify(name: string, buffer: Buffer, mimeType = "image/jpeg") {

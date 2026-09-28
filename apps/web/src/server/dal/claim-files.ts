@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { and, asc, desc, eq } from "drizzle-orm";
 import type { Db } from "../db/client";
-import { captures, carriers, claimFiles, claimLinks } from "../db/schema";
+import { captures, carriers, claimFiles, claimLinks, duplicateAlerts, uploads } from "../db/schema";
 
 export const CLAIM_LINK_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 export const REFERENCE_MAX = 80;
@@ -114,4 +114,60 @@ export async function listCaptures(scope: CarrierScope, claimFileId: string) {
     .innerJoin(claimFiles, eq(claimFiles.id, captures.claimFileId))
     .where(and(eq(captures.claimFileId, claimFileId), eq(claimFiles.carrierId, scope.carrierId)))
     .orderBy(asc(captures.sealedAt));
+}
+
+/** Images Carrier Users uploaded into one of this Carrier's Claim Files, oldest first. */
+export async function listUploads(scope: CarrierScope, claimFileId: string) {
+  return scope.db
+    .select({
+      id: uploads.id,
+      exactHash: uploads.exactHash,
+      verdict: uploads.verdict,
+      verificationId: uploads.verificationId,
+      matchedExactHash: uploads.matchedExactHash,
+      createdAt: uploads.createdAt,
+    })
+    .from(uploads)
+    .innerJoin(claimFiles, eq(claimFiles.id, uploads.claimFileId))
+    .where(and(eq(uploads.claimFileId, claimFileId), eq(claimFiles.carrierId, scope.carrierId)))
+    .orderBy(asc(uploads.createdAt));
+}
+
+/** Duplicate Alerts of one of this Carrier's Claim Files, newest first. */
+export async function listDuplicateAlerts(scope: CarrierScope, claimFileId: string) {
+  return scope.db
+    .select({
+      id: duplicateAlerts.id,
+      sourceExactHash: duplicateAlerts.sourceExactHash,
+      matchedKind: duplicateAlerts.matchedKind,
+      matchedAt: duplicateAlerts.matchedAt,
+      sameCarrier: duplicateAlerts.sameCarrier,
+      exact: duplicateAlerts.exact,
+      distance: duplicateAlerts.distance,
+      tileMatches: duplicateAlerts.tileMatches,
+      createdAt: duplicateAlerts.createdAt,
+    })
+    .from(duplicateAlerts)
+    .innerJoin(claimFiles, eq(claimFiles.id, duplicateAlerts.claimFileId))
+    .where(and(eq(duplicateAlerts.claimFileId, claimFileId), eq(claimFiles.carrierId, scope.carrierId)))
+    .orderBy(desc(duplicateAlerts.createdAt));
+}
+
+/** Storage key of an image in one of this Carrier's Claim Files, or null. */
+export async function evidenceImageKey(scope: CarrierScope, claimFileId: string, ref: { captureExactHash: string } | { uploadId: string }) {
+  if ("captureExactHash" in ref) {
+    const [row] = await scope.db
+      .select({ key: captures.storageKey })
+      .from(captures)
+      .innerJoin(claimFiles, eq(claimFiles.id, captures.claimFileId))
+      .where(and(eq(captures.claimFileId, claimFileId), eq(captures.exactHash, ref.captureExactHash), eq(claimFiles.carrierId, scope.carrierId)));
+    return row?.key ?? null;
+  }
+  if (!/^[0-9a-f-]{36}$/i.test(ref.uploadId)) return null;
+  const [row] = await scope.db
+    .select({ key: uploads.previewKey })
+    .from(uploads)
+    .innerJoin(claimFiles, eq(claimFiles.id, uploads.claimFileId))
+    .where(and(eq(uploads.claimFileId, claimFileId), eq(uploads.id, ref.uploadId), eq(claimFiles.carrierId, scope.carrierId)));
+  return row?.key ?? null;
 }
