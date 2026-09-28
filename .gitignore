@@ -20,3 +20,6 @@ benchmark/data/
 
 # BMAD render cache
 _bmad/render/
+
+# Owner-only checklist
+OWNER-TODO.html
