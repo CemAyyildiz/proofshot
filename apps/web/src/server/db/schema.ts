@@ -1,4 +1,4 @@
-import { boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { bigint, boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 
@@ -149,3 +149,43 @@ export const rateLimits = pgTable(
   },
   (t) => [primaryKey({ columns: [t.bucket, t.windowStart] })],
 );
+
+// ─── Registry index (derived from chain events; rebuildable) ──────────────────────────────────────────────
+
+export const registryRecordKind = pgEnum("registry_record_kind", ["sealed", "imported"]);
+
+/** One row per `CaptureSealed` / `RecordImported` event. The chain is the source of truth. */
+export const registryRecords = pgTable(
+  "registry_records",
+  {
+    chainId: integer("chain_id").notNull(),
+    exactHash: text("exact_hash").notNull(),
+    kind: registryRecordKind("kind").notNull(),
+    pHash: text("p_hash").notNull(),
+    tiles: jsonb("tiles").$type<string[]>().notNull(),
+    width: integer("width").notNull(),
+    height: integer("height").notNull(),
+    carrierId: text("carrier_id").notNull(),
+    keyId: text("key_id"),
+    claimRef: text("claim_ref"),
+    refBlock: bigint("ref_block", { mode: "bigint" }),
+    deviceTime: bigint("device_time", { mode: "bigint" }),
+    locCommit: text("loc_commit"),
+    blockNumber: bigint("block_number", { mode: "bigint" }).notNull(),
+    blockTimestamp: bigint("block_timestamp", { mode: "number" }).notNull(),
+    txHash: text("tx_hash").notNull(),
+    logIndex: integer("log_index").notNull(),
+  },
+  (t) => [
+    // A hash can be both imported and later sealed (the contract allows that order), so key by kind too.
+    primaryKey({ columns: [t.chainId, t.exactHash, t.kind] }),
+    index("registry_records_claim_ref_idx").on(t.claimRef),
+  ],
+);
+
+export const indexerState = pgTable("indexer_state", {
+  /** `${chainId}:${registryAddress}` */
+  id: text("id").primaryKey(),
+  lastBlock: bigint("last_block", { mode: "bigint" }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

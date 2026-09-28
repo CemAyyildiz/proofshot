@@ -12,6 +12,10 @@ export const serverEnvSchema = z.object({
   RPC_URL: z.url().optional(),
   RPC_URL_SECONDARY: z.url().optional(),
   REGISTRY_ADDRESS: address.optional(),
+  /** Block the Registry was deployed in; the indexer starts here. */
+  REGISTRY_DEPLOY_BLOCK: z.coerce.bigint().nonnegative().default(0n),
+  /** Max block span per eth_getLogs call; public RPCs cap this (Monad public RPC: 100). */
+  LOGS_BLOCK_RANGE: z.coerce.bigint().positive().default(1000n),
   RELAYER_PRIVATE_KEY: z
     .string()
     .regex(/^0x[0-9a-fA-F]{64}$/, "must be a 0x-prefixed 32-byte hex key")

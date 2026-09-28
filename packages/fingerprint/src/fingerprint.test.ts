@@ -104,6 +104,14 @@ describe("fingerprintFile", () => {
     expect(Array.from(img.data.subarray(0, 3))).toEqual([255, 255, 255]);
   });
 
+  it("decodes iPhone-style HEIC to the same scene as its JPEG source", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const jpg = await fingerprintFile(await readFile(new URL("../test-fixtures/scene.jpg", import.meta.url)));
+    const heic = await fingerprintFile(await readFile(new URL("../test-fixtures/scene.heic", import.meta.url)));
+    expect([heic.width, heic.height]).toEqual([jpg.width, jpg.height]);
+    expect(hamming(jpg.pHash, heic.pHash)).toBeLessThanOrEqual(31);
+  });
+
   it("rejects images that are too small or undecodable", async () => {
     const tiny = await sharp({ create: { width: 32, height: 32, channels: 3, background: "#777" } }).png().toBuffer();
     await expect(fingerprintFile(tiny)).rejects.toBeInstanceOf(FingerprintError);
