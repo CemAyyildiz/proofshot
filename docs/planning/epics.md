@@ -175,7 +175,7 @@ So that every Verdict is computed by identical code (FR10).
 **Given** an image (JPEG/PNG/WebP bytes or decoded RGBA)
 **When** `fingerprint(image)` runs
 **Then** it returns `{ exactHash: bytes32 (SHA-256 of original bytes), pHash: bytes32 (PDQ 256-bit), tiles: bytes32[16] (PDQ of a 4×4 grid, row-major), width, height, quality }`
-**And** the same input yields byte-identical output in Node and in a browser test runner
+**And** identical decoded pixels yield byte-identical output in Node and browser (one vendored PDQ binary); decoder-level differences between browser and libvips JPEG decoding are measured in Spike A
 
 **Given** two fingerprints
 **When** `hamming(a, b)` runs
@@ -191,7 +191,7 @@ So that `T_match`/`T_tile` are chosen from data and FR11's priority is decided h
 
 **Given** ≥ 50 damage-like source photos, their transforms (WhatsApp, X, screenshot, 50% resize, 10% crop, ≥ 3 generative inpaint edits each) and ≥ 50 near-duplicate negatives under `benchmark/data/` (gitignored, manifest committed)
 **When** `pnpm --filter benchmark run` executes
-**Then** it writes full-hash and per-tile distance histograms, the chosen `T_match` and `T_tile`, and a recall / false-positive table to `benchmark/README.md`
+**Then** it writes full-hash and per-tile distance histograms (Story 1.2 probe: a ~6% area edit moved the whole-image pHash 38 bits, above the initial `T_match` 31 — the match step must be evaluated for tile-majority matching, not only whole-hash distance), the chosen `T_match` and `T_tile`, and a recall / false-positive table to `benchmark/README.md`
 **And** the table reports Derived Copy recall, Altered recall, SM-C1 and SM-C2 against the NFR11 targets
 
 **Given** the results
