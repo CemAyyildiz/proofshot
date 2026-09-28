@@ -42,7 +42,7 @@ export default defineConfig({
     },
     {
       stdout: "pipe",
-      command: `rm -rf .data/e2e .data/outbox.jsonl && pnpm db:seed && pnpm dev --port ${PORT}`,
+      command: `rm -rf .data/e2e .data/storage .data/outbox.jsonl && pnpm db:seed && pnpm dev --port ${PORT}`,
       port: PORT,
       reuseExistingServer: false,
       timeout: 120_000,

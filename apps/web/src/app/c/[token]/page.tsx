@@ -18,5 +18,5 @@ export default async function ClaimLinkPage({ params }: PageProps<"/c/[token]">)
     );
   }
 
-  return <CaptureApp token={token} carrierName={link.carrierName} reference={link.reference} />;
+  return <CaptureApp token={token} carrierName={link.carrierName} reference={link.reference} sandbox={link.isSandbox} />;
 }

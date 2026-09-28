@@ -16,9 +16,11 @@ export interface CaptureAppProps {
   token: string;
   carrierName: string;
   reference: string;
+  /** Public demo (FR-18): no insurer to send to; guide the visitor to try to fool the verifier instead. */
+  sandbox?: boolean;
 }
 
-export function CaptureApp({ token, carrierName, reference }: CaptureAppProps) {
+export function CaptureApp({ token, carrierName, reference, sandbox = false }: CaptureAppProps) {
   const [step, setStep] = useState<Step>({ name: "checking" });
 
   useEffect(() => {
@@ -60,8 +62,8 @@ export function CaptureApp({ token, carrierName, reference }: CaptureAppProps) {
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-5 px-4 py-12">
       <header>
         <p className="eyebrow">{carrierName}</p>
-        <h1 className="mt-1 text-2xl font-semibold">Take photos of the damage</h1>
-        <p className="text-muted">Claim {reference}</p>
+        <h1 className="mt-1 text-2xl font-semibold">{sandbox ? "Take a photo of anything nearby" : "Take photos of the damage"}</h1>
+        {!sandbox && <p className="text-muted">Claim {reference}</p>}
       </header>
 
       {step.name === "checking" && <p className="text-muted">Getting ready…</p>}
@@ -89,7 +91,7 @@ export function CaptureApp({ token, carrierName, reference }: CaptureAppProps) {
         </section>
       )}
 
-      {step.name === "ready" && <CaptureScreen token={token} deviceKey={step.key} />}
+      {step.name === "ready" && <CaptureScreen token={token} deviceKey={step.key} sandbox={sandbox} />}
     </main>
   );
 }

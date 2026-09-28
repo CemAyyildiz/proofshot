@@ -36,7 +36,7 @@ async function openCamera(video: HTMLVideoElement): Promise<Camera> {
 
 const inFlight = (c: StoredCapture) => c.status === "processing" || c.status === "sealing";
 
-export function CaptureScreen({ token, deviceKey }: { token: string; deviceKey: StoredDeviceKey }) {
+export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: string; deviceKey: StoredDeviceKey; sandbox?: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [camera, setCamera] = useState<Camera>({ state: "starting" });
   const [captures, setCaptures] = useState<StoredCapture[]>([]);
@@ -253,9 +253,13 @@ export function CaptureScreen({ token, deviceKey }: { token: string; deviceKey: 
           {sendError}
         </p>
       )}
-      <button type="button" className="btn-primary py-3" disabled={sealedCount === 0 || sending} onClick={sendToInsurer}>
-        {sending ? "Sending…" : sealedCount > 0 ? `Send ${sealedCount} photo${sealedCount === 1 ? "" : "s"} to insurer` : "Send to insurer"}
-      </button>
+      {sandbox ? (
+        <TryToFoolIt capture={[...captures].reverse().find((c) => c.status === "sealed")} />
+      ) : (
+        <button type="button" className="btn-primary py-3" disabled={sealedCount === 0 || sending} onClick={sendToInsurer}>
+          {sending ? "Sending…" : sealedCount > 0 ? `Send ${sealedCount} photo${sealedCount === 1 ? "" : "s"} to insurer` : "Send to insurer"}
+        </button>
+      )}
     </section>
   );
 }
@@ -281,4 +285,37 @@ function Thumb({ blob, className }: { blob: Blob; className: string }) {
   useEffect(() => () => URL.revokeObjectURL(url), [url]);
   // eslint-disable-next-line @next/next/no-img-element -- local object URL, not an optimisable asset
   return <img src={url} alt="" className={className} />;
+}
+
+/** FR-18: after the first Seal, walk the visitor through trying to fool the verifier. */
+function TryToFoolIt({ capture }: { capture?: StoredCapture }) {
+  const url = useMemo(() => (capture ? URL.createObjectURL(capture.blob) : null), [capture]);
+  useEffect(() => () => (url ? URL.revokeObjectURL(url) : undefined), [url]);
+  if (!capture || !url) return <p className="text-sm text-muted">Take a photo. It&apos;s sealed as soon as you confirm.</p>;
+  return (
+    <section aria-labelledby="fool-heading" className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4">
+      <h2 id="fool-heading" className="text-lg font-semibold">
+        Now try to fool it
+      </h2>
+      <ol className="ml-5 list-decimal space-y-2 text-sm">
+        <li>
+          <a href={url} download={`proofshot-${capture.createdAt}.jpg`} className="font-medium underline underline-offset-4">
+            Save your sealed photo
+          </a>
+        </li>
+        <li>Change it: paint over a detail, crop it, or send it to yourself on WhatsApp and save the copy.</li>
+        <li>
+          <a href="/verify" target="_blank" rel="noopener" className="font-medium underline underline-offset-4">
+            Drop the copy into the verifier
+          </a>{" "}
+          and see what it says.
+        </li>
+      </ol>
+      {capture.receiptUrl && (
+        <a href={capture.receiptUrl} className="text-sm text-muted underline underline-offset-4">
+          View this photo&apos;s seal receipt
+        </a>
+      )}
+    </section>
+  );
 }

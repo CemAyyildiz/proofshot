@@ -89,6 +89,7 @@ export async function resolveClaimLink(db: Db, token: string, now = new Date()) 
       reference: claimFiles.reference,
       carrierName: carriers.name,
       carrierPseudonymousId: carriers.pseudonymousId,
+      isSandbox: carriers.isSandbox,
       expiresAt: claimLinks.expiresAt,
       revokedAt: claimLinks.revokedAt,
       sealCount: claimLinks.sealCount,
