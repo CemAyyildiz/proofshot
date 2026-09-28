@@ -4,10 +4,16 @@
   "private": true,
   "scripts": {
     "build": "forge build",
-    "test": "forge test"
+    "test": "forge test",
+    "fixtures": "tsx tools/gen-webauthn-fixture.ts",
+    "spike:b": "tsx tools/spike-b-testnet.ts",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "^5.5.0",
-    "forge-std": "github:foundry-rs/forge-std#v1.10.0"
-  }
+    "@proofshot/shared": "workspace:*",
+    "forge-std": "github:foundry-rs/forge-std#v1.10.0",
+    "viem": "^2.56.9"
+  },
+  "type": "module"
 }

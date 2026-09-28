@@ -13,8 +13,9 @@
     "dev": "pnpm --filter web dev"
   },
   "devDependencies": {
+    "@types/node": "^22",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.0",
-    "vitest": "^3.2.0",
-    "@types/node": "^22"
+    "vitest": "^3.2.0"
   }
 }

@@ -1,0 +1,52 @@
+{
+  "source": "software P-256 (tools/software-authenticator.ts)",
+  "keyId": "0xe84d0461561f3bf61871b762a1df6b5f8f385f240712098d9ce61655c42347b6",
+  "qx": "0x8a6c9864138e8d00f75764e923ab690d7aa03ea882a4e6f82db3663c96171be9",
+  "qy": "0x07e7855b15e65c2a248f54ba8f3573ebb2db94829c3fd58b252402a6aeed63bc",
+  "record": {
+    "exactHash": "0x8a982a3fc79f700ff47c7d88a516c169e43f8e75060f8970a7fd0a93eb337e53",
+    "pHash": "0xa712ca65e5a444e5a17458a39d908623507eb0b88933bc809afe480861b5f0a7",
+    "tiles": [
+      "0x49e3cdcb50812352698ce2cf21b8398373e5d7ea96a370a54c85c704b730f6a7",
+      "0x2cb27af374599f7859ea245d9834ff536691534e0c6f2bd17b1a87b1c645cfc2",
+      "0xbd05e7c980dd8118f5b7a661cfa0a03f69f2c0efbcc0ed28c95bf091cf6aa401",
+      "0x7e55c41996174ad0685b4c3ca29c4b1733b370699134a254129b4db27569844c",
+      "0x09e4b1845c6d3d0367d037cc7eab7b68ddb1f8af4d7c8009731bc9ecda38e85b",
+      "0xc7f8eda7bab3786c6f1c3cab9b2804584209507d1c2c370b7ba4953275b57a23",
+      "0xc825b9632335e19df1606b51714a78036a8f1478151a7ede32a34107fc59a936",
+      "0xa6667e755af787d1176857eb5170df07c4cff38ffb4efd99c2d31171dee49c82",
+      "0x0266ea2a6f75b73f7bbda6e6ad9abc46c9d0126a783d2af10f62aee8a8b9def4",
+      "0x30a20094c40f302f09f761457f76ac9fc04af7383f4f265817cd906fa4867979",
+      "0x5d145577c2f823e6b51c9d8c4f7316bd822ecf00482ba579d48597d1abbce191",
+      "0x20b548c777172b4671ba1a2354ea10a64153a5d82f27cab567ac9d8e8440fd62",
+      "0xf6449e9e11decdf3ecd05af6aa00ac024f2c67c8b9e6aa43ffff312b3396f375",
+      "0xe7662291d1e41fb1236fc1acf89ccc778e05155888e1a009f2ceaf5f4e312d5f",
+      "0xa5ae5a26b36d17c8c16260cde173c75807093b335fc15a342ae2e2dcb0d2039a",
+      "0xf7dbcb0fdc0d0a7796d3f36fe3ea83debefad0b416beb7a2d1fc8c5abf2cdd34"
+    ],
+    "width": 4032,
+    "height": 3024,
+    "locCommit": "0x2e91e9c7d172b64a7215ed059b32a50234505840a4c0cb65f927c66a3bed7aa9",
+    "deviceTime": 1790000000,
+    "claimRef": "0x2334649c63e023bb4ec57999634312f2c3c0d882a4c57583f198825139c05607",
+    "carrierId": "0x86aaa3cd2f8d662be4f9ab5e7c0fa980e26ec396a282f8563f883d3ecd1d4119",
+    "refBlock": 1000
+  },
+  "challenge": "0x8288a07b0e7f6159c8765eba7c6df7c46f5107ee86905446d80c1fce8151b1cb",
+  "auth": {
+    "r": "0x2703bf40ece8d00868f14faf60379f1385bdfaea8b167f3b9e7bfb2d6dc2dd47",
+    "s": "0x3bae933fa9a54c1b7b81d6aeeffc59a2964ea4c4020463f2acc6bd5d8e1dd943",
+    "typeIndex": 1,
+    "challengeIndex": 23,
+    "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97631d00000000",
+    "clientDataJSON": "{\"type\":\"webauthn.get\",\"challenge\":\"goigew5_YVnIdl66fG33xG9RB-6GkFRG2AwfzoFRscs\",\"origin\":\"http://localhost:3000\",\"crossOrigin\":false}"
+  },
+  "authNoUV": {
+    "r": "0xae2cbb250540cbf59f3ed8f21184a61252ef6e27d9e1fc992941e61d2f4f6548",
+    "s": "0x7b68bdd0b6abc94897e94930f10a5c1369c80c473be74ec93b87ff1e61870429",
+    "typeIndex": 1,
+    "challengeIndex": 23,
+    "authenticatorData": "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97631900000000",
+    "clientDataJSON": "{\"type\":\"webauthn.get\",\"challenge\":\"goigew5_YVnIdl66fG33xG9RB-6GkFRG2AwfzoFRscs\",\"origin\":\"http://localhost:3000\",\"crossOrigin\":false}"
+  }
+}

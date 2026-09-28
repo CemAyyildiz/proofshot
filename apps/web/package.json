@@ -14,11 +14,12 @@
     "prebuild": "pnpm copy-wasm"
   },
   "dependencies": {
+    "@proofshot/fingerprint": "workspace:*",
+    "@proofshot/shared": "workspace:*",
     "next": "16.3.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "@proofshot/shared": "workspace:*",
-    "@proofshot/fingerprint": "workspace:*"
+    "viem": "^2.56.9"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
