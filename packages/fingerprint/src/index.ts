@@ -2,3 +2,4 @@
 export * from "./hash";
 export * from "./fingerprint";
 export { initPdq, isPdqReady, pdqRgb, type PdqResult } from "./pdq";
+export * from "./verdict";

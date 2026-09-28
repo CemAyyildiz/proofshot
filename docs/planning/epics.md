@@ -194,6 +194,10 @@ So that `T_match`/`T_tile` are chosen from data and FR11's priority is decided h
 **Then** it writes full-hash and per-tile distance histograms (Story 1.2 probe: a ~6% area edit moved the whole-image pHash 38 bits, above the initial `T_match` 31 — the match step must be evaluated for tile-majority matching, not only whole-hash distance), the chosen `T_match` and `T_tile`, and a recall / false-positive table to `benchmark/README.md`
 **And** the table reports Derived Copy recall, Altered recall, SM-C1 and SM-C2 against the NFR11 targets
 
+**Given** the Story 4.2 finding that whole-image PDQ matches crops only up to ~2–3% (synthetic scenes: 5% → 48–74 bits, 10% → 82–96 bits)
+**When** the benchmark measures the 10% crop transform on real photos
+**Then** it either confirms FR-8's ≤ 10% crop target is met, or evaluates adding a crop-robust centre hash (PDQ of the central 80%, matched by a window search over the submitted image) to the CaptureRecord before mainnet deploy, or narrows FR-8 to the measured crop tolerance
+
 **Given** the results
 **When** the go/no-go is logged in `.memlog.md`
 **Then** FR11 is recorded as P1 (targets met) or P2 (missed, product claim narrowed), and chosen thresholds are committed to shared config
