@@ -1,0 +1,16 @@
+{
+  "name": "@proofshot/benchmark",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "bench": "tsx src/run.ts",
+    "bench:synthetic": "tsx src/run.ts --synthetic"
+  },
+  "dependencies": {
+    "@proofshot/fingerprint": "workspace:*",
+    "sharp": "^0.34.5"
+  }
+}

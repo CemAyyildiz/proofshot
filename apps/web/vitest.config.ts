@@ -12,8 +12,9 @@ export default defineConfig({
   test: {
     environment: "node",
     // Embedded Postgres start-up is CPU-bound; leave headroom when the monorepo runs suites in parallel.
-    testTimeout: 15_000,
-    hookTimeout: 30_000,
+    testTimeout: 30_000,
+    hookTimeout: 60_000,
+    maxWorkers: 4,
     include: ["src/**/*.test.ts?(x)"],
     exclude: ["e2e/**", "node_modules/**"],
   },

@@ -1,0 +1,1750 @@
+{
+  "thresholds": {
+    "tMatch": 31,
+    "tTile": 36,
+    "minTileMatches": 12,
+    "aspectTolerance": 0.02,
+    "minTileQuality": 0,
+    "maxAlteredTiles": 8
+  },
+  "samples": [
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-0/whatsapp-like",
+      "original": "scene-0",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-0/x-like",
+      "original": "scene-0",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-0/screenshot-like",
+      "original": "scene-0",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-0/resize-50",
+      "original": "scene-0",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-0/crop-10",
+      "original": "scene-0",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 108,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-0/crop-3-centred",
+      "original": "scene-0",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 20,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-1/whatsapp-like",
+      "original": "scene-1",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-1/x-like",
+      "original": "scene-1",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-1/screenshot-like",
+      "original": "scene-1",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-1/resize-50",
+      "original": "scene-1",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-1/crop-10",
+      "original": "scene-1",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 100,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-1/crop-3-centred",
+      "original": "scene-1",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 26,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-2/whatsapp-like",
+      "original": "scene-2",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-2/x-like",
+      "original": "scene-2",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-2/screenshot-like",
+      "original": "scene-2",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-2/resize-50",
+      "original": "scene-2",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-2/crop-10",
+      "original": "scene-2",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 98,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-2/crop-3-centred",
+      "original": "scene-2",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 24,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-3/whatsapp-like",
+      "original": "scene-3",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 0,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-3/x-like",
+      "original": "scene-3",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 0,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-3/screenshot-like",
+      "original": "scene-3",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-3/resize-50",
+      "original": "scene-3",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 0,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-3/crop-10",
+      "original": "scene-3",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 104,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-3/crop-3-centred",
+      "original": "scene-3",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 20,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-4/whatsapp-like",
+      "original": "scene-4",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-4/x-like",
+      "original": "scene-4",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 0,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-4/screenshot-like",
+      "original": "scene-4",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-4/resize-50",
+      "original": "scene-4",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-4/crop-10",
+      "original": "scene-4",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 88,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-4/crop-3-centred",
+      "original": "scene-4",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 22,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-5/whatsapp-like",
+      "original": "scene-5",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-5/x-like",
+      "original": "scene-5",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 0,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-5/screenshot-like",
+      "original": "scene-5",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-5/resize-50",
+      "original": "scene-5",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-5/crop-10",
+      "original": "scene-5",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 104,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-5/crop-3-centred",
+      "original": "scene-5",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 24,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-6/whatsapp-like",
+      "original": "scene-6",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-6/x-like",
+      "original": "scene-6",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-6/screenshot-like",
+      "original": "scene-6",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-6/resize-50",
+      "original": "scene-6",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-6/crop-10",
+      "original": "scene-6",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 116,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-6/crop-3-centred",
+      "original": "scene-6",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 28,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-7/whatsapp-like",
+      "original": "scene-7",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-7/x-like",
+      "original": "scene-7",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-7/screenshot-like",
+      "original": "scene-7",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-7/resize-50",
+      "original": "scene-7",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-7/crop-10",
+      "original": "scene-7",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 100,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-7/crop-3-centred",
+      "original": "scene-7",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 26,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-8/whatsapp-like",
+      "original": "scene-8",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-8/x-like",
+      "original": "scene-8",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-8/screenshot-like",
+      "original": "scene-8",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-8/resize-50",
+      "original": "scene-8",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 6,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-8/crop-10",
+      "original": "scene-8",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 102,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-8/crop-3-centred",
+      "original": "scene-8",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 28,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-9/whatsapp-like",
+      "original": "scene-9",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-9/x-like",
+      "original": "scene-9",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-9/screenshot-like",
+      "original": "scene-9",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 0,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-9/resize-50",
+      "original": "scene-9",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-9/crop-10",
+      "original": "scene-9",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 114,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-9/crop-3-centred",
+      "original": "scene-9",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 30,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-10/whatsapp-like",
+      "original": "scene-10",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-10/x-like",
+      "original": "scene-10",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-10/screenshot-like",
+      "original": "scene-10",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-10/resize-50",
+      "original": "scene-10",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-10/crop-10",
+      "original": "scene-10",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 114,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-10/crop-3-centred",
+      "original": "scene-10",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 26,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-11/whatsapp-like",
+      "original": "scene-11",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-11/x-like",
+      "original": "scene-11",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-11/screenshot-like",
+      "original": "scene-11",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 0,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-11/resize-50",
+      "original": "scene-11",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-11/crop-10",
+      "original": "scene-11",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 138,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-11/crop-3-centred",
+      "original": "scene-11",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 28,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-12/whatsapp-like",
+      "original": "scene-12",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-12/x-like",
+      "original": "scene-12",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-12/screenshot-like",
+      "original": "scene-12",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-12/resize-50",
+      "original": "scene-12",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 6,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-12/crop-10",
+      "original": "scene-12",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 126,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-12/crop-3-centred",
+      "original": "scene-12",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 30,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-13/whatsapp-like",
+      "original": "scene-13",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-13/x-like",
+      "original": "scene-13",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-13/screenshot-like",
+      "original": "scene-13",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-13/resize-50",
+      "original": "scene-13",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-13/crop-10",
+      "original": "scene-13",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 110,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-13/crop-3-centred",
+      "original": "scene-13",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 36,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-14/whatsapp-like",
+      "original": "scene-14",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-14/x-like",
+      "original": "scene-14",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-14/screenshot-like",
+      "original": "scene-14",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-14/resize-50",
+      "original": "scene-14",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-14/crop-10",
+      "original": "scene-14",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 110,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-14/crop-3-centred",
+      "original": "scene-14",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 20,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-15/whatsapp-like",
+      "original": "scene-15",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-15/x-like",
+      "original": "scene-15",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 0,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-15/screenshot-like",
+      "original": "scene-15",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-15/resize-50",
+      "original": "scene-15",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 0,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-15/crop-10",
+      "original": "scene-15",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 106,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-15/crop-3-centred",
+      "original": "scene-15",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 30,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-16/whatsapp-like",
+      "original": "scene-16",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-16/x-like",
+      "original": "scene-16",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 0,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-16/screenshot-like",
+      "original": "scene-16",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-16/resize-50",
+      "original": "scene-16",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 0,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-16/crop-10",
+      "original": "scene-16",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 120,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-16/crop-3-centred",
+      "original": "scene-16",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 26,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-17/whatsapp-like",
+      "original": "scene-17",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-17/x-like",
+      "original": "scene-17",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 0,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-17/screenshot-like",
+      "original": "scene-17",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-17/resize-50",
+      "original": "scene-17",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 0,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-17/crop-10",
+      "original": "scene-17",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 100,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-17/crop-3-centred",
+      "original": "scene-17",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 40,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-18/whatsapp-like",
+      "original": "scene-18",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-18/x-like",
+      "original": "scene-18",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 0,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-18/screenshot-like",
+      "original": "scene-18",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-18/resize-50",
+      "original": "scene-18",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-18/crop-10",
+      "original": "scene-18",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 104,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-18/crop-3-centred",
+      "original": "scene-18",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 26,
+      "alteredTiles": []
+    },
+    {
+      "kind": "whatsapp-like",
+      "name": "scene-19/whatsapp-like",
+      "original": "scene-19",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 4,
+      "alteredTiles": []
+    },
+    {
+      "kind": "x-like",
+      "name": "scene-19/x-like",
+      "original": "scene-19",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 0,
+      "alteredTiles": []
+    },
+    {
+      "kind": "screenshot-like",
+      "name": "scene-19/screenshot-like",
+      "original": "scene-19",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 6,
+      "alteredTiles": []
+    },
+    {
+      "kind": "resize-50",
+      "name": "scene-19/resize-50",
+      "original": "scene-19",
+      "verdict": "derived-copy:passed",
+      "matchedOwn": true,
+      "pDistance": 2,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-10",
+      "name": "scene-19/crop-10",
+      "original": "scene-19",
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": 108,
+      "alteredTiles": []
+    },
+    {
+      "kind": "crop-3-centred",
+      "name": "scene-19/crop-3-centred",
+      "original": "scene-19",
+      "verdict": "derived-copy:unavailable",
+      "matchedOwn": true,
+      "pDistance": 30,
+      "alteredTiles": []
+    },
+    {
+      "kind": "edit",
+      "name": "scene-0-dent",
+      "original": "scene-0",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 30,
+      "alteredTiles": [
+        0
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-0-stain",
+      "original": "scene-0",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 14,
+      "alteredTiles": [
+        15
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-1-dent",
+      "original": "scene-1",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 28,
+      "alteredTiles": [
+        0,
+        1,
+        4,
+        5
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-1-stain",
+      "original": "scene-1",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 10,
+      "alteredTiles": [
+        10,
+        11,
+        14
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-2-dent",
+      "original": "scene-2",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 28,
+      "alteredTiles": [
+        5
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-2-stain",
+      "original": "scene-2",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 20,
+      "alteredTiles": [
+        10
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-3-dent",
+      "original": "scene-3",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 22,
+      "alteredTiles": [
+        6,
+        10
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-3-stain",
+      "original": "scene-3",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 20,
+      "alteredTiles": [
+        5
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-4-dent",
+      "original": "scene-4",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 28,
+      "alteredTiles": [
+        10,
+        11,
+        15
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-4-stain",
+      "original": "scene-4",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 16,
+      "alteredTiles": [
+        1,
+        5
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-5-dent",
+      "original": "scene-5",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 32,
+      "alteredTiles": [
+        8,
+        12
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-5-stain",
+      "original": "scene-5",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 22,
+      "alteredTiles": [
+        3,
+        7
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-6-dent",
+      "original": "scene-6",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 22,
+      "alteredTiles": [
+        0,
+        1,
+        5
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-6-stain",
+      "original": "scene-6",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 16,
+      "alteredTiles": [
+        10,
+        15
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-7-dent",
+      "original": "scene-7",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 30,
+      "alteredTiles": [
+        1,
+        2,
+        5
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-7-stain",
+      "original": "scene-7",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 22,
+      "alteredTiles": [
+        10
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-8-dent",
+      "original": "scene-8",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 32,
+      "alteredTiles": [
+        6,
+        10
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-8-stain",
+      "original": "scene-8",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 26,
+      "alteredTiles": [
+        9
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-9-dent",
+      "original": "scene-9",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 26,
+      "alteredTiles": [
+        10,
+        11
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-9-stain",
+      "original": "scene-9",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 24,
+      "alteredTiles": [
+        5
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-10-dent",
+      "original": "scene-10",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 30,
+      "alteredTiles": [
+        8,
+        12
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-10-stain",
+      "original": "scene-10",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 20,
+      "alteredTiles": [
+        3,
+        7
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-11-dent",
+      "original": "scene-11",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 24,
+      "alteredTiles": [
+        12,
+        13
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-11-stain",
+      "original": "scene-11",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 18,
+      "alteredTiles": [
+        2
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-12-dent",
+      "original": "scene-12",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 22,
+      "alteredTiles": [
+        1,
+        2,
+        5,
+        6
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-12-stain",
+      "original": "scene-12",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 14,
+      "alteredTiles": [
+        10,
+        14
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-13-dent",
+      "original": "scene-13",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 32,
+      "alteredTiles": [
+        6
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-13-stain",
+      "original": "scene-13",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 16,
+      "alteredTiles": [
+        9
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-14-dent",
+      "original": "scene-14",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 30,
+      "alteredTiles": [
+        7,
+        10,
+        11
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-14-stain",
+      "original": "scene-14",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 16,
+      "alteredTiles": [
+        8,
+        9
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-15-dent",
+      "original": "scene-15",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 32,
+      "alteredTiles": [
+        8
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-15-stain",
+      "original": "scene-15",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 14,
+      "alteredTiles": [
+        3,
+        7
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-16-dent",
+      "original": "scene-16",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 40,
+      "alteredTiles": [
+        8,
+        9,
+        13
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-16-stain",
+      "original": "scene-16",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 18,
+      "alteredTiles": [
+        2,
+        6
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-17-dent",
+      "original": "scene-17",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 44,
+      "alteredTiles": [
+        1,
+        2,
+        5
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-17-stain",
+      "original": "scene-17",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 28,
+      "alteredTiles": [
+        13,
+        14
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-18-dent",
+      "original": "scene-18",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 30,
+      "alteredTiles": [
+        2,
+        6
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-18-stain",
+      "original": "scene-18",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 14,
+      "alteredTiles": [
+        9,
+        13
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-19-dent",
+      "original": "scene-19",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 34,
+      "alteredTiles": [
+        6,
+        7
+      ]
+    },
+    {
+      "kind": "edit",
+      "name": "scene-19-stain",
+      "original": "scene-19",
+      "verdict": "altered:failed",
+      "matchedOwn": true,
+      "pDistance": 18,
+      "alteredTiles": [
+        8
+      ]
+    },
+    {
+      "kind": "negative",
+      "name": "other-0",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-1",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-2",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-3",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-4",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-5",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-6",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-7",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-8",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-9",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-10",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-11",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-12",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-13",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-14",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-15",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-16",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-17",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-18",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    },
+    {
+      "kind": "negative",
+      "name": "other-19",
+      "original": null,
+      "verdict": "no-record",
+      "matchedOwn": false,
+      "pDistance": null,
+      "alteredTiles": []
+    }
+  ]
+}

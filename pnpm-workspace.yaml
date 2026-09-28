@@ -3,6 +3,7 @@ packages:
   - packages/*
   - cli
   - contracts
+  - benchmark
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
