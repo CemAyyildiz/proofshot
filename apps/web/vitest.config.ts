@@ -9,5 +9,12 @@ export default defineConfig({
       "server-only": fileURLToPath(new URL("./src/test/empty.ts", import.meta.url)),
     },
   },
-  test: { environment: "node", include: ["src/**/*.test.ts?(x)"], exclude: ["e2e/**", "node_modules/**"] },
+  test: {
+    environment: "node",
+    // Embedded Postgres start-up is CPU-bound; leave headroom when the monorepo runs suites in parallel.
+    testTimeout: 15_000,
+    hookTimeout: 30_000,
+    include: ["src/**/*.test.ts?(x)"],
+    exclude: ["e2e/**", "node_modules/**"],
+  },
 });
