@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CaptureScreen } from "./capture-screen";
 import { SUPPORTED_BROWSERS, createPasskey, loadDeviceKey, passkeySupported, saveDeviceKey, type StoredDeviceKey } from "@/lib/passkey";
 
 type Step =
@@ -88,11 +89,7 @@ export function CaptureApp({ token, carrierName, reference }: CaptureAppProps) {
         </section>
       )}
 
-      {step.name === "ready" && (
-        <section aria-label="Camera" className="flex flex-col gap-3">
-          <p role="status">Ready to take photos.</p>
-        </section>
-      )}
+      {step.name === "ready" && <CaptureScreen token={token} deviceKey={step.key} />}
     </main>
   );
 }

@@ -12,7 +12,18 @@ export default defineConfig({
   workers: 1,
   retries: process.env.CI ? 1 : 0,
   use: { baseURL: `http://localhost:${PORT}`, trace: "retain-on-failure" },
-  projects: [{ name: "chrome", use: { ...devices["Desktop Chrome"], channel: process.env.CI ? undefined : "chrome" } }],
+  projects: [
+    {
+      name: "chrome",
+      use: {
+        ...devices["Desktop Chrome"],
+        channel: process.env.CI ? undefined : "chrome",
+        // Chrome's synthetic camera stands in for the phone's rear camera.
+        launchOptions: { args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"] },
+        permissions: ["camera"],
+      },
+    },
+  ],
   webServer: [
     {
       command: "pnpm --filter @proofshot/contracts dev:chain",

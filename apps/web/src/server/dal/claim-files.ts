@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import type { Db } from "../db/client";
-import { carriers, claimFiles, claimLinks } from "../db/schema";
+import { captures, carriers, claimFiles, claimLinks } from "../db/schema";
 
 export const CLAIM_LINK_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 export const REFERENCE_MAX = 80;
@@ -98,4 +98,20 @@ export async function resolveClaimLink(db: Db, token: string, now = new Date()) 
     .innerJoin(carriers, eq(carriers.id, claimFiles.carrierId))
     .where(eq(claimLinks.token, token));
   return row ? { ...row, state: claimLinkState(row, now) } : null;
+}
+
+/** Sealed Captures of one of this Carrier's Claim Files, oldest first. */
+export async function listCaptures(scope: CarrierScope, claimFileId: string) {
+  return scope.db
+    .select({
+      id: captures.id,
+      exactHash: captures.exactHash,
+      txHash: captures.txHash,
+      sealedAt: captures.sealedAt,
+      sentAt: captures.sentAt,
+    })
+    .from(captures)
+    .innerJoin(claimFiles, eq(claimFiles.id, captures.claimFileId))
+    .where(and(eq(captures.claimFileId, claimFileId), eq(claimFiles.carrierId, scope.carrierId)))
+    .orderBy(asc(captures.sealedAt));
 }

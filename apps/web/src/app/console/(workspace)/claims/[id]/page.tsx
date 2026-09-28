@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { CopyButton } from "@/components/copy-button";
 import { env } from "@/lib/env";
 import { formatDate, formatDateTime } from "@/lib/format";
-import { claimLinkState, getClaimFile } from "@/server/dal/claim-files";
+import { claimLinkState, getClaimFile, listCaptures } from "@/server/dal/claim-files";
 import { carrierScope } from "@/server/dal/scope";
 import { revokeLink } from "../../actions";
 
@@ -12,8 +12,10 @@ export const metadata: Metadata = { title: "Claim File · Proofshot Console" };
 
 export default async function ClaimFilePage({ params }: PageProps<"/console/claims/[id]">) {
   const { id } = await params;
-  const file = await getClaimFile(await carrierScope(), id);
+  const scope = await carrierScope();
+  const file = await getClaimFile(scope, id);
   if (!file) notFound();
+  const evidence = await listCaptures(scope, file.id);
 
   const url = new URL(`/c/${file.link.token}`, env().APP_URL).toString();
   const state = claimLinkState(file.link);
@@ -61,7 +63,22 @@ export default async function ClaimFilePage({ params }: PageProps<"/console/clai
         <h2 id="evidence-heading" className="font-semibold">
           Evidence
         </h2>
-        <p className="text-muted">No photos yet.</p>
+        {evidence.length === 0 ? (
+          <p className="text-muted">No photos yet.</p>
+        ) : (
+          <ul className="divide-y divide-line rounded-md border border-line bg-surface">
+            {evidence.map((c) => (
+              <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
+                <span className="font-mono">{c.exactHash.slice(0, 10)}…</span>
+                <span className="text-muted">Sealed {formatDateTime(c.sealedAt)}</span>
+                <span>{c.sentAt ? "Photo received" : "Sealed, not sent yet"}</span>
+                <a href={`/r/${c.exactHash}`} className="underline underline-offset-4">
+                  Receipt
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );

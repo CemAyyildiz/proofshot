@@ -1,4 +1,4 @@
-import { boolean, index, integer, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 
@@ -99,6 +99,8 @@ export const captures = pgTable(
     storageKey: text("storage_key"),
     sealedAt: timestamp("sealed_at", { withTimezone: true }).notNull(),
     sentAt: timestamp("sent_at", { withTimezone: true }),
+    /** Client-measured timings for the SM-5 latency report. */
+    timings: jsonb("timings").$type<{ shutterToSignedMs?: number; shutterToSealedMs?: number }>(),
   },
   (t) => [index("captures_claim_file_idx").on(t.claimFileId)],
 );

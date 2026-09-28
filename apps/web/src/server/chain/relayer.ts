@@ -3,6 +3,7 @@ import { type CaptureRecord, type Hex, type WebAuthnAuth, registryAbi } from "@p
 import { createPublicClient, createWalletClient, defineChain, http, type PublicClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { env } from "@/lib/env";
+import { processSingleton } from "../singleton";
 
 export interface SealResult {
   txHash: Hex;
@@ -84,8 +85,6 @@ function createViemRelayer(): Relayer {
   };
 }
 
-let relayer: Relayer | undefined;
 export function getRelayer(): Relayer {
-  relayer ??= createViemRelayer();
-  return relayer;
+  return processSingleton("relayer", createViemRelayer);
 }
