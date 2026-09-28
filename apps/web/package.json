@@ -14,7 +14,8 @@
     "prebuild": "pnpm copy-wasm",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db.mts migrate",
-    "db:seed": "tsx scripts/db.mts seed"
+    "db:seed": "tsx scripts/db.mts seed",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",
@@ -26,9 +27,11 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "^0.0.1",
-    "viem": "^2.56.9"
+    "viem": "^2.56.9",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

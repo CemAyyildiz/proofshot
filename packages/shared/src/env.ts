@@ -16,7 +16,11 @@ export const serverEnvSchema = z.object({
     .string()
     .regex(/^0x[0-9a-fA-F]{64}$/, "must be a 0x-prefixed 32-byte hex key")
     .optional(),
-  DATABASE_URL: z.url().optional(),
+  DATABASE_URL: z.string().min(1).optional(),
+  /** Public origin used in emailed links, e.g. https://proofshot.app. */
+  APP_URL: z.url().default("http://localhost:3000"),
+  RESEND_API_KEY: z.string().min(1).optional(),
+  MAIL_FROM: z.string().min(3).default("Proofshot <login@proofshot.app>"),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema> & { network: NetworkConfig; rpcUrl: string };
