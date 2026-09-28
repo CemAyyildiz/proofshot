@@ -79,8 +79,16 @@ export async function sealCapture(db: Db, relayer: () => Relayer, token: string,
   const [key] = await db.select({ keyId: deviceKeys.keyId }).from(deviceKeys).where(eq(deviceKeys.keyId, keyId));
   if (!key) return { ok: false, status: 400, error: "This device isn't set up yet. Reload the page to set it up." };
 
-  const [existing] = await db.select({ id: captures.id }).from(captures).where(eq(captures.exactHash, record.exactHash));
-  if (existing) return { ok: false, status: 409, error: "This photo is already sealed.", receiptUrl: receiptUrlFor(record.exactHash) };
+  const [existing] = await db
+    .select({ claimFileId: captures.claimFileId })
+    .from(captures)
+    .where(eq(captures.exactHash, record.exactHash));
+  if (existing) {
+    // Only this Claim File's own photo counts as "already sealed here"; the same bytes in another claim are a reuse.
+    return existing.claimFileId === link.claimFileId
+      ? { ok: false, status: 409, error: "This photo is already sealed.", receiptUrl: receiptUrlFor(record.exactHash) }
+      : { ok: false, status: 409, error: "This exact photo was already sealed for a different claim." };
+  }
 
   if (!(await consume(db, `seal:key:${keyId}`, SEALS_PER_KEY_PER_DAY, DAY_MS, now)).allowed) {
     return { ok: false, status: 429, error: "You've sealed the maximum number of photos for today on this device." };
@@ -108,7 +116,8 @@ export async function sealCapture(db: Db, relayer: () => Relayer, token: string,
     await db.update(claimLinks).set({ sealCount: sql`${claimLinks.sealCount} - 1` }).where(eq(claimLinks.token, token));
     const msg = String(err);
     if (msg.includes("AlreadySealed")) {
-      return { ok: false, status: 409, error: "This photo is already sealed.", receiptUrl: receiptUrlFor(record.exactHash) };
+      // Sealed onchain but not by this Claim File (it would have a captures row): never present it as ours.
+      return { ok: false, status: 409, error: "This exact photo was already sealed elsewhere." };
     }
     console.error("[seal] failed", err);
     const expired = msg.includes("SigningWindowExpired");

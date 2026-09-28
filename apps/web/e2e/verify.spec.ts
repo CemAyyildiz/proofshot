@@ -1,0 +1,84 @@
+import { readFile } from "node:fs/promises";
+import { expect, test } from "@playwright/test";
+import sharp from "sharp";
+import { addVirtualPasskeyAuthenticator, createClaimLink, signIn, simulateSensorNoise } from "./helpers";
+
+/** Seals and sends one photo through the real Capturer flow; returns the file the Carrier received. */
+async function sealOnePhoto(page: import("@playwright/test").Page, browser: import("@playwright/test").Browser) {
+  await signIn(page, "marcus@northwind.demo");
+  const link = await createClaimLink(page, `VERIFY-${Date.now()}`);
+  const claimUrl = page.url();
+  const phone = await (await browser.newContext({ permissions: ["camera"] })).newPage();
+  await addVirtualPasskeyAuthenticator(phone);
+  await simulateSensorNoise(phone);
+  await phone.goto(link);
+  await phone.getByRole("button", { name: "Continue" }).click();
+  await phone.getByRole("button", { name: "Take photo" }).click();
+  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
+  await phone.getByRole("button", { name: "Send 1 photo to insurer" }).click();
+  await expect(phone.getByRole("heading", { name: "Sent to your insurer" })).toBeVisible();
+  await page.goto(claimUrl);
+  const href = await page.getByRole("link", { name: "Receipt" }).getAttribute("href");
+  const exactHash = href!.replace("/r/", "");
+  const { globSync } = await import("node:fs");
+  const [path] = globSync(`.data/storage/*/*/captures/${exactHash}.jpg`);
+  return { exactHash, file: await readFile(path!) };
+}
+
+test("the Public Verifier returns one honest Verdict per copy and a public receipt", async ({ page, browser }) => {
+  test.setTimeout(90_000);
+  const { exactHash, file } = await sealOnePhoto(page, browser);
+  const visitor = await (await browser.newContext()).newPage();
+
+  async function verify(name: string, buffer: Buffer, mimeType = "image/jpeg") {
+    await visitor.goto("/verify");
+    await visitor.locator("#verify-file").setInputFiles({ name, mimeType, buffer });
+    await expect(visitor.getByRole("heading", { name: /^Verdict:/ })).toBeAttached({ timeout: 15_000 });
+  }
+  const panel = () => visitor.getByRole("region", { name: /^Verdict:/ });
+
+  // Identical file → Original, with a Receipt that never shows the image.
+  await verify("original.jpg", file);
+  await expect(panel()).toContainText("Original");
+  await expect(panel()).toContainText("What it does not mean");
+  await visitor.getByRole("link", { name: "Open Verification Receipt" }).click();
+  await expect(visitor).toHaveURL(/\/v\/[A-Za-z0-9_-]{12}$/);
+  await expect(visitor.getByRole("heading", { name: "Verdict: Original" })).toBeAttached();
+  await expect(visitor.getByText("Signing Window")).toBeVisible();
+  await expect(visitor.getByText("a carrier", { exact: true })).toBeVisible();
+  await expect(visitor.getByRole("heading", { name: "Verify it yourself" })).toBeVisible();
+  await expect(visitor.locator("img")).toHaveCount(0);
+
+  // WhatsApp-style recompression → Derived Copy, alteration check passed.
+  await verify("whatsapp.jpg", await sharp(file).resize(800).jpeg({ quality: 60 }).toBuffer());
+  await expect(panel()).toContainText("Derived Copy");
+  await expect(panel()).toContainText("No regions were changed");
+
+  // A localized edit → Altered with a Tile Map.
+  const edited = await sharp(file)
+    .composite([{ input: Buffer.from('<svg width="960" height="720"><ellipse cx="360" cy="270" rx="100" ry="70" fill="#1c1c1c"/></svg>') }])
+    .jpeg({ quality: 92 })
+    .toBuffer();
+  await verify("edited.jpg", edited);
+  await expect(panel()).toContainText("Altered");
+  await expect(visitor.getByRole("figure")).toContainText(/\d+ of 16 regions differ from the sealed photo/);
+
+  // An unrelated image → No Record, explicitly not "fake".
+  const unrelated = await sharp({ create: { width: 800, height: 600, channels: 3, background: "#334455" } })
+    .composite([{ input: Buffer.from('<svg width="800" height="600"><rect x="100" y="100" width="300" height="200" fill="#e0c060"/><circle cx="600" cy="400" r="120" fill="#aa3355"/></svg>') }])
+    .png()
+    .toBuffer();
+  await verify("other.png", unrelated, "image/png");
+  await expect(panel()).toContainText("No Record");
+  await expect(panel()).toContainText("does not mean the image is fake");
+
+  // Not an image → specific message, no Verdict.
+  await visitor.goto("/verify");
+  await visitor.locator("#verify-file").setInputFiles({ name: "notes.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.7") });
+  await expect(visitor.getByText(/isn.t a supported image/)).toBeVisible();
+
+  // The Capture Record's own receipt.
+  await visitor.goto(`/r/${exactHash}`);
+  await expect(visitor.getByRole("heading", { name: "Sealed photo" })).toBeVisible();
+  await expect(visitor.getByText("Device Key")).toBeVisible();
+});

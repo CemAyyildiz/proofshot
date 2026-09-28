@@ -43,3 +43,4 @@ public/pdq.wasm
 .data/
 test-results/
 playwright-report/
+e2e/fixtures/

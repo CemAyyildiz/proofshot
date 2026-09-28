@@ -10,6 +10,12 @@
   --accent: #1f3a5f;
   --accent-fg: #ffffff;
   --danger: #a3261f;
+  /* Verdict colours — used for Verdicts only. All ≥ 4.5:1 against white text. */
+  --verdict-original: #1d6b3a;
+  --verdict-derived: #1f4f8a;
+  --verdict-altered: #9a2b12;
+  --verdict-none: #4b4f57;
+  --verdict-fg: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,6 +28,11 @@
     --accent: #9db8dc;
     --accent-fg: #0e1a2b;
     --danger: #f19a92;
+    --verdict-original: #7fd39c;
+    --verdict-derived: #9cc2f2;
+    --verdict-altered: #f5a38c;
+    --verdict-none: #c3c6cc;
+    --verdict-fg: #121315;
   }
 }
 
@@ -34,6 +45,11 @@
   --color-accent: var(--accent);
   --color-accent-fg: var(--accent-fg);
   --color-danger: var(--danger);
+  --color-verdict-original: var(--verdict-original);
+  --color-verdict-derived: var(--verdict-derived);
+  --color-verdict-altered: var(--verdict-altered);
+  --color-verdict-none: var(--verdict-none);
+  --color-verdict-fg: var(--verdict-fg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

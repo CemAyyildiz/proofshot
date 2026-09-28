@@ -3,6 +3,7 @@ import type { Hex32 } from "@proofshot/fingerprint";
 import { registryAbi } from "@proofshot/shared";
 import { createPublicClient, http, type Hex } from "viem";
 import { env } from "@/lib/env";
+import { processSingleton } from "../singleton";
 import type { EventSource, RegistryEvent } from "./indexer";
 
 export function chainEventSource(): EventSource | null {
@@ -26,4 +27,18 @@ export function chainEventSource(): EventSource | null {
       return Number((await client.getBlock({ blockNumber })).timestamp);
     },
   };
+}
+
+/** Timestamp of any block (for Signing Window lower bounds), cached for the process. Null if the RPC fails. */
+export async function blockTime(blockNumber: bigint): Promise<number | null> {
+  const cache = processSingleton("block-times", () => new Map<bigint, number>());
+  const hit = cache.get(blockNumber);
+  if (hit !== undefined) return hit;
+  try {
+    const t = Number((await createPublicClient({ transport: http(env().rpcUrl) }).getBlock({ blockNumber })).timestamp);
+    cache.set(blockNumber, t);
+    return t;
+  } catch {
+    return null;
+  }
 }

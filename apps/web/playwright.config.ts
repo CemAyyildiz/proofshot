@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 3100;
@@ -7,6 +8,7 @@ export const E2E_REGISTRY = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
 export default defineConfig({
   testDir: "./e2e",
+  globalSetup: "./e2e/global-setup.ts",
   fullyParallel: false,
   // One dev server, one database and one mail outbox are shared by every test.
   workers: 1,
@@ -18,8 +20,14 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         channel: process.env.CI ? undefined : "chrome",
-        // Chrome's synthetic camera stands in for the phone's rear camera.
-        launchOptions: { args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"] },
+        // Chrome's fake camera plays a textured scene (generated in globalSetup) in place of the rear camera.
+        launchOptions: {
+          args: [
+            "--use-fake-device-for-media-stream",
+            "--use-fake-ui-for-media-stream",
+            `--use-file-for-fake-video-capture=${resolve("e2e/fixtures/camera.y4m")}`,
+          ],
+        },
         permissions: ["camera"],
       },
     },

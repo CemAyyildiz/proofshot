@@ -15,7 +15,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db.mts migrate",
     "db:seed": "tsx scripts/db.mts seed",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "pretest": "pnpm copy-wasm"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",
@@ -33,13 +34,14 @@
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22.20.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
     "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

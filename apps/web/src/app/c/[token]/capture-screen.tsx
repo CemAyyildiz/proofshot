@@ -34,6 +34,7 @@ export function CaptureScreen({ token, deviceKey }: { token: string; deviceKey: 
   const [captures, setCaptures] = useState<StoredCapture[]>([]);
   const [sending, setSending] = useState(false);
   const [sentView, setSentView] = useState<{ skipped: number } | null>(null);
+  const [sendError, setSendError] = useState("");
   const fingerprints = useRef(new Map<string, Fingerprint>());
   const signQueue = useRef<Promise<void>>(Promise.resolve());
 
@@ -128,7 +129,9 @@ export function CaptureScreen({ token, deviceKey }: { token: string; deviceKey: 
 
   async function sendToInsurer() {
     setSending(true);
+    setSendError("");
     const ready = captures.filter((c) => c.status === "sealed" && c.exactHash);
+    let failed = 0;
     for (const c of ready) {
       const res = await fetch(`/api/claim-links/${token}/captures/${c.exactHash}/file`, {
         method: "PUT",
@@ -136,8 +139,13 @@ export function CaptureScreen({ token, deviceKey }: { token: string; deviceKey: 
         body: c.blob,
       }).catch(() => null);
       if (res?.ok) update({ ...c, status: "sent" });
+      else failed++;
     }
     setSending(false);
+    if (failed > 0) {
+      setSendError(`${failed} photo${failed === 1 ? "" : "s"} couldn't be sent. Check your connection and try again.`);
+      return;
+    }
     setSentView({ skipped: captures.filter((c) => c.status !== "sealed" && c.status !== "sent").length });
   }
 
@@ -227,6 +235,11 @@ export function CaptureScreen({ token, deviceKey }: { token: string; deviceKey: 
         </ul>
       )}
 
+      {sendError && (
+        <p role="alert" className="text-danger">
+          {sendError}
+        </p>
+      )}
       <button type="button" className="btn-primary py-3" disabled={sealedCount === 0 || sending} onClick={sendToInsurer}>
         {sending ? "Sending…" : sealedCount > 0 ? `Send ${sealedCount} photo${sealedCount === 1 ? "" : "s"} to insurer` : "Send to insurer"}
       </button>

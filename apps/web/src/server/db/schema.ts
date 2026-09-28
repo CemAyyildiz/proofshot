@@ -189,3 +189,24 @@ export const indexerState = pgTable("indexer_state", {
   lastBlock: bigint("last_block", { mode: "bigint" }).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * A Verification's outcome, so its Receipt has a stable URL. Never the image: only the submitted file's
+ * fingerprints and the Verdict (FR-8, FR-9).
+ */
+export const verifications = pgTable("verifications", {
+  id: text("id").primaryKey(),
+  chainId: integer("chain_id").notNull(),
+  submittedExactHash: text("submitted_exact_hash").notNull(),
+  submittedWidth: integer("submitted_width").notNull(),
+  submittedHeight: integer("submitted_height").notNull(),
+  verdict: text("verdict").$type<"original" | "derived-copy" | "altered" | "no-record">().notNull(),
+  alterationCheck: text("alteration_check").$type<"passed" | "failed" | "unavailable">(),
+  matchedExactHash: text("matched_exact_hash"),
+  matchedKind: registryRecordKind("matched_kind"),
+  distance: integer("distance"),
+  alteredTiles: jsonb("altered_tiles").$type<number[]>(),
+  /** Claim File the image was uploaded into (Console); null for the Public Verifier. */
+  claimFileId: uuid("claim_file_id").references(() => claimFiles.id),
+  createdAt: createdAt(),
+});

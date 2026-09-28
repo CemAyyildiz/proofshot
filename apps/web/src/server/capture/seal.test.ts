@@ -103,12 +103,21 @@ describe("sealCapture", () => {
     expect(seal).not.toHaveBeenCalled();
   });
 
-  it("returns the existing receipt for an already sealed photo", async () => {
+  it("returns the existing receipt only when this Claim File already sealed the photo", async () => {
     const b = body();
     await sealCapture(db, relayer, token, b);
     expect(await sealCapture(db, relayer, token, b)).toMatchObject({ ok: false, status: 409, receiptUrl: `/r/${b.record.exactHash}` });
-    seal.mockRejectedValueOnce(new Error('reverted with custom error AlreadySealed(0x…)'));
-    expect(await sealCapture(db, relayer, token, body())).toMatchObject({ ok: false, status: 409 });
+
+    const other = await createClaimFile(scope, "OTHER");
+    const reuse = { ...b, record: { ...b.record, claimRef: claimRefFor(other.id) } };
+    const r = await sealCapture(db, relayer, other.link.token, reuse);
+    expect(r).toMatchObject({ ok: false, status: 409 });
+    expect(r.ok === false && r.receiptUrl).toBeUndefined();
+
+    seal.mockRejectedValueOnce(new Error("reverted with custom error AlreadySealed(0x…)"));
+    const onchain = await sealCapture(db, relayer, token, body());
+    expect(onchain).toMatchObject({ ok: false, status: 409 });
+    expect(onchain.ok === false && onchain.receiptUrl).toBeUndefined();
   });
 
   it("releases the reserved Seal when the chain rejects it", async () => {

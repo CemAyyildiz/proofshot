@@ -48,3 +48,22 @@ export async function addVirtualPasskeyAuthenticator(page: Page) {
   });
   return { cdp, authenticatorId };
 }
+
+/**
+ * Real sensors never produce two byte-identical frames; Chrome's looping fake camera does. Stamp two random pixels
+ * onto every captured frame so separate tests never seal the same bytes.
+ */
+export async function simulateSensorNoise(page: Page) {
+  await page.addInitScript(() => {
+    const draw = CanvasRenderingContext2D.prototype.drawImage;
+    CanvasRenderingContext2D.prototype.drawImage = function (this: CanvasRenderingContext2D, ...args: unknown[]) {
+      (draw as (...a: unknown[]) => void).apply(this, args);
+      if (args[0] instanceof HTMLVideoElement) {
+        for (let i = 0; i < 2; i++) {
+          this.fillStyle = `rgb(${(Math.random() * 256) | 0},${(Math.random() * 256) | 0},${(Math.random() * 256) | 0})`;
+          this.fillRect((Math.random() * this.canvas.width) | 0, (Math.random() * this.canvas.height) | 0, 1, 1);
+        }
+      }
+    } as typeof draw;
+  });
+}

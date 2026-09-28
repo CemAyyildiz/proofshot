@@ -3,7 +3,7 @@ import { type Browser, type Page, expect, test } from "@playwright/test";
 import { createPublicClient, http } from "viem";
 import { foundry } from "viem/chains";
 import { E2E_REGISTRY, E2E_RPC } from "../playwright.config";
-import { addVirtualPasskeyAuthenticator, createClaimLink, signIn } from "./helpers";
+import { addVirtualPasskeyAuthenticator, createClaimLink, signIn, simulateSensorNoise } from "./helpers";
 
 const chain = createPublicClient({ chain: foundry, transport: http(E2E_RPC) });
 const FORBIDDEN = /wallet|\bgas\b|token|blockchain|transaction/i;
@@ -11,6 +11,7 @@ const FORBIDDEN = /wallet|\bgas\b|token|blockchain|transaction/i;
 async function openAsCapturer(browser: Browser, link: string): Promise<Page> {
   const phone = await (await browser.newContext({ permissions: ["camera"] })).newPage();
   await addVirtualPasskeyAuthenticator(phone);
+  await simulateSensorNoise(phone);
   await phone.goto(link);
   return phone;
 }

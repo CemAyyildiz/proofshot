@@ -1,16 +1,26 @@
+/// <reference path="./heic-decode.d.ts" />
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import heicDecode from "heic-decode";
 import sharp from "sharp";
 import { type Fingerprint, type RgbImage, FingerprintError, fingerprintDecoded } from "./fingerprint";
-import { initPdq } from "./pdq";
+import { initPdq, isPdqReady } from "./pdq";
 
 export * from "./index";
 
-const WASM_PATH = fileURLToPath(new URL("../vendor/pdq/pdq.wasm", import.meta.url));
+let wasmPath: string | undefined;
+
+/**
+ * Where to load the PDQ binary from. Bundlers (Next) rewrite `import.meta.url`, so hosts that bundle this module
+ * pass an explicit path; plain Node and the CLI use the package's own copy.
+ */
+export function setPdqWasmPath(path: string) {
+  wasmPath = path;
+}
 
 export async function initNode(): Promise<void> {
-  await initPdq(await readFile(WASM_PATH));
+  if (isPdqReady()) return;
+  await initPdq(await readFile(wasmPath ?? fileURLToPath(new URL("../vendor/pdq/pdq.wasm", import.meta.url))));
 }
 
 /** ISO-BMFF container (HEIC/HEIF/AVIF): bytes 4..8 are "ftyp". */
