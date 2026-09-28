@@ -1,24 +1,5 @@
-import { readFileSync } from "node:fs";
-import { type Page, expect, test } from "@playwright/test";
-
-function lastLinkFor(email: string): string {
-  const lines = readFileSync(".data/outbox.jsonl", "utf8").trim().split("\n").map((l) => JSON.parse(l) as { to: string; url: string });
-  const hit = lines.reverse().find((l) => l.to === email);
-  if (!hit) throw new Error(`no email to ${email}`);
-  return hit.url;
-}
-
-async function signIn(page: Page, email: string) {
-  await page.goto("/console");
-  await expect(page).toHaveURL(/\/console\/sign-in$/);
-  await page.getByLabel("Work email").fill(email);
-  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
-  await expect(page.getByRole("status")).toContainText("sign-in link is on its way");
-  await expect.poll(() => { try { return lastLinkFor(email); } catch { return ""; } }).not.toBe("");
-  await page.goto(lastLinkFor(email));
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/console$/);
-}
+import { expect, test } from "@playwright/test";
+import { lastLinkFor, signIn } from "./helpers";
 
 test("Carrier User creates a Claim File, shares and revokes its link; other Carriers cannot see it", async ({ page, browser }) => {
   await signIn(page, "marcus@northwind.demo");

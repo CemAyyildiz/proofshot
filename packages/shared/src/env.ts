@@ -8,7 +8,7 @@ const address = z.string().regex(/^0x[0-9a-fA-F]{40}$/, "must be a 0x-prefixed 2
  * boots; later stories tighten them (e.g. RELAYER_PRIVATE_KEY once sealing ships).
  */
 export const serverEnvSchema = z.object({
-  PROOFSHOT_NETWORK: z.enum(["testnet", "mainnet"]).default("testnet"),
+  PROOFSHOT_NETWORK: z.enum(["local", "testnet", "mainnet"]).default("testnet"),
   RPC_URL: z.url().optional(),
   RPC_URL_SECONDARY: z.url().optional(),
   REGISTRY_ADDRESS: address.optional(),

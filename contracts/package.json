@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "abi": "tsx tools/export-abi.ts",
     "deploy:testnet": "forge script script/DeployRegistry.s.sol --rpc-url monad_testnet --broadcast",
-    "deploy:mainnet": "forge script script/DeployRegistry.s.sol --rpc-url monad_mainnet --broadcast"
+    "deploy:mainnet": "forge script script/DeployRegistry.s.sol --rpc-url monad_mainnet --broadcast",
+    "dev:chain": "forge build && tsx tools/dev-chain.ts"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "^5.5.0",
