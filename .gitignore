@@ -1,0 +1,22 @@
+node_modules/
+dist/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.vercel
+.DS_Store
+
+# contracts
+contracts/out/
+contracts/cache/
+contracts/broadcast/*/31337/
+
+# benchmark raw data (manifest is committed)
+benchmark/data/
+
+# BMAD render cache
+_bmad/render/
