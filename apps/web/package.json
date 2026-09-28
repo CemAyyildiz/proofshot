@@ -23,6 +23,7 @@
     "@proofshot/fingerprint": "workspace:*",
     "@proofshot/shared": "workspace:*",
     "drizzle-orm": "^0.45.3",
+    "fflate": "^0.8.3",
     "next": "16.3.6",
     "postgres": "^3.4.9",
     "qrcode": "^1.5.4",

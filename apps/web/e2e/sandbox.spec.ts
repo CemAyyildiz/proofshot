@@ -3,8 +3,8 @@ import { devices, expect, test } from "@playwright/test";
 import { addVirtualPasskeyAuthenticator, simulateSensorNoise } from "./helpers";
 
 test("FR-18: a visitor's phone reaches a ready camera in ≤ 3 taps, seals a photo and is guided to fool the verifier", async ({ browser }) => {
-  const { defaultBrowserType: _ignored, ...pixel } = devices["Pixel 7"];
-  const phone = await (await browser.newContext({ ...pixel, permissions: ["camera"] })).newPage();
+  const { viewport, userAgent, deviceScaleFactor, isMobile, hasTouch } = devices["Pixel 7"];
+  const phone = await (await browser.newContext({ viewport, userAgent, deviceScaleFactor, isMobile, hasTouch, permissions: ["camera"] })).newPage();
   await addVirtualPasskeyAuthenticator(phone);
   await simulateSensorNoise(phone);
 

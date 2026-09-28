@@ -16,6 +16,16 @@ export interface Relayer {
   /** Submits and returns without waiting: later relayer txs are nonce-ordered after it. */
   registerDeviceKey(keyId: Hex, qx: Hex, qy: Hex): Promise<Hex>;
   seal(keyId: Hex, record: CaptureRecord, auth: WebAuthnAuth): Promise<SealResult>;
+  importRecords(carrierId: Hex, records: ImportRecord[]): Promise<SealResult>;
+}
+
+/** Mirrors `Registry.ImportRecord`. */
+export interface ImportRecord {
+  exactHash: Hex;
+  pHash: Hex;
+  tiles: Hex[];
+  width: number;
+  height: number;
 }
 
 export class RelayerNotConfigured extends Error {
@@ -80,6 +90,19 @@ function createViemRelayer(): Relayer {
       );
       const receipt = await pub.waitForTransactionReceipt({ hash: txHash, pollingInterval: 100 });
       if (receipt.status !== "success") throw new Error(`seal reverted: ${txHash}`);
+      return { txHash, blockNumber: receipt.blockNumber };
+    },
+    async importRecords(carrierId, records) {
+      const txHash = await submit(() =>
+        wallet.writeContract({
+          address,
+          abi: registryAbi,
+          functionName: "importRecords",
+          args: [carrierId, records.map((r) => ({ ...r, tiles: r.tiles as never }))],
+        }),
+      );
+      const receipt = await pub.waitForTransactionReceipt({ hash: txHash, pollingInterval: 100 });
+      if (receipt.status !== "success") throw new Error(`importRecords reverted: ${txHash}`);
       return { txHash, blockNumber: receipt.blockNumber };
     },
   };
