@@ -1,0 +1,10 @@
+packages:
+  - apps/*
+  - packages/*
+  - cli
+  - contracts
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
+onlyBuiltDependencies:
+  - esbuild

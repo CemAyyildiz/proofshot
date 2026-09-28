@@ -1,0 +1,15 @@
+{
+  "name": "proofshot-verify",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": { "proofshot-verify": "./src/index.ts" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@proofshot/fingerprint": "workspace:*",
+    "@proofshot/shared": "workspace:*"
+  }
+}
