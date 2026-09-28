@@ -1,7 +1,25 @@
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { E2E_REGISTRY, E2E_RPC } from "../playwright.config";
 import { expect, test } from "@playwright/test";
 import sharp from "sharp";
 import { addVirtualPasskeyAuthenticator, createClaimLink, signIn, simulateSensorNoise } from "./helpers";
+
+const TITLES = { original: "Original", "derived-copy": "Derived Copy", altered: "Altered", "no-record": "No Record" } as const;
+const tmp = mkdtempSync(join(tmpdir(), "ps-cli-"));
+
+/** FR-10: the open-source CLI, reading only the chain, must reach the same Verdict as the Public Verifier. */
+function cliVerdict(name: string, buffer: Buffer): string {
+  const file = join(tmp, name);
+  writeFileSync(file, buffer);
+  const out = execFileSync(resolve("../../node_modules/.bin/tsx"), [resolve("../../cli/src/index.ts"), file, "--rpc", E2E_RPC, "--registry", E2E_REGISTRY, "--json"], {
+    encoding: "utf8",
+  });
+  return TITLES[(JSON.parse(out) as { verdict: keyof typeof TITLES }).verdict];
+}
 
 /** Seals and sends one photo through the real Capturer flow; returns the file the Carrier received. */
 async function sealOnePhoto(page: import("@playwright/test").Page, browser: import("@playwright/test").Browser) {
@@ -33,7 +51,10 @@ test("the Public Verifier returns one honest Verdict per copy and a public recei
   async function verify(name: string, buffer: Buffer, mimeType = "image/jpeg") {
     await visitor.goto("/verify");
     await visitor.locator("#verify-file").setInputFiles({ name, mimeType, buffer });
-    await expect(visitor.getByRole("heading", { name: /^Verdict:/ })).toBeAttached({ timeout: 15_000 });
+    const heading = visitor.getByRole("heading", { name: /^Verdict:/ });
+    await expect(heading).toBeAttached({ timeout: 15_000 });
+    const web = (await heading.textContent())!.replace("Verdict: ", "");
+    expect(cliVerdict(name, buffer), `CLI vs Verifier for ${name}`).toBe(web);
   }
   const panel = () => visitor.getByRole("region", { name: /^Verdict:/ });
 

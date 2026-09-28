@@ -3,13 +3,26 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "bin": { "proofshot-verify": "./src/index.ts" },
+  "bin": {
+    "proofshot-verify": "./dist/index.js"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "start": "tsx src/index.ts",
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/index.js --external:sharp --external:heic-decode --banner:js=\"import { createRequire } from \\\"node:module\\\"; const require = createRequire(import.meta.url);\" && node -e \"require('fs').copyFileSync(require.resolve('@proofshot/fingerprint/pdq.wasm'), 'dist/pdq.wasm')\""
   },
   "dependencies": {
     "@proofshot/fingerprint": "workspace:*",
-    "@proofshot/shared": "workspace:*"
-  }
+    "@proofshot/shared": "workspace:*",
+    "viem": "^2.56.9",
+    "sharp": "^0.34.5",
+    "heic-decode": "^2.1.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.12"
+  },
+  "files": [
+    "dist"
+  ]
 }
