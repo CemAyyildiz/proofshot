@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {WebAuthn} from "@openzeppelin/contracts/utils/cryptography/WebAuthn.sol";
 
 /// @title Proofshot Registry
@@ -12,7 +13,11 @@ import {WebAuthn} from "@openzeppelin/contracts/utils/cryptography/WebAuthn.sol"
 /// @dev Writes are relayer-only in v1: the relayer sponsors fees (FR-7) and attests that `carrierId`/`claimRef`
 ///      come from a valid Claim Link. Capturer authorship is still proven onchain by the Device Key's WebAuthn
 ///      signature over the whole record.
-contract Registry is AccessControl {
+///
+///      Incident response for a compromised relayer key: the admin (a separate, cold key) pauses all writes, revokes
+///      the relayer role and any Device Keys it registered, grants the role to a fresh relayer, and unpauses.
+///      Records already written stay in the event log; their `keyId` and block let verifiers discount them.
+contract Registry is AccessControl, Pausable {
     struct CaptureRecord {
         bytes32 exactHash; // SHA-256 of the original image bytes
         bytes32 pHash; // PDQ of the whole image
@@ -79,9 +84,13 @@ contract Registry is AccessControl {
     error SigningWindowExpired(uint64 refBlock, uint256 currentBlock);
     error RpIdNotAllowed(bytes32 rpIdHash);
     error InvalidSignature();
+    error AdminIsRelayer();
+    error NotAuthorized();
 
     constructor(address admin, address relayer, bytes32[] memory rpIdHashes) {
         if (admin == address(0) || relayer == address(0)) revert ZeroValue();
+        // The relayer is a hot key on a server; the admin must be a different (cold) key that can stop it.
+        if (admin == relayer) revert AdminIsRelayer();
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(RELAYER_ROLE, relayer);
         for (uint256 i; i < rpIdHashes.length; i++) _setRpIdHash(rpIdHashes[i], true);
@@ -93,10 +102,19 @@ contract Registry is AccessControl {
         _setRpIdHash(rpIdHash, allowed);
     }
 
+    /// @notice Stops every write (Seals, imports, key registration). Reads and past records are unaffected.
+    function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _unpause();
+    }
+
     // ─── Device Keys ───────────────────────────────────────────────────────────────────────────────────────
 
     /// @notice Registers a passkey public key. Keys are immutable once registered; a new device gets a new key.
-    function registerDeviceKey(bytes32 keyId, bytes32 qx, bytes32 qy) external onlyRole(RELAYER_ROLE) {
+    function registerDeviceKey(bytes32 keyId, bytes32 qx, bytes32 qy) external onlyRole(RELAYER_ROLE) whenNotPaused {
         if (keyId == 0 || (qx == 0 && qy == 0)) revert ZeroValue();
         if (_deviceKeys[keyId].qx != 0 || _deviceKeys[keyId].qy != 0) revert DeviceKeyExists(keyId);
         _deviceKeys[keyId] = DeviceKey(qx, qy, 0);
@@ -104,7 +122,9 @@ contract Registry is AccessControl {
     }
 
     /// @notice Stops a key from sealing from this block on. Earlier Seals stay valid for their Signing Window (T-7).
-    function revokeDeviceKey(bytes32 keyId) external onlyRole(RELAYER_ROLE) {
+    ///         The admin can revoke too, so keys registered by a compromised relayer can be cut off while paused.
+    function revokeDeviceKey(bytes32 keyId) external {
+        if (!hasRole(RELAYER_ROLE, msg.sender) && !hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) revert NotAuthorized();
         DeviceKey storage key = _deviceKeys[keyId];
         if (key.qx == 0 && key.qy == 0) revert UnknownDeviceKey(keyId);
         if (key.revokedAtBlock == 0) {
@@ -124,6 +144,7 @@ contract Registry is AccessControl {
     function seal(bytes32 keyId, CaptureRecord calldata r, WebAuthn.WebAuthnAuth calldata auth)
         external
         onlyRole(RELAYER_ROLE)
+        whenNotPaused
     {
         DeviceKey memory key = _deviceKeys[keyId];
         if (key.qx == 0 && key.qy == 0) revert UnknownDeviceKey(keyId);
@@ -150,6 +171,7 @@ contract Registry is AccessControl {
     function importRecords(bytes32 carrierId, ImportRecord[] calldata records)
         external
         onlyRole(RELAYER_ROLE)
+        whenNotPaused
         returns (uint256 imported)
     {
         if (carrierId == 0) revert ZeroValue();

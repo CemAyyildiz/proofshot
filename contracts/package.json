@@ -9,8 +9,8 @@
     "spike:b": "tsx tools/spike-b-testnet.ts",
     "typecheck": "tsc --noEmit",
     "abi": "tsx tools/export-abi.ts",
-    "deploy:testnet": "forge script script/DeployRegistry.s.sol --rpc-url monad_testnet --broadcast",
-    "deploy:mainnet": "forge script script/DeployRegistry.s.sol --rpc-url monad_mainnet --broadcast",
+    "deploy:testnet": "EXPECTED_CHAIN_ID=10143 forge script script/DeployRegistry.s.sol --rpc-url monad_testnet --broadcast",
+    "deploy:mainnet": "EXPECTED_CHAIN_ID=143 forge script script/DeployRegistry.s.sol --rpc-url monad_mainnet --broadcast",
     "dev:chain": "forge build && tsx tools/dev-chain.ts"
   },
   "devDependencies": {

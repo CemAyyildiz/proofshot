@@ -89,3 +89,39 @@ and the Verifier all run under it).
 compromise blast radius, admin powers), `importRecords` unbounded loops, `rpIdHash` extraction edge cases, the
 Signing Window with `block.number` on Monad, upgrade/redeploy story, NatSpec, deploy script safety (chain-id check,
 dry run), and a Slither-style manual pass.
+
+---
+
+## Iteration 3 — Contracts (2026-09-30)
+
+Reviewed `Registry.sol`, its tests and the deploy script.
+
+Findings:
+
+- **H1** Relayer-key compromise had no containment. The relayer can register a key it controls and forge Seals or
+  Imported Records under any `carrierId` (inherent to relayer attestation in v1), and the contract offered no way to
+  stop it: no pause, and only the relayer itself could revoke Device Keys.
+- **M1** Nothing prevented deploying with `admin == relayer`, which would put the admin role on a server hot key.
+- **M2** The deploy script had no chain-id guard (a testnet config could be broadcast to mainnet) and didn't record
+  the deploy block the indexer needs (`REGISTRY_DEPLOY_BLOCK`).
+- **L1** `MAX_LAG = 100` blocks (~30–40 s) is tight if a Capturer hesitates at the Face ID prompt; the UI already
+  says "took too long — retry" and retry re-signs with a fresh block. Kept: a tight Signing Window is the claim.
+- **L2** Admin transfer is single-step (`AccessControl`); `AccessControlDefaultAdminRules` would add a delay.
+  Deferred: the admin is a cold key used rarely.
+- **L3** `forge lint` flags `1 << bit` in fuzz tests as a reversed shift — false positive (intended).
+- OK: minimal state (SM-C3), all write paths role-gated, distinct custom errors, replay/window/UV/RP ID checks,
+  imports idempotent and never block a later Seal, 1,024-run fuzz over every signed field.
+
+Done: H1, M1, M2.
+
+- `Pausable`: the admin pauses/unpauses every write; the admin can also revoke Device Keys. NatSpec documents the
+  incident runbook (pause → revoke relayer role and its keys → grant a fresh relayer → unpause), covered by an
+  end-to-end test.
+- Constructor rejects `admin == relayer`.
+- Deploy script requires `EXPECTED_CHAIN_ID` to match and writes `deployments/<chainId>.json` (address, deploy block,
+  roles, RP IDs); `pnpm deploy:testnet` / `deploy:mainnet` set the expected chain.
+- `seal()` gas now 100,315 (+2.2k for the pause check). 24 Registry tests.
+
+**Next: Iteration 4 — Tests/CI.** Check CI actually runs e2e with Foundry + Chrome (Playwright browser install,
+Anvil on the runner), flaky patterns (fixed sleeps, shared state), coverage gaps (sign-in rate limit, verifier 429,
+receipts 404, CSP on capture), test runtime, and add a coverage report for the contracts.

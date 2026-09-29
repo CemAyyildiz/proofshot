@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std/Test.sol";
 import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {WebAuthn} from "@openzeppelin/contracts/utils/cryptography/WebAuthn.sol";
 import {Registry} from "../src/Registry.sol";
 
@@ -73,6 +74,59 @@ contract RegistryTest is Test {
         new Registry(address(0), relayer, rp);
         vm.expectRevert(Registry.ZeroValue.selector);
         new Registry(admin, address(0), rp);
+    }
+
+    function test_ConstructorRejectsAdminAsRelayer() public {
+        bytes32[] memory rp = new bytes32[](0);
+        vm.expectRevert(Registry.AdminIsRelayer.selector);
+        new Registry(relayer, relayer, rp);
+    }
+
+    function test_IncidentResponse_PauseRevokeRotate() public {
+        Registry.CaptureRecord memory r = _record();
+        address attacker = relayer; // the compromised hot key
+        address fresh = makeAddr("fresh-relayer");
+
+        // Only the admin can pause.
+        vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, attacker, bytes32(0)));
+        vm.prank(attacker);
+        registry.pause();
+
+        vm.startPrank(admin);
+        registry.pause();
+        registry.revokeRole(registry.RELAYER_ROLE(), attacker);
+        registry.revokeDeviceKey(keyId); // a key the compromised relayer registered
+        registry.grantRole(registry.RELAYER_ROLE(), fresh);
+        vm.stopPrank();
+
+        // Paused: no writes by anyone.
+        vm.expectRevert(Pausable.EnforcedPause.selector);
+        vm.prank(fresh);
+        registry.seal(keyId, r, _auth(".auth"));
+        Registry.ImportRecord[] memory batch = new Registry.ImportRecord[](0);
+        vm.expectRevert(Pausable.EnforcedPause.selector);
+        vm.prank(fresh);
+        registry.importRecords(keccak256("c"), batch);
+        vm.expectRevert(Pausable.EnforcedPause.selector);
+        vm.prank(fresh);
+        registry.registerDeviceKey(keccak256("k2"), qx, qy);
+
+        vm.prank(admin);
+        registry.unpause();
+
+        // The old relayer is out; the revoked key can't seal even through the new relayer.
+        vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, attacker, registry.RELAYER_ROLE()));
+        vm.prank(attacker);
+        registry.seal(keyId, r, _auth(".auth"));
+        vm.expectRevert(abi.encodeWithSelector(Registry.DeviceKeyIsRevoked.selector, keyId));
+        vm.prank(fresh);
+        registry.seal(keyId, r, _auth(".auth"));
+    }
+
+    function test_RevokeDeviceKeyNeedsRelayerOrAdmin() public {
+        vm.expectRevert(Registry.NotAuthorized.selector);
+        vm.prank(stranger);
+        registry.revokeDeviceKey(keyId);
     }
 
     function test_AdminManagesRpIds() public {

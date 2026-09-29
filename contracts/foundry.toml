@@ -6,7 +6,7 @@ script = "script"
 libs = ["node_modules"]
 solc_version = "0.8.30"
 evm_version = "prague"
-fs_permissions = [{ access = "read", path = "./test/fixtures" }]
+fs_permissions = [{ access = "read", path = "./test/fixtures" }, { access = "write", path = "./deployments" }]
 optimizer = true
 optimizer_runs = 10_000
 remappings = [
