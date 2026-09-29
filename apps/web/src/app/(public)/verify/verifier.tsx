@@ -15,10 +15,23 @@ interface Result {
   record: { kind: "sealed" | "imported"; sealedAt: string } | null;
 }
 
-type State = { name: "idle" } | { name: "checking"; file: File } | { name: "done"; file: File; result: Result } | { name: "error"; message: string };
+type State = { name: "idle" } | { name: "checking"; file: File; uploaded: number } | { name: "done"; file: File; result: Result } | { name: "error"; message: string };
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif";
 const MAX_BYTES = 20 * 1024 * 1024;
+
+/** POST with upload progress (fetch can't report it); resolves with status and parsed JSON. */
+function postWithProgress(url: string, body: FormData, onProgress: (fraction: number) => void) {
+  return new Promise<{ status: number; body: Record<string, unknown> }>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.responseType = "json";
+    xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total);
+    xhr.onload = () => resolve({ status: xhr.status, body: (xhr.response as Record<string, unknown>) ?? {} });
+    xhr.onerror = () => reject(new Error("network"));
+    xhr.send(body);
+  });
+}
 
 export function Verifier() {
   const [state, setState] = useState<State>({ name: "idle" });
@@ -41,14 +54,15 @@ export function Verifier() {
 
   async function check(f: File) {
     if (f.size > MAX_BYTES) return setState({ name: "error", message: "This image is larger than 20 MB." });
-    setState({ name: "checking", file: f });
+    setState({ name: "checking", file: f, uploaded: 0 });
     const form = new FormData();
     form.set("file", f);
     try {
-      const res = await fetch("/api/verify", { method: "POST", body: form });
-      const body = await res.json();
-      if (!res.ok) return setState({ name: "error", message: body.error ?? "Something went wrong. Try again." });
-      setState({ name: "done", file: f, result: body as Result });
+      const res = await postWithProgress("/api/verify", form, (uploaded) => setState({ name: "checking", file: f, uploaded }));
+      if (res.status < 200 || res.status >= 300) {
+        return setState({ name: "error", message: (res.body.error as string) ?? "Something went wrong. Try again." });
+      }
+      setState({ name: "done", file: f, result: res.body as unknown as Result });
     } catch {
       setState({ name: "error", message: "We couldn't reach the verifier. Check your connection and try again." });
     }
@@ -68,6 +82,13 @@ export function Verifier() {
         />
         {r.verdict === "altered" && preview ? (
           <TileMap src={preview.url} alteredTiles={r.alteredTiles} width={preview.width} height={preview.height} />
+        ) : r.verdict === "altered" ? (
+          // This browser can't display the file (e.g. HEIC outside Safari): keep the regions as text.
+          <p className="rounded-md border border-line bg-surface p-3 text-sm">
+            {r.alteredTiles.length} of 16 regions differ from the sealed photo (row, column on a 4×4 grid):{" "}
+            {r.alteredTiles.map((i) => `${Math.floor(i / 4) + 1},${(i % 4) + 1}`).join("; ")}. This browser can&apos;t display
+            the file itself to draw the map.
+          </p>
         ) : (
           <div className="flex items-center gap-3 rounded-md border border-line bg-surface p-3 text-sm">
             {preview && (
@@ -112,9 +133,12 @@ export function Verifier() {
         }`}
       >
         {state.name === "checking" ? (
-          <span role="status" className="flex items-center gap-2">
-            <span className="size-4 animate-spin rounded-full border-2 border-line border-t-accent" aria-hidden="true" />
-            Checking {state.file.name}…
+          <span role="status" className="flex w-full max-w-xs flex-col items-center gap-2">
+            <span className="flex items-center gap-2">
+              <span className="size-4 animate-spin rounded-full border-2 border-line border-t-accent" aria-hidden="true" />
+              {state.uploaded < 1 ? `Uploading ${state.file.name}… ${Math.round(state.uploaded * 100)}%` : `Checking ${state.file.name}…`}
+            </span>
+            <progress className="h-1.5 w-full" max={1} value={state.uploaded < 1 ? state.uploaded : undefined} aria-label="Upload progress" />
           </span>
         ) : (
           <>

@@ -71,9 +71,9 @@ export function CaptureApp({ token, carrierName, reference, sandbox = false }: C
         </span>
       </div>
       <header>
-        <p className="eyebrow">{carrierName}</p>
+        <p className="eyebrow [overflow-wrap:anywhere]">{carrierName}</p>
         <h1 className="mt-1 text-2xl font-semibold">{sandbox ? "Take a photo of anything nearby" : "Take photos of the damage"}</h1>
-        {!sandbox && <p className="text-muted">Claim {reference}</p>}
+        {!sandbox && <p className="text-muted [overflow-wrap:anywhere]">Claim {reference}</p>}
       </header>
 
       {step.name === "checking" && <p className="text-muted">Getting ready…</p>}

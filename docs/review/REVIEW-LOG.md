@@ -483,3 +483,34 @@ Done: all four.
 **Next: Iteration 16 — Frontend UI/UX, pass 4**: the capture screen on a real small phone viewport (320 px),
 landscape orientation, very long Carrier names and claim references, the Verifier with a 20 MB image (progress and
 cancel), and HEIC preview fallback in non-Safari browsers.
+
+---
+
+## Iteration 16 — Frontend UI/UX, pass 4: edge layouts (2026-09-30)
+
+New on-demand screenshots (`e2e/screens-edge.spec.ts`, included in `pnpm screens`): 320 × 568, landscape
+812 × 375, and an 80-character unbroken claim reference.
+
+Findings:
+
+- **H1** Capture at 320 px / landscape: the fixed 3:4 portrait viewfinder is taller than the screen, so the viewfinder
+  and the shutter never fit together — in landscape the Capturer has to scroll mid-shot (PRD §12 "one-hand capture").
+- **H2** Long unbroken claim references overflowed: horizontal scrolling on the capture page at 320 px (it also
+  made the shutter unreachable for Playwright), and the Console heading ran past its container.
+- **M1** "Revoke link" rendered centred across the card (the confirmation wrapper stretched in a flex column).
+- **M2** Uploading a large image to the Verifier showed an indeterminate spinner with no progress.
+- **M3** HEIC in non-Safari browsers: no preview can be drawn, and an Altered result then lost its region list.
+
+Done: all five.
+
+- Viewfinder width derives from the height budget (`min(100%, 58svh × 3/4)`); e2e asserts viewfinder + shutter fit the
+  viewport at 320 × 568 and 812 × 375, and that there is no horizontal scroll with an 80-character reference.
+- References wrap (`overflow-wrap: anywhere`) on capture and the Claim File heading; the Console table truncates them
+  with the full value in `title`.
+- Revoke link / confirmation are start-aligned.
+- Verifier upload uses XHR progress: "Uploading … 45%" with a progress bar, then "Checking…".
+- Altered without a displayable preview lists the changed regions as text.
+
+**Next: Iteration 17 — Backend, pass 4**: object-storage adapter interface readiness (S3/Vercel Blob) behind
+`Storage` with a contract test both implementations must pass, request-size limits in `next.config` for server
+actions, and a review of every `console.error` for PII (emails, tokens) before logs leave the machine.

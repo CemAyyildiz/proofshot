@@ -7,7 +7,7 @@ export function RevokeLink({ claimFileId }: { claimFileId: string }) {
   return (
     <ConfirmAction
       trigger="Revoke link"
-      triggerClassName="text-sm text-danger underline underline-offset-4"
+      triggerClassName="self-start text-sm text-danger underline underline-offset-4"
       question="Revoke this link? The policyholder won't be able to add photos, and this can't be undone."
       confirmLabel="Revoke link"
       onConfirm={async () => {

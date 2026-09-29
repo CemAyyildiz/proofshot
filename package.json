@@ -15,7 +15,7 @@
     "dev:chain": "pnpm --filter @proofshot/contracts dev:chain",
     "seed": "pnpm --filter web db:seed",
     "e2e": "pnpm --filter web e2e",
-    "screens": "SCREENS=1 pnpm --filter web e2e screens"
+    "screens": "SCREENS=1 pnpm --filter web e2e screens screens-edge"
   },
   "devDependencies": {
     "@types/node": "^22",

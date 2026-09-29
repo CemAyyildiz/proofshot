@@ -96,3 +96,26 @@ test("a browser without a platform authenticator gets a clear, specific message"
     /Open this link in Safari on iPhone \(iOS 17 or later\) or Chrome on Android \(13 or later\)/,
   );
 });
+
+test("the viewfinder and shutter fit one screen on a small phone and in landscape", async ({ page, browser }) => {
+  await signIn(page, "marcus@northwind.demo");
+  const link = await createClaimLink(page, "CLM-2026-" + "HAILDAMAGEAUTOGLASSWINDSCREEN".repeat(3).slice(0, 71));
+  for (const viewport of [
+    { width: 320, height: 568 },
+    { width: 812, height: 375 },
+  ]) {
+    const phone = await (await browser.newContext({ viewport, permissions: ["camera"] })).newPage();
+    await addVirtualPasskeyAuthenticator(phone);
+    await phone.goto(link);
+    await phone.getByRole("button", { name: "Continue" }).click();
+    const shutter = phone.getByRole("button", { name: "Take photo" });
+    await expect(shutter).toBeEnabled();
+    await shutter.scrollIntoViewIfNeeded();
+    const preview = await phone.getByLabel("Camera preview").boundingBox();
+    const button = await shutter.boundingBox();
+    expect(button!.y + button!.height - preview!.y, `${viewport.width}x${viewport.height}`).toBeLessThanOrEqual(viewport.height);
+    // No horizontal scrolling, even with an 80-character unbroken claim reference.
+    expect(await phone.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await phone.context().close();
+  }
+});

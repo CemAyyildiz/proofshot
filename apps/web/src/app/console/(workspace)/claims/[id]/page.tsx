@@ -42,7 +42,7 @@ export default async function ClaimFilePage({ params }: PageProps<"/console/clai
         <Link href="/console" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground">
           <ArrowLeftIcon /> All Claim Files
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">{file.reference}</h1>
+        <h1 className="mt-2 text-2xl font-semibold [overflow-wrap:anywhere]">{file.reference}</h1>
         <p className="text-sm text-muted">Created {formatDate(file.createdAt)} · {evidence.length + uploaded.length} item{evidence.length + uploaded.length === 1 ? "" : "s"}{alerts.length ? ` · ${alerts.length} Duplicate Alert${alerts.length === 1 ? "" : "s"}` : ""}</p>
       </div>
 

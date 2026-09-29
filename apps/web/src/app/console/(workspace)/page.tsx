@@ -43,8 +43,8 @@ export default async function ConsoleHome() {
                 const link = claimLinkState(f.link);
                 return (
                   <tr key={f.id} className="hover:bg-background">
-                    <th scope="row" className="px-4 py-3 text-left font-medium">
-                      <Link href={`/console/claims/${f.id}`} className="hover:underline">
+                    <th scope="row" className="max-w-[18rem] px-4 py-3 text-left font-medium">
+                      <Link href={`/console/claims/${f.id}`} title={f.reference} className="block truncate hover:underline">
                         {f.reference}
                       </Link>
                     </th>

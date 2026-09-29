@@ -201,7 +201,8 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
 
   return (
     <section aria-label="Camera" className="flex flex-col gap-3">
-      <div className="relative overflow-hidden rounded-xl bg-black">
+      {/* Width follows the height budget so the viewfinder, shutter and count fit one screen in any orientation. */}
+      <div className="relative mx-auto w-full overflow-hidden rounded-xl bg-black" style={{ maxWidth: "min(100%, calc(58svh * 3 / 4))" }}>
         <video ref={videoRef} playsInline muted autoPlay className="aspect-[3/4] w-full object-cover" aria-label="Camera preview" />
         {camera.state === "starting" && <p className="absolute inset-0 grid place-items-center text-white">Starting camera…</p>}
         {(camera.state === "denied" || camera.state === "unavailable") && (

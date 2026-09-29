@@ -36,7 +36,7 @@ export function ConfirmAction({
     );
   }
   return (
-    <div role="group" aria-label={question} className="flex flex-wrap items-center gap-2 text-sm">
+    <div role="group" aria-label={question} className="flex flex-wrap items-center gap-2 self-start text-sm">
       <span>{question}</span>
       <button
         type="button"
