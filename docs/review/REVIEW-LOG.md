@@ -254,3 +254,36 @@ Done: all four.
 **Next: Iteration 8 — Contracts, pass 2**: gas golf on `seal()` (event encoding, calldata struct copy for the
 challenge), `deviceTime` sanity bounds, whether `claimRef` should be indexed in `CaptureSealed` for third-party
 queries, a Foundry invariant test (a sealed hash is never re-sealed or imported), and NatSpec for every public item.
+
+---
+
+## Iteration 8 — Contracts, pass 2 (2026-09-30)
+
+Findings:
+
+- **M1** No stateful property testing: unit tests and the bit-flip fuzz cover single calls, but nothing checked that
+  *sequences* of Seals, imports and block advances preserve the Registry's core guarantees — and every Seal test
+  reused one fixture signature, so the contract never saw many distinct, valid assertions.
+- **M2** NatSpec covered intent but not parameters/returns/events; the verified source is what judges read.
+- **L1** `deviceTime` isn't bounded. Kept deliberately and documented: it is the device's own clock, recorded as
+  claimed; the block-bounded Signing Window is the trustworthy time, and rejecting skewed clocks would fail honest
+  phones.
+- **L2** `claimRef` can't be indexed in `CaptureSealed` (three topics already used by exactHash, keyId, carrierId);
+  documented — index it offchain.
+- **L3** Gas: `seal()` work is dominated by the precompile call and the 16-tile event payload, both inherent.
+  No safe savings found.
+
+Done: M1, M2 (and L1/L2 documented).
+
+- `test/utils/WebAuthnSigner.sol`: builds platform-authenticator-shaped WebAuthn assertions in Solidity with
+  `vm.signP256` (UP|UV flags, low-s), so tests can seal arbitrary records.
+- `test/invariant/RegistryInvariant.t.sol`: a handler drives random Seals (3 keys, 24-hash space so collisions
+  happen), imports and block advances. Invariants: no hash is ever re-sealed, sealing is permanent, a sealed photo is
+  never re-registered as an unsigned import. 128 runs × 64 depth = 8,192 calls each, `fail_on_revert`, 0 reverts.
+- Full NatSpec on events, admin, key, seal and import functions; `forge doc` builds.
+
+Contract tests: 40 (26 Registry, 10 spike, 4 invariant).
+
+**Next: Iteration 9 — Tests/CI, pass 2**: run the invariant suite in CI with a higher budget on main only, add a
+Lighthouse/axe accessibility pass over key pages in e2e, check e2e runtime and flakiness over 3 consecutive runs,
+and make the screenshot tool part of a manual "design check" script.

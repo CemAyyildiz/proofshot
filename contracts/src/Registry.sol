@@ -56,9 +56,14 @@ contract Registry is AccessControl, Pausable {
     /// @notice WebAuthn RP ID hashes (sha256 of the RP ID) whose assertions are accepted.
     mapping(bytes32 rpIdHash => bool) public allowedRpIdHash;
 
+    /// @notice A passkey public key (P-256 point `qx`, `qy`) became usable for Seals under `keyId`.
     event DeviceKeyRegistered(bytes32 indexed keyId, bytes32 qx, bytes32 qy);
+    /// @notice `keyId` can no longer seal from block `atBlock` on. Earlier Seals are unaffected.
     event DeviceKeyRevoked(bytes32 indexed keyId, uint64 atBlock);
+    /// @notice Assertions whose authenticator data starts with `rpIdHash` (sha256 of an RP ID) are accepted or not.
     event RpIdHashAllowed(bytes32 indexed rpIdHash, bool allowed);
+    /// @notice A Capture Record was sealed. This event *is* the public record: verifiers read every field from it.
+    ///         `claimRef` is not indexed because only three topics are available; index it offchain.
     event CaptureSealed(
         bytes32 indexed exactHash,
         bytes32 indexed keyId,
@@ -72,6 +77,7 @@ contract Registry is AccessControl, Pausable {
         uint64 deviceTime,
         uint64 refBlock
     );
+    /// @notice A Carrier imported fingerprints of a photo received outside Proofshot. Unsigned by design.
     event RecordImported(
         bytes32 indexed exactHash, bytes32 indexed carrierId, bytes32 pHash, bytes32[16] tiles, uint32 width, uint32 height
     );
@@ -98,6 +104,8 @@ contract Registry is AccessControl, Pausable {
 
     // ─── Admin ─────────────────────────────────────────────────────────────────────────────────────────────
 
+    /// @notice Allows or disallows passkeys created for an RP ID (e.g. a new production or preview hostname).
+    /// @param rpIdHash sha256 of the RP ID string.
     function setRpIdHash(bytes32 rpIdHash, bool allowed) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _setRpIdHash(rpIdHash, allowed);
     }
@@ -114,6 +122,9 @@ contract Registry is AccessControl, Pausable {
     // ─── Device Keys ───────────────────────────────────────────────────────────────────────────────────────
 
     /// @notice Registers a passkey public key. Keys are immutable once registered; a new device gets a new key.
+    /// @param keyId keccak256 of the WebAuthn credential ID.
+    /// @param qx P-256 public key x coordinate.
+    /// @param qy P-256 public key y coordinate.
     function registerDeviceKey(bytes32 keyId, bytes32 qx, bytes32 qy) external onlyRole(RELAYER_ROLE) whenNotPaused {
         if (keyId == 0 || (qx == 0 && qy == 0)) revert ZeroValue();
         if (_deviceKeys[keyId].qx != 0 || _deviceKeys[keyId].qy != 0) revert DeviceKeyExists(keyId);
@@ -133,6 +144,7 @@ contract Registry is AccessControl, Pausable {
         }
     }
 
+    /// @return The registered public key and its revocation block (0 if active); all zero if unknown.
     function deviceKey(bytes32 keyId) external view returns (DeviceKey memory) {
         return _deviceKeys[keyId];
     }
@@ -141,6 +153,13 @@ contract Registry is AccessControl, Pausable {
 
     /// @notice Writes a Capture Record after verifying the Device Key's WebAuthn assertion over
     ///         `sha256(abi.encode(r))`, with user verification required.
+    /// @dev Checks, in order: key registered and not revoked, Exact Hash not yet sealed, `refBlock` within
+    ///      `MAX_LAG` blocks (the Signing Window), RP ID allowed, then the P-256 signature via the precompile.
+    ///      `r.deviceTime` is the device's own clock and is recorded as claimed, not enforced: the Signing Window,
+    ///      bounded by block numbers, is the trustworthy time.
+    /// @param keyId Device Key that signed.
+    /// @param r The Capture Record exactly as signed.
+    /// @param auth The WebAuthn assertion (authenticator data, client data JSON, low-s signature).
     function seal(bytes32 keyId, CaptureRecord calldata r, WebAuthn.WebAuthnAuth calldata auth)
         external
         onlyRole(RELAYER_ROLE)
@@ -167,6 +186,8 @@ contract Registry is AccessControl, Pausable {
 
     /// @notice Registers fingerprints of photos a Carrier received outside Proofshot (FR-13). Unsigned by design.
     ///         Already-imported or already-sealed Exact Hashes are skipped so a retried batch never reverts.
+    /// @param carrierId Pseudonymous ID of the importing Carrier.
+    /// @param records Fingerprints only; never image bytes.
     /// @return imported Number of records actually written.
     function importRecords(bytes32 carrierId, ImportRecord[] calldata records)
         external
