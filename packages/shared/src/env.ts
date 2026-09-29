@@ -25,6 +25,8 @@ export const serverEnvSchema = z.object({
   APP_URL: z.url().default("http://localhost:3000"),
   RESEND_API_KEY: z.string().min(1).optional(),
   MAIL_FROM: z.string().min(3).default("Proofshot <login@proofshot.app>"),
+  /** Sign-in links per address per hour (raised only in automated tests). */
+  SIGNIN_LIMIT_PER_EMAIL: z.coerce.number().int().positive().default(5),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema> & { network: NetworkConfig; rpcUrl: string };

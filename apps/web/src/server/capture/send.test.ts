@@ -10,6 +10,7 @@ import { createClaimFile, revokeClaimLink, type CarrierScope } from "../dal/clai
 import { FsStorage, captureKey } from "../storage";
 import { testDb } from "../test-db";
 import { MAX_IMAGE_BYTES, receiveCaptureFile, recordTimings } from "./send";
+import { claimRefFor } from "./seal";
 
 let db: Db;
 let storage: FsStorage;
@@ -61,6 +62,19 @@ describe("receiveCaptureFile", () => {
     expect(await receiveCaptureFile(db, storage, token, exactHash, new Uint8Array(MAX_IMAGE_BYTES + 1))).toMatchObject({ status: 413 });
     await revokeClaimLink(scope, fileId);
     expect(await receiveCaptureFile(db, storage, token, exactHash, photo)).toMatchObject({ status: 410 });
+  });
+});
+
+describe("receiveCaptureFile reconciliation", () => {
+  it("restores a lost captures row from the Registry before accepting the file", async () => {
+    const lost = new Uint8Array(randomBytes(3000));
+    const h = `0x${createHash("sha256").update(lost).digest("hex")}` as const;
+    const findSealed = async () => ({ txHash: "0xabc" as const, blockNumber: 9n, claimRef: claimRefFor(fileId), keyId: "0x01" as const });
+    expect(await receiveCaptureFile(db, storage, token, h, lost, findSealed)).toEqual({ ok: true, status: "received" });
+    const other = async () => ({ txHash: "0xabc" as const, blockNumber: 9n, claimRef: `0x${"9".repeat(64)}` as const, keyId: "0x01" as const });
+    const stranger = new Uint8Array(randomBytes(3000));
+    const h2 = `0x${createHash("sha256").update(stranger).digest("hex")}`;
+    expect(await receiveCaptureFile(db, storage, token, h2, stranger, other)).toMatchObject({ ok: false, status: 404 });
   });
 });
 

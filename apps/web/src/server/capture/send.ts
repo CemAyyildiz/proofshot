@@ -4,6 +4,8 @@ import type { Db } from "../db/client";
 import { captures, claimFiles } from "../db/schema";
 import { resolveClaimLink } from "../dal/claim-files";
 import { captureKey, type Storage } from "../storage";
+import { type SealedOnchain, claimRefFor, recordCapture } from "./seal";
+import type { Hex } from "@proofshot/shared";
 
 export const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 
@@ -13,7 +15,14 @@ export type SendResult = { ok: true; status: "received" | "already-received" } |
  * Accepts the original image bytes of a sealed Capture into Carrier-scoped storage. The bytes must hash to
  * the sealed Exact Hash, so what the Carrier receives verifies as Original.
  */
-export async function receiveCaptureFile(db: Db, storage: Storage, token: string, exactHash: string, bytes: Uint8Array): Promise<SendResult> {
+export async function receiveCaptureFile(
+  db: Db,
+  storage: Storage,
+  token: string,
+  exactHash: string,
+  bytes: Uint8Array,
+  findSealed?: (exactHash: Hex) => Promise<SealedOnchain | null>,
+): Promise<SendResult> {
   if (!/^0x[0-9a-f]{64}$/.test(exactHash)) return { ok: false, status: 400, error: "Invalid request." };
   if (bytes.byteLength > MAX_IMAGE_BYTES) return { ok: false, status: 413, error: "This photo is too large." };
 
@@ -21,10 +30,21 @@ export async function receiveCaptureFile(db: Db, storage: Storage, token: string
   if (!link) return { ok: false, status: 404, error: "This link is not valid." };
   if (link.state !== "active") return { ok: false, status: 410, error: "This link is no longer active." };
 
-  const [capture] = await db
-    .select()
-    .from(captures)
-    .where(and(eq(captures.exactHash, exactHash), eq(captures.claimFileId, link.claimFileId)));
+  const findCapture = () =>
+    db
+      .select()
+      .from(captures)
+      .where(and(eq(captures.exactHash, exactHash), eq(captures.claimFileId, link.claimFileId)))
+      .then((r) => r[0]);
+  let capture = await findCapture();
+  if (!capture && findSealed) {
+    // Sealed onchain for this Claim File but the captures row was lost: restore it from the Registry.
+    const onchain = await findSealed(exactHash as Hex).catch(() => null);
+    if (onchain && onchain.claimRef === claimRefFor(link.claimFileId)) {
+      await recordCapture(db, { claimFileId: link.claimFileId, keyId: onchain.keyId, exactHash: exactHash as Hex, txHash: onchain.txHash, now: new Date() });
+      capture = await findCapture();
+    }
+  }
   // Only sealed Captures of this Claim File can be sent.
   if (!capture) return { ok: false, status: 404, error: "Only sealed photos can be sent." };
   if (capture.sentAt) return { ok: true, status: "already-received" };

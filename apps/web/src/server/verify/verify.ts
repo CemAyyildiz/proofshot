@@ -6,6 +6,9 @@ import type { Db } from "../db/client";
 import { verifications } from "../db/schema";
 
 export const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
+/** Public Verifier budget per caller: fingerprinting is the most expensive unauthenticated request. */
+export const VERIFICATIONS_PER_WINDOW = 30;
+export const VERIFICATION_WINDOW_MS = 10 * 60 * 1000;
 
 export type VerifyResult =
   | { ok: true; id: string; fingerprint: Fingerprint; verdict: Verdict }

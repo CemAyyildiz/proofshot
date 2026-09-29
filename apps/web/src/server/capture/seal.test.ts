@@ -120,6 +120,28 @@ describe("sealCapture", () => {
     expect(onchain.ok === false && onchain.receiptUrl).toBeUndefined();
   });
 
+  it("reconciles a Seal that landed onchain but whose DB write was lost", async () => {
+    const b = body();
+    seal.mockRejectedValueOnce(new Error("reverted with custom error AlreadySealed(0x…)"));
+    const findSealed = vi.fn().mockResolvedValue({ txHash: "0xc0ffee", blockNumber: 1004n, claimRef: claimRefFor(fileId), keyId: KEY });
+    const r = await sealCapture(db, relayer, token, b, { findSealed });
+    expect(r).toEqual({ ok: true, txHash: "0xc0ffee", blockNumber: "1004", receiptUrl: `/r/${b.record.exactHash}` });
+    expect(findSealed).toHaveBeenCalledWith(b.record.exactHash);
+    const [row] = await db.select().from(captures);
+    expect(row).toMatchObject({ exactHash: b.record.exactHash, txHash: "0xc0ffee", claimFileId: fileId });
+    expect((await db.select().from(claimLinks))[0]!.sealCount).toBe(1);
+  });
+
+  it("does not adopt an onchain Seal from another Claim File or Device Key", async () => {
+    for (const other of [{ claimRef: h32(), keyId: KEY }, { claimRef: claimRefFor(fileId), keyId: h32() }]) {
+      seal.mockRejectedValueOnce(new Error("AlreadySealed"));
+      const r = await sealCapture(db, relayer, token, body(), { findSealed: async () => ({ txHash: "0x1", blockNumber: 1n, ...other }) });
+      expect(r).toMatchObject({ ok: false, status: 409 });
+    }
+    expect(await db.select().from(captures)).toHaveLength(0);
+    expect((await db.select().from(claimLinks))[0]!.sealCount).toBe(0);
+  });
+
   it("releases the reserved Seal when the chain rejects it", async () => {
     seal.mockRejectedValueOnce(new Error("InvalidSignature()"));
     expect(await sealCapture(db, relayer, token, body())).toMatchObject({ ok: false, status: 502 });
@@ -138,6 +160,6 @@ describe("sealCapture", () => {
     const now = new Date("2026-09-28T12:00:00Z");
     const { consume } = await import("../rate-limit");
     for (let i = 0; i < SEALS_PER_KEY_PER_DAY; i++) await consume(db, `seal:key:${KEY}`, SEALS_PER_KEY_PER_DAY, 86_400_000, now);
-    expect(await sealCapture(db, relayer, token, body(), now)).toMatchObject({ ok: false, status: 429 });
+    expect(await sealCapture(db, relayer, token, body(), { now })).toMatchObject({ ok: false, status: 429 });
   });
 });

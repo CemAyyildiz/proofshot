@@ -35,6 +35,11 @@ export function SignInForm() {
           Enter a valid email address.
         </p>
       )}
+      {state.status === "limited" && (
+        <p role="alert" className="text-sm text-danger">
+          Too many sign-in requests. Wait an hour and try again, or use the link we already sent.
+        </p>
+      )}
       <button type="submit" disabled={pending} className="btn-primary">
         {pending ? "Sending…" : "Email me a sign-in link"}
       </button>

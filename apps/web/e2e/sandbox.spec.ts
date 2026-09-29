@@ -33,7 +33,11 @@ test("FR-18: a visitor's phone reaches a ready camera in ≤ 3 taps, seals a pho
 });
 
 test("desktop visitors get a QR code that continues on a phone", async ({ page }) => {
-  await page.goto("/");
+  const res = await page.goto("/");
+  const h = res!.headers();
+  expect(h["content-security-policy"]).toContain("frame-ancestors 'none'");
+  expect(h["referrer-policy"]).toBe("same-origin");
+  expect(h["x-powered-by"]).toBeUndefined();
   await expect(page.getByRole("img", { name: /QR code for .*\/try$/ })).toBeVisible();
   await page.goto("/try");
   await expect(page.getByRole("button", { name: "Start the demo" })).toBeVisible();

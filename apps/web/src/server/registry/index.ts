@@ -8,6 +8,11 @@ import { processSingleton } from "../singleton";
 import { chainEventSource } from "./chain-source";
 import { syncRegistry, toEntry } from "./indexer";
 
+/** The Registry could not be read. Callers must say so rather than return a Verdict from stale data. */
+export class RegistryUnavailable extends Error {
+  override name = "RegistryUnavailable";
+}
+
 /** Minimum gap between chain syncs; verifications within it reuse the in-memory index. */
 const SYNC_INTERVAL_MS = 1_000;
 
@@ -41,6 +46,9 @@ export async function registryEntries(): Promise<RegistryEntry[]> {
           if (added.length) idx.entries = [...idx.entries, ...added.map((r) => toEntry(r as typeof registryRecords.$inferSelect))];
         }
         idx.lastSync = Date.now();
+      } catch (err) {
+        console.error("[registry] sync failed", err);
+        throw new RegistryUnavailable("The public registry is temporarily unreachable.");
       } finally {
         idx.inflight = undefined;
       }
@@ -48,4 +56,10 @@ export async function registryEntries(): Promise<RegistryEntry[]> {
     await idx.inflight;
   }
   return idx.entries;
+}
+
+/** The sealed Registry entry for an Exact Hash, if any (forces a sync first). */
+export async function findSealedOnchain(exactHash: string) {
+  const e = (await registryEntries()).find((r) => r.kind === "sealed" && r.exactHash === exactHash.toLowerCase());
+  return e && e.claimRef && e.keyId ? { txHash: e.txHash, blockNumber: e.blockNumber, claimRef: e.claimRef, keyId: e.keyId } : null;
 }

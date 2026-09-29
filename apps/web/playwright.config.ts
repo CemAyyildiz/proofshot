@@ -50,6 +50,7 @@ export default defineConfig({
         DATABASE_URL: "pglite:./.data/e2e",
         APP_URL: `http://localhost:${PORT}`,
         RESEND_API_KEY: "",
+        SIGNIN_LIMIT_PER_EMAIL: "1000",
         PROOFSHOT_NETWORK: "local",
         RPC_URL: E2E_RPC,
         REGISTRY_ADDRESS: E2E_REGISTRY,

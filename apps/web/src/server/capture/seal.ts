@@ -71,15 +71,24 @@ export interface SealedCapture {
   record: CaptureRecord;
 }
 
-export async function sealCapture(
-  db: Db,
-  relayer: () => Relayer,
-  token: string,
-  input: unknown,
-  now = new Date(),
+/** What the public Registry says about a sealed Exact Hash; used to reconcile a Seal whose DB write was lost. */
+export interface SealedOnchain {
+  txHash: Hex;
+  blockNumber: bigint;
+  claimRef: Hex;
+  keyId: Hex;
+}
+
+export interface SealOptions {
+  now?: Date;
   /** Runs after a successful Seal (Duplicate Alerts). Failures are logged, never surfaced to the Capturer. */
-  onSealed?: (c: SealedCapture) => Promise<unknown>,
-): Promise<SealResponse> {
+  onSealed?: (c: SealedCapture) => Promise<unknown>;
+  /** Looks up an Exact Hash in the indexed Registry. */
+  findSealed?: (exactHash: Hex) => Promise<SealedOnchain | null>;
+}
+
+export async function sealCapture(db: Db, relayer: () => Relayer, token: string, input: unknown, opts: SealOptions = {}): Promise<SealResponse> {
+  const now = opts.now ?? new Date();
   const parsed = sealBody.safeParse(input);
   if (!parsed.success) return { ok: false, status: 400, error: "Invalid request." };
   const { keyId, record, auth, locSalt } = parsed.data;
@@ -116,34 +125,46 @@ export async function sealCapture(
     .returning({ sealCount: claimLinks.sealCount });
   if (!reserved) return { ok: false, status: 429, error: `This link has reached its limit of ${SEALS_PER_LINK} photos. Ask your insurer for a new link.` };
 
+  const release = () => db.update(claimLinks).set({ sealCount: sql`${claimLinks.sealCount} - 1` }).where(eq(claimLinks.token, token));
+  const sealed = { claimFileId: link.claimFileId, claimRef: record.claimRef, carrierId: link.carrierPseudonymousId as Hex, record: record as CaptureRecord };
+
+  let txHash: Hex;
+  let blockNumber: bigint;
   try {
-    const { txHash, blockNumber } = await relayer().seal(keyId, record as CaptureRecord, auth as WebAuthnAuth);
-    await db.insert(captures).values({
-      claimFileId: link.claimFileId,
-      deviceKeyId: keyId,
-      exactHash: record.exactHash,
-      txHash,
-      locSalt: locSalt ?? null,
-      sealedAt: now,
-    });
-    if (onSealed) {
-      await onSealed({
-        claimFileId: link.claimFileId,
-        claimRef: record.claimRef,
-        carrierId: link.carrierPseudonymousId as Hex,
-        record: record as CaptureRecord,
-      }).catch((err) => console.error("[seal] post-seal hook failed", err));
-    }
-    return { ok: true, txHash, blockNumber: blockNumber.toString(), receiptUrl: receiptUrlFor(record.exactHash) };
+    ({ txHash, blockNumber } = await relayer().seal(keyId, record as CaptureRecord, auth as WebAuthnAuth));
   } catch (err) {
-    await db.update(claimLinks).set({ sealCount: sql`${claimLinks.sealCount} - 1` }).where(eq(claimLinks.token, token));
     const msg = String(err);
     if (msg.includes("AlreadySealed")) {
-      // Sealed onchain but not by this Claim File (it would have a captures row): never present it as ours.
+      // Our earlier attempt may have sealed it and lost the DB write or the response. The Registry decides.
+      const onchain = await opts.findSealed?.(record.exactHash).catch(() => null);
+      if (onchain && onchain.claimRef === record.claimRef && onchain.keyId === keyId) {
+        await recordCapture(db, { claimFileId: link.claimFileId, keyId, exactHash: record.exactHash, txHash: onchain.txHash, locSalt, now });
+        await opts.onSealed?.(sealed).catch((e) => console.error("[seal] post-seal hook failed", e));
+        return { ok: true, txHash: onchain.txHash, blockNumber: onchain.blockNumber.toString(), receiptUrl: receiptUrlFor(record.exactHash) };
+      }
+      await release();
       return { ok: false, status: 409, error: "This exact photo was already sealed elsewhere." };
     }
+    await release();
     console.error("[seal] failed", err);
     const expired = msg.includes("SigningWindowExpired");
     return { ok: false, status: 502, error: expired ? "This photo took too long to seal. Tap retry." : "This photo couldn't be sealed. Tap retry." };
   }
+
+  // The Seal is final onchain. A failed DB write must not turn it into an error: a retry or the send step reconciles it.
+  await recordCapture(db, { claimFileId: link.claimFileId, keyId, exactHash: record.exactHash, txHash, locSalt, now }).catch((err) =>
+    console.error("[seal] sealed onchain but the captures row failed; will reconcile", err),
+  );
+  await opts.onSealed?.(sealed).catch((err) => console.error("[seal] post-seal hook failed", err));
+  return { ok: true, txHash, blockNumber: blockNumber.toString(), receiptUrl: receiptUrlFor(record.exactHash) };
+}
+
+export function recordCapture(
+  db: Db,
+  c: { claimFileId: string; keyId: Hex; exactHash: Hex; txHash: Hex; locSalt?: Hex | null; now: Date },
+) {
+  return db
+    .insert(captures)
+    .values({ claimFileId: c.claimFileId, deviceKeyId: c.keyId, exactHash: c.exactHash, txHash: c.txHash, locSalt: c.locSalt ?? null, sealedAt: c.now })
+    .onConflictDoNothing({ target: captures.exactHash });
 }
