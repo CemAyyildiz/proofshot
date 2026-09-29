@@ -128,4 +128,4 @@ sealed photo) driven by Solidity-signed passkey assertions.
 | `contracts` | Registry (Solidity, Foundry), deploy script, local dev chain |
 | `cli` | `proofshot-verify`: reproduce a Verdict from public data only |
 | `benchmark` | SM-2 accuracy benchmark |
-| `docs` | Architecture, threat model, deploy runbook, spikes, review log |
+| `docs` | Architecture, threat model, deploy runbook, requirement traceability, demo script, write-up draft, spikes, review log |

@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { env } from "@/lib/env";
 import { PasskeySpike } from "./passkey-spike";
 
 export const metadata: Metadata = { title: "Spike B · Passkey fixture", robots: { index: false } };
 
 export default function Page() {
+  // Developer tool: hidden in production unless explicitly enabled for a real-device session.
+  if (process.env.NODE_ENV === "production" && env().ENABLE_SPIKE_PAGES !== "1") notFound();
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-4 px-4 py-10">
       <h1 className="text-2xl font-semibold">Spike B: passkey fixture</h1>

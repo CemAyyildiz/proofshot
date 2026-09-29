@@ -313,3 +313,27 @@ Done: all four.
 **Next: Iteration 10 — Docs/README, pass 2**: `docs/demo-script.md` aligned with the shipped UI (the A6 script's
 exact clicks and copy), a submission write-up draft per A7 with only measured numbers and explicit "pending" marks,
 and a CHANGELOG/feature matrix mapping each FR to its code and test.
+
+---
+
+## Iteration 10 — Docs/README, pass 2 (2026-09-30)
+
+Findings:
+
+- **M1** No requirement traceability: a judge or reviewer couldn't see which code and which test backs each FR.
+- **M2** The PRD's demo script (A6) predates the UI; its clicks and copy no longer matched the product.
+- **M3** No write-up draft; the risk is filling it later with rounded or projected numbers.
+- **M4** (security, found while mapping files) `/spike/passkey`, a developer tool, was reachable in production.
+
+Done: all four.
+
+- `docs/traceability.md`: FR-1…FR-18 → implementation paths → unit/contract/e2e evidence, plus NFR-5/7/8/9.
+- `docs/demo-script.md`: timed script using the exact on-screen labels, setup checklist and fallbacks.
+- `docs/submission-writeup.md`: A7 outline filled with measured numbers only; every unmeasured figure is marked ⏳
+  with the file that will hold it; the crop limit is stated up front.
+- `/spike/passkey` returns 404 in production unless `ENABLE_SPIKE_PAGES=1` (documented in `.env.example`; the owner
+  checklist says to enable it only for the real-device session).
+
+**Next: Iteration 11 — Frontend UI/UX, pass 3**: motion and feedback polish (seal state transitions, a success
+moment when a photo seals, reduced-motion safe), loading skeletons for Console pages, empty states with next steps,
+the Claim File page at 10+ items (grid density), and copy consistency across Verdict texts.
