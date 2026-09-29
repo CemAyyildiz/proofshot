@@ -20,6 +20,10 @@ export const serverEnvSchema = z.object({
     .string()
     .regex(/^0x[0-9a-fA-F]{64}$/, "must be a 0x-prefixed 32-byte hex key")
     .optional(),
+  /** How long a Seal request waits for its transaction before telling the Capturer to retry (a retry reconciles). */
+  RELAYER_RECEIPT_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
+  /** /api/health reports unhealthy (503) below this relayer balance, so uptime monitoring alerts before Seals fail. */
+  RELAYER_MIN_BALANCE_MON: z.coerce.number().nonnegative().default(1),
   DATABASE_URL: z.string().min(1).optional(),
   /** Public origin used in emailed links, e.g. https://proofshot.app. */
   APP_URL: z.url().default("http://localhost:3000"),

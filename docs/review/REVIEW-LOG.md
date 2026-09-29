@@ -366,3 +366,35 @@ Done: H1, H2, M1, M2, M3 (M4 investigated and deliberately not shipped).
 **Next: Iteration 12 — Backend, pass 3**: idempotency of the send step under concurrent retries, the relayer's
 behaviour under nonce gaps and stuck transactions (timeouts, replacement), what happens when the relayer runs out of
 MON (clear Capturer message, alerting hook), and structured logging with request IDs.
+
+---
+
+## Iteration 12 — Backend, pass 3 (2026-09-30)
+
+Findings:
+
+- **H1** The relayer waited for transaction receipts with no timeout: a stuck transaction would hang the Capturer's
+  Seal request until the platform killed it.
+- **H2** When the relayer ran out of MON or the Registry was paused, Capturers were told "couldn't be sealed — tap
+  retry": an endless loop that could never succeed, and nobody was alerted.
+- **M1** No alarm path for a draining relayer balance (NFR-4, R-5).
+- **M2** A failed Seal's reason lived only in a `title` tooltip — invisible on phones.
+- OK: send is idempotent under concurrent retries (same key, same bytes, `sentAt` guarded); nonce gaps are covered by
+  the serialised submit queue plus `pending` nonces; retries after a timeout are reconciled from the Registry
+  (iteration 2).
+
+Done: all four.
+
+- `relayerErrorKind()` classifies failures (unfunded, paused, already-sealed, window-expired, timeout, other).
+  Seal: unfunded/paused → 503 "Sealing is paused on our side… your photo is kept on this phone"; timeout → 504 "taking
+  longer than usual — if it went through we'll pick it up"; the link reservation is always released. Enroll and
+  import map the same way. Unit-tested.
+- Receipt waits are bounded by `RELAYER_RECEIPT_TIMEOUT_MS` (30 s).
+- `/api/health` checks the relayer balance and `Registry.paused()`; 503 with `problems` when below
+  `RELAYER_MIN_BALANCE_MON`, paused or unreachable — an uptime monitor on it is the low-balance alarm. e2e asserts the
+  healthy shape.
+- Failed thumbnails show the reason as text under the photo.
+
+**Next: Iteration 13 — Contracts, pass 3**: review the dev-chain and deploy tooling end to end on a fresh checkout
+(does `pnpm dev:chain` + `pnpm seed` + `pnpm dev` work from zero?), gas snapshot file checked into CI to catch
+regressions (`forge snapshot --check`), and the PasskeySpike contract's future (keep as documentation or remove).

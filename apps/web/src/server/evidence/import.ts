@@ -1,5 +1,6 @@
 import type { Hex32 } from "@proofshot/fingerprint";
 import { eq } from "drizzle-orm";
+import { isServiceUnavailable, relayerErrorKind } from "../chain/errors";
 import type { ImportRecord, Relayer } from "../chain/relayer";
 import { carriers } from "../db/schema";
 import type { CarrierScope } from "../dal/claim-files";
@@ -14,7 +15,7 @@ export const IMPORTS_PER_CARRIER_PER_DAY = 2_000;
 export type ImportItemResult = { name: string; status: "imported" | "unreadable"; exactHash?: string };
 export type ImportBatchResult =
   | { ok: true; items: ImportItemResult[]; txHash: string | null }
-  | { ok: false; status: 400 | 429 | 502; error: string };
+  | { ok: false; status: 400 | 429 | 502 | 503; error: string };
 
 /**
  * Fingerprints each image (the bytes are discarded, never stored) and writes the fingerprints to the Registry as
@@ -49,7 +50,9 @@ export async function importBatch(
     const { txHash } = await relayer().importRecords(carrier!.pid as Hex32, records);
     return { ok: true, items, txHash };
   } catch (err) {
-    console.error("[import] importRecords failed", err);
+    const kind = relayerErrorKind(err);
+    console.error(`[import] importRecords failed (${kind})`, err);
+    if (isServiceUnavailable(kind)) return { ok: false, status: 503, error: "Imports are paused on our side for a moment. Try again later." };
     return { ok: false, status: 502, error: "This batch couldn't be recorded. Retry it — already imported photos are skipped." };
   }
 }

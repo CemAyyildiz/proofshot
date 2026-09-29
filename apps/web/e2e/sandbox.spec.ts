@@ -38,6 +38,13 @@ test("desktop visitors get a QR code that continues on a phone", async ({ page }
   expect(h["content-security-policy"]).toContain("frame-ancestors 'none'");
   expect(h["referrer-policy"]).toBe("same-origin");
   expect(h["x-powered-by"]).toBeUndefined();
+
+  // Health covers the relayer's balance and the Registry's pause state (uptime monitors alert on 503).
+  const health = await page.request.get("/api/health");
+  expect(health.status()).toBe(200);
+  const body = await health.json();
+  expect(body).toMatchObject({ ok: true, registryPaused: false, problems: [] });
+  expect(body.relayerBalanceMon).toBeGreaterThan(1);
   await expect(page.getByRole("img", { name: /QR code for .*\/try$/ })).toBeVisible();
   await page.goto("/try");
   await expect(page.getByRole("button", { name: "Start the demo" })).toBeVisible();

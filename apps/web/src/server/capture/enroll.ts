@@ -2,6 +2,7 @@ import { base64UrlDecode, spkiToXY, type Hex } from "@proofshot/shared";
 import { eq } from "drizzle-orm";
 import { keccak256 } from "viem";
 import { z } from "zod";
+import { isServiceUnavailable, relayerErrorKind } from "../chain/errors";
 import type { Relayer } from "../chain/relayer";
 import type { Db } from "../db/client";
 import { deviceKeys } from "../db/schema";
@@ -54,8 +55,15 @@ export async function enrollDeviceKey(db: Db, relayer: () => Relayer, token: str
     await relayer().registerDeviceKey(keyId, point.qx, point.qy);
   } catch (err) {
     await db.delete(deviceKeys).where(eq(deviceKeys.keyId, keyId));
-    console.error("[enroll] registerDeviceKey failed", err);
-    return { ok: false, status: 503, error: "We couldn't finish setting up this device. Try again in a moment." };
+    const kind = relayerErrorKind(err);
+    console.error(`[enroll] registerDeviceKey failed (${kind})`, err);
+    return {
+      ok: false,
+      status: 503,
+      error: isServiceUnavailable(kind)
+        ? "Setup is paused on our side for a moment. Try again in a few minutes."
+        : "We couldn't finish setting up this device. Try again in a moment.",
+    };
   }
   return { ok: true, keyId, status: "registered" };
 }

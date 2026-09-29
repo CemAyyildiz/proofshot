@@ -260,6 +260,9 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
                 )}
               </div>
               <CaptureStatusLine capture={c} />
+              {c.status === "failed" && c.error && c.error !== "Not sealed — retry" && (
+                <span className="text-xs text-muted">{c.error}</span>
+              )}
               {c.status === "failed" && (
                 <span className="flex flex-wrap gap-2 text-xs">
                   <button type="button" className="underline" onClick={() => seal(c, performance.now())}>
@@ -305,7 +308,7 @@ function CaptureStatusLine({ capture: c }: { capture: StoredCapture }) {
           ? "Not sealed — retry"
           : "Sealing…";
   return (
-    <span role="status" className="text-xs font-medium" title={c.status === "failed" ? c.error : undefined}>
+    <span role="status" className="text-xs font-medium">
       {text}
     </span>
   );

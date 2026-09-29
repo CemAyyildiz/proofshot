@@ -2,6 +2,7 @@ import type { CaptureRecord, Hex, WebAuthnAuth } from "@proofshot/shared";
 import { and, eq, lt, sql } from "drizzle-orm";
 import { keccak256, toBytes } from "viem";
 import { z } from "zod";
+import { isServiceUnavailable, relayerErrorKind } from "../chain/errors";
 import type { Relayer } from "../chain/relayer";
 import type { Db } from "../db/client";
 import { captures, claimLinks, deviceKeys } from "../db/schema";
@@ -49,7 +50,7 @@ export const sealBody = z.object({
 
 export type SealResponse =
   | { ok: true; txHash: Hex; blockNumber: string; receiptUrl: string }
-  | { ok: false; status: 400 | 404 | 409 | 410 | 429 | 502; error: string; receiptUrl?: string };
+  | { ok: false; status: 400 | 404 | 409 | 410 | 429 | 502 | 503 | 504; error: string; receiptUrl?: string };
 
 export const receiptUrlFor = (exactHash: string) => `/r/${exactHash}`;
 
@@ -136,8 +137,8 @@ export async function sealCapture(db: Db, relayer: () => Relayer, token: string,
   try {
     ({ txHash, blockNumber } = await relayer().seal(keyId, record as CaptureRecord, auth as WebAuthnAuth));
   } catch (err) {
-    const msg = String(err);
-    if (msg.includes("AlreadySealed")) {
+    const kind = relayerErrorKind(err);
+    if (kind === "already-sealed") {
       // Our earlier attempt may have sealed it and lost the DB write or the response. The Registry decides.
       const onchain = await opts.findSealed?.(record.exactHash).catch(() => null);
       if (onchain && onchain.claimRef === record.claimRef && onchain.keyId === keyId) {
@@ -149,9 +150,14 @@ export async function sealCapture(db: Db, relayer: () => Relayer, token: string,
       return { ok: false, status: 409, error: "This exact photo was already sealed elsewhere." };
     }
     await release();
-    console.error("[seal] failed", err);
-    const expired = msg.includes("SigningWindowExpired");
-    return { ok: false, status: 502, error: expired ? "This photo took too long to seal. Tap retry." : "This photo couldn't be sealed. Tap retry." };
+    console.error(`[seal] failed (${kind})`, err);
+    if (isServiceUnavailable(kind)) {
+      return { ok: false, status: 503, error: "Sealing is paused on our side for a moment. Your photo is kept on this phone — try again in a few minutes." };
+    }
+    if (kind === "timeout") {
+      return { ok: false, status: 504, error: "Sealing is taking longer than usual. Tap retry — if it already went through, we'll pick it up." };
+    }
+    return { ok: false, status: 502, error: kind === "window-expired" ? "This photo took too long to seal. Tap retry." : "This photo couldn't be sealed. Tap retry." };
   }
 
   // The Seal is final onchain. A failed DB write must not turn it into an error: a retry or the send step reconciles it.

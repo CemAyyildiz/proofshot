@@ -47,6 +47,7 @@ object-storage adapter for `src/server/storage.ts` (pending).
 
 ## 3. Before judging
 
-- External uptime check on `/`, `/verify`, `/api/health`.
-- Watch the relayer's MON balance; each Seal costs ~100k gas.
+- External uptime check on `/`, `/verify` and `/api/health`. Health returns **503** when the relayer's balance is
+  below `RELAYER_MIN_BALANCE_MON` (default 1 MON), the Registry is paused, or the chain is unreachable — so the
+  uptime monitor is also the low-balance alarm. Each Seal costs ~100k gas.
 - Keep the admin key offline; the incident runbook is in the Registry's NatSpec and `docs/threat-model.md` (T-8).

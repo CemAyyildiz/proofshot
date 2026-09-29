@@ -19,6 +19,8 @@ export interface Relayer {
   registerDeviceKey(keyId: Hex, qx: Hex, qy: Hex): Promise<Hex>;
   seal(keyId: Hex, record: CaptureRecord, auth: WebAuthnAuth): Promise<SealResult>;
   importRecords(carrierId: Hex, records: ImportRecord[]): Promise<SealResult>;
+  /** Relayer balance (wei) and whether the Registry is paused, for health checks. */
+  status(): Promise<{ balanceWei: bigint; paused: boolean }>;
 }
 
 /** Mirrors `Registry.ImportRecord`. */
@@ -70,6 +72,13 @@ function createViemRelayer(): Relayer {
   };
 
   return {
+    async status() {
+      const [balanceWei, paused] = await Promise.all([
+        pub.getBalance({ address: account.address }),
+        pub.readContract({ address, abi: registryAbi, functionName: "paused" }),
+      ]);
+      return { balanceWei, paused: paused as boolean };
+    },
     async latestBlock() {
       const b = await pub.getBlock({ blockTag: "latest" });
       return { number: b.number, hash: b.hash };
@@ -90,7 +99,7 @@ function createViemRelayer(): Relayer {
           ],
         }),
       );
-      const receipt = await pub.waitForTransactionReceipt({ hash: txHash, pollingInterval: 100 });
+      const receipt = await pub.waitForTransactionReceipt({ hash: txHash, pollingInterval: 100, timeout: e.RELAYER_RECEIPT_TIMEOUT_MS });
       if (receipt.status !== "success") throw new Error(`seal reverted: ${txHash}`);
       invalidateRegistry();
       return { txHash, blockNumber: receipt.blockNumber };
@@ -104,7 +113,7 @@ function createViemRelayer(): Relayer {
           args: [carrierId, records.map((r) => ({ ...r, tiles: r.tiles as never }))],
         }),
       );
-      const receipt = await pub.waitForTransactionReceipt({ hash: txHash, pollingInterval: 100 });
+      const receipt = await pub.waitForTransactionReceipt({ hash: txHash, pollingInterval: 100, timeout: e.RELAYER_RECEIPT_TIMEOUT_MS });
       if (receipt.status !== "success") throw new Error(`importRecords reverted: ${txHash}`);
       invalidateRegistry();
       return { txHash, blockNumber: receipt.blockNumber };

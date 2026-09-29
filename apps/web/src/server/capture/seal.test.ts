@@ -142,6 +142,21 @@ describe("sealCapture", () => {
     expect((await db.select().from(claimLinks))[0]!.sealCount).toBe(0);
   });
 
+  it("tells the Capturer the truth when the service can't write, and releases the reservation", async () => {
+    const cases: [string, number, RegExp][] = [
+      ["insufficient funds for gas * price + value", 503, /paused on our side/],
+      ["reverted: EnforcedPause()", 503, /paused on our side/],
+      ["Timed out while waiting for transaction with hash 0x1", 504, /taking longer than usual/],
+    ];
+    for (const [message, status, text] of cases) {
+      seal.mockRejectedValueOnce(new Error(message));
+      const r = await sealCapture(db, relayer, token, body());
+      expect(r).toMatchObject({ ok: false, status });
+      expect(r.ok === false && r.error).toMatch(text);
+    }
+    expect((await db.select().from(claimLinks))[0]!.sealCount).toBe(0);
+  });
+
   it("releases the reserved Seal when the chain rejects it", async () => {
     seal.mockRejectedValueOnce(new Error("InvalidSignature()"));
     expect(await sealCapture(db, relayer, token, body())).toMatchObject({ ok: false, status: 502 });
