@@ -3,6 +3,7 @@ import { type CaptureRecord, type Hex, type WebAuthnAuth, registryAbi } from "@p
 import { createPublicClient, createWalletClient, defineChain, http, type PublicClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { env } from "@/lib/env";
+import { invalidateRegistry } from "../registry";
 import { processSingleton } from "../singleton";
 
 export interface SealResult {
@@ -90,6 +91,7 @@ function createViemRelayer(): Relayer {
       );
       const receipt = await pub.waitForTransactionReceipt({ hash: txHash, pollingInterval: 100 });
       if (receipt.status !== "success") throw new Error(`seal reverted: ${txHash}`);
+      invalidateRegistry();
       return { txHash, blockNumber: receipt.blockNumber };
     },
     async importRecords(carrierId, records) {
@@ -103,6 +105,7 @@ function createViemRelayer(): Relayer {
       );
       const receipt = await pub.waitForTransactionReceipt({ hash: txHash, pollingInterval: 100 });
       if (receipt.status !== "success") throw new Error(`importRecords reverted: ${txHash}`);
+      invalidateRegistry();
       return { txHash, blockNumber: receipt.blockNumber };
     },
   };

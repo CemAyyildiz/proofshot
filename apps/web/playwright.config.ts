@@ -2,6 +2,8 @@ import { resolve } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 3100;
+/** E2E_PROD=1 runs the suite against `next build && next start`: bundling and production-only CSP are covered. */
+const PROD = !!process.env.E2E_PROD;
 export const E2E_RPC = "http://127.0.0.1:8546";
 /** Deterministic: first contract deployed by Anvil account #0 on a fresh chain. */
 export const E2E_REGISTRY = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
@@ -42,10 +44,10 @@ export default defineConfig({
     },
     {
       stdout: "pipe",
-      command: `rm -rf .data/e2e .data/storage .data/outbox.jsonl && pnpm db:seed && pnpm dev --port ${PORT}`,
+      command: `rm -rf .data/e2e .data/storage .data/outbox.jsonl && pnpm db:seed && ${PROD ? `pnpm build && pnpm start --port ${PORT}` : `pnpm dev --port ${PORT}`}`,
       port: PORT,
       reuseExistingServer: false,
-      timeout: 120_000,
+      timeout: PROD ? 300_000 : 120_000,
       env: {
         DATABASE_URL: "pglite:./.data/e2e",
         APP_URL: `http://localhost:${PORT}`,

@@ -81,3 +81,21 @@ test("the Public Verifier returns one honest Verdict per copy and a public recei
   await expect(visitor.getByRole("heading", { name: "Sealed photo" })).toBeVisible();
   await expect(visitor.getByText("Device Key")).toBeVisible();
 });
+
+test("the Public Verifier rate-limits a single client and unknown receipts are 404", async ({ request }) => {
+  const client = { "x-forwarded-for": "203.0.113.77" }; // an isolated client so other tests keep their budget
+  const statuses: number[] = [];
+  for (let i = 0; i < 31; i++) {
+    const res = await request.post("/api/verify", {
+      headers: client,
+      multipart: { file: { name: "x.txt", mimeType: "text/plain", buffer: Buffer.from("not an image") } },
+    });
+    statuses.push(res.status());
+  }
+  expect(statuses.slice(0, 30).every((s) => s === 415)).toBe(true);
+  expect(statuses[30]).toBe(429);
+
+  expect((await request.get("/v/AAAAAAAAAAAA")).status()).toBe(404);
+  expect((await request.get(`/r/0x${"0".repeat(64)}`)).status()).toBe(404);
+  expect((await request.get("/r/not-a-hash")).status()).toBe(404);
+});

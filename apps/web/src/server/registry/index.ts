@@ -26,6 +26,14 @@ interface Index {
 const index = () => processSingleton<Index>("registry-index", () => ({ entries: [], loaded: false, lastSync: 0 }));
 
 /**
+ * Forces the next read to sync with the chain. Called after this server's own Registry writes (Seals, imports) so
+ * a check made right after them — a Duplicate Alert, an in-file verification — never misses them.
+ */
+export function invalidateRegistry() {
+  index().lastSync = 0;
+}
+
+/**
  * Every Registry entry on the configured chain, synced from events at most `SYNC_INTERVAL_MS` ago. Held in memory:
  * at the hackathon's scale (≤ 10,000 entries, NFR-2) a linear Hamming scan is well under a millisecond per entry.
  */

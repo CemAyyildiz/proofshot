@@ -125,3 +125,37 @@ Done: H1, M1, M2.
 **Next: Iteration 4 — Tests/CI.** Check CI actually runs e2e with Foundry + Chrome (Playwright browser install,
 Anvil on the runner), flaky patterns (fixed sleeps, shared state), coverage gaps (sign-in rate limit, verifier 429,
 receipts 404, CSP on capture), test runtime, and add a coverage report for the contracts.
+
+---
+
+## Iteration 4 — Tests/CI (2026-09-30)
+
+Findings:
+
+- **H1** e2e ran only against `next dev`. Both earlier bundling bugs (`import.meta.url`, PGlite) existed only in
+  bundled code, and the production CSP (no `unsafe-eval`) was never exercised. Running the suite against
+  `next build && next start` immediately found a real bug:
+- **H2** (bug) The in-memory Registry index syncs at most once a second. A check made within a second of this
+  server's own write — an import followed by an in-file verification, or two quick Seals — could miss the new
+  record: a forwarded copy of a just-imported photo came back **No Record** instead of Derived Copy + Duplicate Alert.
+- **M1** No tests for the new safeguards: sign-in limits, HTTP guards (411/413, 503), Verifier 429, receipt 404s.
+- **M2** CI ran everything in one job, re-downloaded Chromium each time, and kept no artifacts on failure.
+- **M3** Registry branch coverage 86.67% (revoke edge cases, zero RP ID untested).
+- OK: no fixed sleeps in functional e2e (only in the on-demand screenshot tool); tests isolate state (fresh DB,
+  storage and chain per run; per-client rate-limit buckets).
+
+Done: all five.
+
+- `E2E_PROD=1` runs the suite against the production build; CI's e2e job uses it. Both modes pass (14/14).
+- The relayer invalidates the Registry index after its own Seals and imports, so the next read resyncs.
+- Unit tests for `signInAllowed` (per address, per client, window reset) and `bodyTooLarge` / `withRegistry`;
+  e2e for Verifier 429 (isolated client) and receipt 404s.
+- CI: parallel `check` and `e2e` jobs, Playwright browser cache, report/trace artifacts on failure, 20-min timeout.
+- Contracts: `pnpm --filter @proofshot/contracts coverage` (`--ir-minimum`); Registry now 96% lines, 97% statements,
+  **100% branches**, 100% functions.
+
+Totals: 65 web unit tests, 26 fingerprint, 11 shared, 36 contract tests, 14 e2e (dev and prod).
+
+**Next: Iteration 5 — Docs/README.** Root README for judges (what, why Monad, how to run, architecture diagram,
+reproducing a Verdict), per-package READMEs, `.env.example` completeness, deploy runbook (testnet/mainnet, Vercel),
+threat model page, and consistency of claims with measured numbers.

@@ -123,6 +123,28 @@ contract RegistryTest is Test {
         registry.seal(keyId, r, _auth(".auth"));
     }
 
+    function test_RevokeEdgeCases() public {
+        vm.expectRevert(abi.encodeWithSelector(Registry.UnknownDeviceKey.selector, keccak256("nope")));
+        vm.prank(relayer);
+        registry.revokeDeviceKey(keccak256("nope"));
+
+        vm.prank(relayer);
+        registry.revokeDeviceKey(keyId);
+        uint64 first = registry.deviceKey(keyId).revokedAtBlock;
+        vm.roll(block.number + 10);
+        vm.recordLogs();
+        vm.prank(admin);
+        registry.revokeDeviceKey(keyId); // idempotent: keeps the original block, emits nothing
+        assertEq(registry.deviceKey(keyId).revokedAtBlock, first);
+        assertEq(vm.getRecordedLogs().length, 0);
+    }
+
+    function test_SetRpIdHashRejectsZero() public {
+        vm.expectRevert(Registry.ZeroValue.selector);
+        vm.prank(admin);
+        registry.setRpIdHash(bytes32(0), true);
+    }
+
     function test_RevokeDeviceKeyNeedsRelayerOrAdmin() public {
         vm.expectRevert(Registry.NotAuthorized.selector);
         vm.prank(stranger);
