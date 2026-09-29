@@ -222,3 +222,35 @@ Done: all five.
 magic-link tokens), DB indexes for hot queries (rate_limits by bucket, uploads/captures by exact hash, duplicate
 alert listing), Duplicate-Alert cost as the Registry grows (linear scan per Seal), timing-safe comparisons, logging
 hygiene (no tokens or keys in logs), and the `/seal-context` endpoint's lack of a rate limit.
+
+---
+
+## Iteration 7 — Backend, pass 2 (2026-09-30)
+
+Findings:
+
+- **H1** Performance: a Verdict or Duplicate-Alert scan over 10,000 Registry entries took **~220 ms of blocking CPU**
+  (hex strings re-parsed on every Hamming comparison, 17 per entry). Within NFR-2, but it serialises concurrent
+  verifications on Node's single thread.
+- **H2** Logging hygiene: a production deploy without `RESEND_API_KEY` would print live sign-in links (bearer
+  tokens) into server logs.
+- **M1** Unbounded tables: `rate_limits` (a row per bucket per window), expired `sessions`, used/expired
+  `magic_link_tokens`.
+- **M2** `/seal-context` (one RPC call each) had no limit per Claim Link.
+- OK: hot queries are covered by primary keys and existing indexes (rate_limits PK, captures.exact_hash unique,
+  per-Claim-File indexes, duplicate_alerts unique index leading with claim_file_id); secrets are compared in the DB
+  by hash; errors logged by the relayer carry no key material; `verifications` are kept on purpose (stable receipts).
+
+Done: all four.
+
+- Verdict engine pre-parses hashes once per object (WeakMap cache) and uses a bitwise popcount: **220 ms → 4.8 ms**
+  per 10k entries (findMatches 2.6 ms), same results (26 fingerprint tests).
+- Without an email provider a production build refuses to send (error, no token logged) unless `MAIL_DEV_OUTBOX=1`
+  (set only by the e2e harness).
+- `pruneExpired()` + `/api/cron/maintenance` (Bearer `CRON_SECRET`, timing-safe, 404 when unset) + `vercel.json`
+  daily cron; unit-tested, e2e asserts the route is invisible without the secret.
+- `/seal-context`: 300 lookups per Claim Link per hour → 429.
+
+**Next: Iteration 8 — Contracts, pass 2**: gas golf on `seal()` (event encoding, calldata struct copy for the
+challenge), `deviceTime` sanity bounds, whether `claimRef` should be indexed in `CaptureSealed` for third-party
+queries, a Foundry invariant test (a sealed hash is never re-sealed or imported), and NatSpec for every public item.

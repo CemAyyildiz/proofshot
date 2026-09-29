@@ -1,5 +1,41 @@
 import { TILE_COUNT, type PerceptualFingerprint } from "./fingerprint";
-import { type Hex32, hamming } from "./hash";
+import type { Hex32 } from "./hash";
+
+// ─── Fast Hamming over pre-parsed 256-bit hashes ─────────────────────────────────────────────────────────────
+// Comparing hex strings re-parses them every time; at 10k Registry entries × 17 hashes that dominated Verdict time.
+
+/** 256-bit hash → 8 × uint32. */
+function words(hex: string): Uint32Array {
+  const x = hex.startsWith("0x") ? hex.slice(2) : hex;
+  const w = new Uint32Array(8);
+  for (let i = 0; i < 8; i++) w[i] = parseInt(x.slice(i * 8, i * 8 + 8), 16) >>> 0;
+  return w;
+}
+
+function popcount32(v: number): number {
+  v = v - ((v >>> 1) & 0x55555555);
+  v = (v & 0x33333333) + ((v >>> 2) & 0x33333333);
+  return (((v + (v >>> 4)) & 0x0f0f0f0f) * 0x01010101) >>> 24;
+}
+
+function dist(a: Uint32Array, b: Uint32Array): number {
+  let d = 0;
+  for (let i = 0; i < 8; i++) d += popcount32((a[i]! ^ b[i]!) >>> 0);
+  return d;
+}
+
+interface Parsed {
+  p: Uint32Array;
+  tiles: Uint32Array[];
+}
+
+const parsedEntries = new WeakMap<object, Parsed>();
+/** Parsed hashes, cached per object (Registry entries live for the process; fingerprints for one call). */
+function parsed(x: { pHash: string; tiles: readonly string[] }): Parsed {
+  let v = parsedEntries.get(x);
+  if (!v) parsedEntries.set(x, (v = { p: words(x.pHash), tiles: x.tiles.map(words) }));
+  return v;
+}
 
 /**
  * Verdict thresholds. Starting points from addendum A2 and the Story 1.2 probe; Spike A (benchmark/) tunes
@@ -91,11 +127,13 @@ interface Candidate {
 type Comparable = Pick<PerceptualFingerprint, "pHash" | "tiles" | "width" | "height">;
 
 function score(fp: Comparable, record: RegistryEntry, t: Thresholds): Candidate {
-  const distance = hamming(fp.pHash, record.pHash);
+  const a = parsed(fp);
+  const b = parsed(record);
+  const distance = dist(a.p, b.p);
   if (!aspectCompatible(fp, record, t.aspectTolerance) || record.tiles.length !== TILE_COUNT) {
     return { record, distance, tileMatches: 0 };
   }
-  const tileDistances = record.tiles.map((tile, i) => hamming(fp.tiles[i]!, tile));
+  const tileDistances = b.tiles.map((tile, i) => dist(a.tiles[i]!, tile));
   return { record, distance, tileDistances, tileMatches: tileDistances.filter((d) => d <= t.tTile).length };
 }
 

@@ -26,6 +26,10 @@ export const serverEnvSchema = z.object({
   RESEND_API_KEY: z.string().min(1).optional(),
   MAIL_FROM: z.string().min(3).default("Proofshot <login@proofshot.app>"),
   /** Sign-in links per address per hour (raised only in automated tests). */
+  /** Shared secret the hosting scheduler sends to /api/cron/maintenance. Unset: the route is disabled. */
+  CRON_SECRET: z.string().min(16).optional(),
+  /** "1" allows the dev outbox (links in logs and .data/outbox.jsonl) in production builds — automated tests only. */
+  MAIL_DEV_OUTBOX: z.enum(["0", "1"]).default("0"),
   SIGNIN_LIMIT_PER_EMAIL: z.coerce.number().int().positive().default(5),
 });
 

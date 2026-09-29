@@ -98,6 +98,8 @@ test("the Public Verifier rate-limits a single client and unknown receipts are 4
   expect((await request.get("/v/AAAAAAAAAAAA")).status()).toBe(404);
   expect((await request.get(`/r/0x${"0".repeat(64)}`)).status()).toBe(404);
   expect((await request.get("/r/not-a-hash")).status()).toBe(404);
+  // The maintenance endpoint is invisible without its secret.
+  expect((await request.get("/api/cron/maintenance")).status()).toBe(404);
 });
 
 test("keyboard users can reach the verifier's file picker and see where focus is", async ({ page }) => {

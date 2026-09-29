@@ -5,10 +5,22 @@ import { env } from "@/lib/env";
 /** Dev/test outbox: one JSON line per email, read by e2e tests. Never used when a provider is configured. */
 export const DEV_OUTBOX = ".data/outbox.jsonl";
 
-/** Sends the sign-in link via Resend when configured; otherwise logs it (local development). */
+export class MailNotConfigured extends Error {
+  override name = "MailNotConfigured";
+}
+
+/**
+ * Sends the sign-in link via Resend when configured. Without a provider, development (and tests that opt in with
+ * MAIL_DEV_OUTBOX=1) print the link; a production build refuses, so a missing key can never put live sign-in tokens
+ * into server logs.
+ */
 export async function sendMagicLinkEmail(to: string, url: string): Promise<void> {
-  const { RESEND_API_KEY, MAIL_FROM } = env();
+  const { RESEND_API_KEY, MAIL_FROM, MAIL_DEV_OUTBOX } = env();
   if (!RESEND_API_KEY) {
+    if (process.env.NODE_ENV === "production" && MAIL_DEV_OUTBOX !== "1") {
+      console.error("[auth] RESEND_API_KEY is not set; sign-in email not sent");
+      throw new MailNotConfigured("Sign-in email is not configured");
+    }
     console.info(`[auth] magic link for ${to}: ${url}`);
     await mkdir(".data", { recursive: true });
     await appendFile(DEV_OUTBOX, JSON.stringify({ to, url, at: new Date().toISOString() }) + "\n");

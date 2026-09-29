@@ -9,6 +9,8 @@ import { resolveClaimLink } from "../dal/claim-files";
 import { DAY_MS, consume } from "../rate-limit";
 
 export const SEALS_PER_LINK = 50;
+/** Seal-context lookups per Claim Link per hour: each costs an RPC call; a real session needs a few dozen at most. */
+export const CONTEXTS_PER_LINK_PER_HOUR = 300;
 export const SEALS_PER_KEY_PER_DAY = 200;
 
 /** Opaque onchain reference to a Claim File; never the Carrier's reference string. */
@@ -55,6 +57,7 @@ export const receiptUrlFor = (exactHash: string) => `/r/${exactHash}`;
 export async function sealContext(db: Db, relayer: () => Relayer, token: string) {
   const link = await resolveClaimLink(db, token);
   if (!link || link.state !== "active") return null;
+  if (!(await consume(db, `context:${token}`, CONTEXTS_PER_LINK_PER_HOUR, 60 * 60 * 1000)).allowed) return "limited" as const;
   const block = await relayer().latestBlock();
   return {
     claimRef: claimRefFor(link.claimFileId),

@@ -32,7 +32,8 @@ Set these in the hosting provider (see `apps/web/.env.example`):
 | `RELAYER_PRIVATE_KEY` | the relayer key |
 | `DATABASE_URL` | Postgres |
 | `APP_URL` | public origin, e.g. `https://proofshot.app` |
-| `RESEND_API_KEY`, `MAIL_FROM` | sign-in email |
+| `RESEND_API_KEY`, `MAIL_FROM` | sign-in email (required in production: without it sign-in refuses rather than logging tokens) |
+| `CRON_SECRET` | ≥ 16 random characters; `vercel.json` schedules the daily `/api/cron/maintenance` cleanup |
 
 Then migrate and seed once:
 
