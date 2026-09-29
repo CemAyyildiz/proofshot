@@ -23,7 +23,7 @@ can check a photo without asking anyone.
 ## 4. Why Monad
 
 - The P-256 precompile lets the contract verify the passkey signature over the whole Capture Record:
-  **100,315 gas per Seal** (Foundry, Osaka EVM) vs 311,500 without it. Live testnet: ⏳ `docs/spikes/spike-b-testnet.json`.
+  **100,315 gas per Seal** (Foundry, Osaka EVM) vs 326,546 without it. Live testnet: ⏳ `docs/spikes/spike-b-testnet.json`.
 - Seal latency p95 shutter → "Sealed ✓": ⏳ (target ≤ 3 s, NFR-1; `docs/latency.md`).
 - Cost per Seal on mainnet: ⏳ (gas × price at submission).
 

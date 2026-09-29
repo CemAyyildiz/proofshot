@@ -454,3 +454,32 @@ Done: all three.
 spike docs against the current code (gas, test counts, limits, env names), add a CHANGELOG summarising the review
 iterations for judges, and make OWNER-TODO.html reflect everything that now needs the owner (CRON_SECRET, RESEND,
 uptime monitor on /api/health).
+
+---
+
+## Iteration 15 — Docs, pass 3: every claim checked against the code (2026-09-30)
+
+Findings:
+
+- **H1** Wrong number in the README and write-up: "vs 311,500 without the precompile" was the *spike* contract's
+  figure. The Registry's `seal()` without the precompile measures **326,546** gas (100,315 with it).
+- **H2** Unverified claim: "the Monad public RPC allows 100 blocks per `eth_getLogs`" (README table, `.env.example`).
+  Worse, the claim hid a real fragility: the indexer used a fixed range, so a provider with a smaller limit would stop
+  indexing entirely (the CLI already adapted; the app did not).
+- **M1** No single summary of what was built and hardened for a reader who won't open the review log.
+- **M2** OWNER-TODO lacked the owner steps added by later iterations: `RESEND_API_KEY` (sign-in refuses without it),
+  `CRON_SECRET`, and the uptime monitor on `/api/health` that doubles as the low-balance alarm.
+- OK: test counts, coverage, invariant budget, crop limit, env names and route names in README, traceability,
+  architecture, threat model and deploy docs match the code.
+
+Done: all four.
+
+- Gas figure corrected (README, write-up).
+- Indexer halves the `eth_getLogs` range when the RPC refuses it, down to one block (unit-tested); docs now say
+  "match your provider's limit" instead of asserting one.
+- `CHANGELOG.md`: product scope and the hardening themes from the review iterations, plus what is pending.
+- OWNER-TODO.html: Resend key, CRON_SECRET, and a new "uptime monitor" step.
+
+**Next: Iteration 16 — Frontend UI/UX, pass 4**: the capture screen on a real small phone viewport (320 px),
+landscape orientation, very long Carrier names and claim references, the Verifier with a 20 MB image (progress and
+cancel), and HEIC preview fallback in non-Safari browsers.

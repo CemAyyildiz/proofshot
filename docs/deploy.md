@@ -28,7 +28,7 @@ Set these in the hosting provider (see `apps/web/.env.example`):
 | `PROOFSHOT_NETWORK` | `testnet` or `mainnet` |
 | `RPC_URL`, `RPC_URL_SECONDARY` | primary and fallback RPC |
 | `REGISTRY_ADDRESS`, `REGISTRY_DEPLOY_BLOCK` | from `deployments/<chainId>.json` |
-| `LOGS_BLOCK_RANGE` | `100` on the Monad public RPC |
+| `LOGS_BLOCK_RANGE` | max blocks per `eth_getLogs`; set it to your RPC's limit (the indexer halves the range automatically if the RPC refuses) |
 | `RELAYER_PRIVATE_KEY` | the relayer key |
 | `DATABASE_URL` | Postgres |
 | `APP_URL` | public origin, e.g. `https://proofshot.app` |

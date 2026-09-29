@@ -32,8 +32,8 @@ legally. See [docs/threat-model.md](docs/threat-model.md).
 ## Why Monad
 
 - **Passkeys verified onchain, cheaply.** Monad ships the P-256 signature precompile (EIP-7951), so the contract
-  verifies a WebAuthn assertion over the whole Capture Record for **100,315 gas per Seal** (vs 311,500 with the
-  Solidity fallback) — measured with Foundry on the Osaka EVM; the live-testnet measurement is pending
+  verifies a WebAuthn assertion over the whole Capture Record for **100,315 gas per Seal** (vs 326,546 without the
+  precompile) — measured with Foundry on the Osaka EVM; the live-testnet measurement is pending
   ([docs/spikes/spike-b.md](docs/spikes/spike-b.md)).
 - **Fast blocks and finality** are what make the "Sealed ✓ within 3 seconds" target (NFR-1) realistic; the live
   latency report is pending with the testnet run.
@@ -103,7 +103,7 @@ pnpm --filter @proofshot/benchmark bench   # SM-2 benchmark (needs benchmark/dat
 ```
 
 End-to-end tests drive Chrome with a virtual platform authenticator and a fake camera, so every Seal carries a real
-WebAuthn assertion that the Registry verifies onchain. Every page is scanned with axe for WCAG 2.1 AA in light and
+WebAuthn assertion that the Registry verifies onchain. Every product surface is scanned with axe for WCAG 2.1 AA in light and
 dark mode. Registry branch coverage is 100%, with stateful invariants (no re-seal, sealing is permanent, no import of a
 sealed photo) driven by Solidity-signed passkey assertions.
 

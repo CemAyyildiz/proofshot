@@ -106,9 +106,20 @@ export async function syncRegistry(db: Db, source: EventSource): Promise<Row[]> 
   const head = await source.latestBlock();
   const added: Row[] = [];
 
+  let range = source.maxRange;
   while (from <= head) {
-    const to = from + source.maxRange - 1n < head ? from + source.maxRange - 1n : head;
-    const events = await source.events(from, to);
+    const to = from + range - 1n < head ? from + range - 1n : head;
+    let events: RegistryEvent[];
+    try {
+      events = await source.events(from, to);
+    } catch (err) {
+      // RPCs cap eth_getLogs ranges differently; shrink until this one accepts, down to a single block.
+      if (range > 1n) {
+        range = range / 2n;
+        continue;
+      }
+      throw err;
+    }
     const timestamps = new Map<bigint, number>();
     for (const e of events) if (!timestamps.has(e.blockNumber)) timestamps.set(e.blockNumber, await source.blockTimestamp(e.blockNumber));
     const rows = events.map((e) => toRow(e, source.chainId, timestamps.get(e.blockNumber)!));

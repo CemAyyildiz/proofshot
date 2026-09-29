@@ -81,6 +81,19 @@ describe("syncRegistry", () => {
     expect(rows.find((r) => r.kind === "imported")!.keyId).toBeNull();
   });
 
+  it("halves the block range when the RPC refuses it", async () => {
+    chain.maxRange = 40n;
+    chain.head = 60n;
+    chain.log = [sealed(15n), sealed(55n)];
+    const inner = chain.events;
+    chain.events = async (from, to) => {
+      if (to - from + 1n > 10n) throw new Error("query exceeds max block range 10");
+      return inner(from, to);
+    };
+    expect(await syncRegistry(db, chain)).toHaveLength(2);
+    expect(chain.calls.every(([f, t]) => t - f + 1n <= 10n)).toBe(true);
+  });
+
   it("resumes after the last indexed block and is idempotent", async () => {
     chain.log = [sealed(11n)];
     chain.head = 12n;
