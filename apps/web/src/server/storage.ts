@@ -1,4 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { GetObjectCommand, NoSuchKey, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { dirname, join, normalize, sep } from "node:path";
 import { env } from "@/lib/env";
 import { processSingleton } from "./singleton";
@@ -20,6 +21,7 @@ export class FsStorage implements Storage {
   constructor(private readonly root: string) {}
 
   private path(key: string) {
+    assertKey(key);
     const p = normalize(join(this.root, key));
     if (!p.startsWith(normalize(this.root) + sep)) throw new Error("invalid storage key");
     return p;
@@ -42,7 +44,50 @@ export class FsStorage implements Storage {
   }
 }
 
-export function getStorage(): Storage {
+/** Rejects keys that could escape a Carrier prefix or address another object. */
+function assertKey(key: string) {
+  if (!/^[A-Za-z0-9-]+\/[A-Za-z0-9._\/-]+$/.test(key) || key.includes("..") || key.startsWith("/")) throw new Error("invalid storage key");
+}
+
+/** Any S3-compatible bucket (AWS S3, Cloudflare R2, MinIO). The bucket must be private. */
+export class S3Storage implements Storage {
+  constructor(
+    private readonly client: Pick<S3Client, "send">,
+    private readonly bucket: string,
+  ) {}
+
+  async put(key: string, bytes: Uint8Array, contentType: string) {
+    assertKey(key);
+    await this.client.send(new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: bytes, ContentType: contentType }));
+  }
+
+  async get(key: string) {
+    assertKey(key);
+    try {
+      const res = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+      return res.Body ? new Uint8Array(await res.Body.transformToByteArray()) : null;
+    } catch (e) {
+      if (e instanceof NoSuchKey || (e as { name?: string }).name === "NoSuchKey") return null;
+      throw e;
+    }
+  }
+}
+
+function createStorage(): Storage {
+  const e = env();
+  if (e.STORAGE_DRIVER === "s3") {
+    if (!e.S3_BUCKET || !e.S3_ACCESS_KEY_ID || !e.S3_SECRET_ACCESS_KEY) throw new Error("STORAGE_DRIVER=s3 needs S3_BUCKET and credentials");
+    const client = new S3Client({
+      region: e.S3_REGION,
+      endpoint: e.S3_ENDPOINT,
+      credentials: { accessKeyId: e.S3_ACCESS_KEY_ID, secretAccessKey: e.S3_SECRET_ACCESS_KEY },
+    });
+    return new S3Storage(client, e.S3_BUCKET);
+  }
   // STORAGE_DIR is an absolute path; the default is statically scoped so builds don't trace the whole project.
-  return processSingleton("storage", () => new FsStorage(env().STORAGE_DIR || join(process.cwd(), ".data", "storage")));
+  return new FsStorage(e.STORAGE_DIR || join(process.cwd(), ".data", "storage"));
+}
+
+export function getStorage(): Storage {
+  return processSingleton("storage", createStorage);
 }

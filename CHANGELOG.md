@@ -35,5 +35,6 @@ review findings behind the hardening work are in [docs/review/REVIEW-LOG.md](doc
 
 ## Pending (needs the owner)
 
-Testnet/mainnet deploy and live gas/latency numbers, hosting (Postgres, object storage, email), the real-photo
+Testnet/mainnet deploy and live gas/latency numbers, hosting accounts (Postgres, a private R2/S3 bucket — the adapter is
+built — and email), the real-photo
 benchmark, real users and practitioner interviews. See the write-up draft's ⏳ marks.

@@ -31,6 +31,7 @@ Set these in the hosting provider (see `apps/web/.env.example`):
 | `LOGS_BLOCK_RANGE` | max blocks per `eth_getLogs`; set it to your RPC's limit (the indexer halves the range automatically if the RPC refuses) |
 | `RELAYER_PRIVATE_KEY` | the relayer key |
 | `DATABASE_URL` | Postgres |
+| `STORAGE_DRIVER` + `S3_*` | evidence image storage (see below) |
 | `APP_URL` | public origin, e.g. `https://proofshot.app` |
 | `RESEND_API_KEY`, `MAIL_FROM` | sign-in email (required in production: without it sign-in refuses rather than logging tokens) |
 | `CRON_SECRET` | ≥ 16 random characters; `vercel.json` schedules the daily `/api/cron/maintenance` cleanup |
@@ -42,8 +43,10 @@ DATABASE_URL=... pnpm --filter web db:migrate
 DATABASE_URL=... pnpm --filter web db:seed northwind=you@example.com
 ```
 
-Evidence images use filesystem storage (`STORAGE_DIR`), which needs a persistent disk. Serverless hosts need an
-object-storage adapter for `src/server/storage.ts` (pending).
+Evidence images: on a host with a persistent disk use `STORAGE_DRIVER=fs` (+ `STORAGE_DIR`). On serverless hosts
+(Vercel) use `STORAGE_DRIVER=s3` with a **private** S3-compatible bucket — Cloudflare R2 works (`S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com`,
+`S3_REGION=auto`) — plus `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`. Never make the bucket public: images
+are served only through the tenant-checked Console routes.
 
 ## 3. Before judging
 

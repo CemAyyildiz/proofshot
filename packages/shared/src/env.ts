@@ -25,8 +25,17 @@ export const serverEnvSchema = z.object({
   /** /api/health reports unhealthy (503) below this relayer balance, so uptime monitoring alerts before Seals fail. */
   RELAYER_MIN_BALANCE_MON: z.coerce.number().nonnegative().default(1),
   DATABASE_URL: z.string().min(1).optional(),
-  /** Absolute directory for evidence images (filesystem storage). Unset: apps/web/.data/storage. */
+  /** Where evidence images live: "fs" (a persistent disk) or "s3" (any S3-compatible bucket, e.g. Cloudflare R2). */
+  STORAGE_DRIVER: z.enum(["fs", "s3"]).default("fs"),
+  /** fs driver: absolute directory. Unset: apps/web/.data/storage. */
   STORAGE_DIR: z.string().startsWith("/").optional(),
+  /** s3 driver: a PRIVATE bucket; objects are only ever served through the tenant-checked Console routes. */
+  S3_BUCKET: z.string().min(1).optional(),
+  S3_REGION: z.string().min(1).default("auto"),
+  /** Custom endpoint for S3-compatible stores (R2: https://<account>.r2.cloudflarestorage.com). Unset: AWS. */
+  S3_ENDPOINT: z.url().optional(),
+  S3_ACCESS_KEY_ID: z.string().min(1).optional(),
+  S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
   /** Public origin used in emailed links, e.g. https://proofshot.app. */
   APP_URL: z.url().default("http://localhost:3000"),
   RESEND_API_KEY: z.string().min(1).optional(),

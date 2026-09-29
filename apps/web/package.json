@@ -19,6 +19,7 @@
     "pretest": "pnpm copy-wasm"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1143.0",
     "@electric-sql/pglite": "^0.5.8",
     "@proofshot/fingerprint": "workspace:*",
     "@proofshot/shared": "workspace:*",

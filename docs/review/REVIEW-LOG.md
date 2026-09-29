@@ -514,3 +514,32 @@ Done: all five.
 **Next: Iteration 17 — Backend, pass 4**: object-storage adapter interface readiness (S3/Vercel Blob) behind
 `Storage` with a contract test both implementations must pass, request-size limits in `next.config` for server
 actions, and a review of every `console.error` for PII (emails, tokens) before logs leave the machine.
+
+---
+
+## Iteration 17 — Backend, pass 4: storage for serverless (2026-09-30)
+
+Findings:
+
+- **H1** Deploy blocker: evidence images were stored only on the local filesystem. Serverless hosts (the planned
+  Vercel deploy) have no persistent disk, so sent photos and Console uploads would vanish between requests.
+- **H2** My own earlier recommendation (OWNER-TODO: "Vercel Blob") was wrong for this data: Blob serves objects by
+  URL to anyone who has it, but claim evidence must only ever be served through the tenant-checked Console routes
+  (NFR-5).
+- **M1** Storage implementations had no shared contract, and `FsStorage` checked path escapes but not key shape.
+- OK: server actions only take small forms (Next's 1 MB action limit is right); route handlers enforce their own
+  sizes (iteration 2). Logs: no emails or tokens are logged outside the development outbox; relayer errors carry
+  transaction data only.
+
+Done: all three.
+
+- `S3Storage` (any S3-compatible, private bucket: AWS S3, Cloudflare R2, MinIO) selected by `STORAGE_DRIVER=s3`;
+  `fs` stays the default for local and single-node hosts. Env schema, `.env.example` and `docs/deploy.md` updated.
+- A shared `storageContract` suite (round-trip bytes, missing key → null, refuses escaping/malformed keys) runs against
+  both implementations (S3 through an in-memory command fake); both validate key shape.
+- OWNER-TODO now asks for a **private** Cloudflare R2 bucket and lists the exact variables; CHANGELOG notes the adapter
+  is built.
+
+**Next: Iteration 18 — Contracts, pass 4**: final pre-deploy checklist for the Registry (compiler version pin,
+optimizer runs vs verified source, constructor args encoding for verification, a `DeployRegistry` dry run against a
+fork of Monad testnet if reachable without keys), and document the exact verification command sequence.
