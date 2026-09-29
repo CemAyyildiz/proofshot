@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {Script, console} from "forge-std/Script.sol";
+import {VmSafe} from "forge-std/Vm.sol";
 import {Registry} from "../src/Registry.sol";
 
 /// @notice Deploys the Registry and writes deployments/<chainId>.json (address, deploy block, roles, RP IDs), which
@@ -31,6 +32,13 @@ contract DeployRegistry is Script {
         vm.startBroadcast();
         registry = new Registry(admin, relayer, rpIdHashes);
         vm.stopBroadcast();
+
+        // Only a real broadcast produces a deployment record; simulations and dry runs must not leave a fake one.
+        if (!vm.isContext(VmSafe.ForgeContext.ScriptBroadcast)) {
+            console.log("Simulation only: deployments/<chainId>.json not written");
+            console.log("Registry (simulated)", address(registry));
+            return registry;
+        }
 
         string memory key = "deployment";
         vm.serializeUint(key, "chainId", block.chainid);

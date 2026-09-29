@@ -33,8 +33,9 @@ legally. See [docs/threat-model.md](docs/threat-model.md).
 
 - **Passkeys verified onchain, cheaply.** Monad ships the P-256 signature precompile (EIP-7951), so the contract
   verifies a WebAuthn assertion over the whole Capture Record for **100,315 gas per Seal** (vs 326,546 without the
-  precompile) — measured with Foundry on the Osaka EVM; the live-testnet measurement is pending
-  ([docs/spikes/spike-b.md](docs/spikes/spike-b.md)).
+  precompile) — measured with Foundry on the Osaka EVM. A keyless probe confirmed on **Monad testnet and mainnet**
+  that the precompile is live and that the same OpenZeppelin verification accepts a passkey assertion (13,853 gas) and
+  rejects a tampered one; live `seal()` gas and latency are pending a funded key ([docs/spikes/spike-b.md](docs/spikes/spike-b.md)).
 - **Fast blocks and finality** are what make the "Sealed ✓ within 3 seconds" target (NFR-1) realistic; the live
   latency report is pending with the testnet run.
 - **Per-photo economics**: at that gas, sealing every photo individually is affordable, so each Receipt points at

@@ -543,3 +543,33 @@ Done: all three.
 **Next: Iteration 18 — Contracts, pass 4**: final pre-deploy checklist for the Registry (compiler version pin,
 optimizer runs vs verified source, constructor args encoding for verification, a `DeployRegistry` dry run against a
 fork of Monad testnet if reachable without keys), and document the exact verification command sequence.
+
+---
+
+## Iteration 18 — Contracts, pass 4: live-chain checks without keys (2026-09-30)
+
+Findings:
+
+- **H1** The project's core technical claim — passkey signatures verify onchain on Monad via the P-256 precompile —
+  had only been exercised on a local Anvil (Osaka) chain. Nothing had touched Monad itself.
+- **M1** The deploy script wrote `deployments/<chainId>.json` even when only simulating, which would leave a record for
+  a contract that was never deployed.
+- **M2** Funding guidance (OWNER-TODO, write-up) had no numbers from the live chains.
+- OK: solc 0.8.30 pinned in `foundry.toml`; the script guards the chain ID; RPCs for testnet (10143) and mainnet (143)
+  are reachable and return the configured chain IDs.
+
+Done: all three.
+
+- Direct `eth_call` to `0x100` on both networks with the fixture signature: returns `1`; a tampered `s` returns empty.
+- `script/WebAuthnProbe.sol` + `pnpm --filter @proofshot/contracts probe`: executes the probe's creation code via
+  `eth_call` so the Registry's exact OpenZeppelin `WebAuthn.verify` runs on each chain's own EVM — **valid on testnet
+  and mainnet, 13,853 gas; tampered signature rejected** — with no deployment, key or funds. Raw output:
+  `docs/spikes/spike-b-probe.json`.
+- Deploy script writes the deployment record only under `ScriptBroadcast`; a testnet-fork simulation now runs clean
+  (~3.2M gas).
+- Live gas price 102 gwei on both networks → deploy ≈ 0.33 MON, Seal ≈ 0.010 MON (5,000 ≈ 51 MON); recorded in the
+  spike doc, write-up and OWNER-TODO funding steps. README and write-up state what the probe proved and what still
+  needs a funded key.
+
+**Next: Iteration 19 — Tests/CI, pass 4**: run the keyless probe in CI on `main` as a scheduled canary (network drift
+would surface early), add a unit test for the deploy script's chain guard, and review the total CI duration.

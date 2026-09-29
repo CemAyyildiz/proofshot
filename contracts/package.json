@@ -14,7 +14,8 @@
     "dev:chain": "forge build && tsx tools/dev-chain.ts",
     "coverage": "forge coverage --ir-minimum --no-match-coverage \"(test|script)/\" --report summary",
     "gas:snapshot": "forge snapshot --match-contract \"^RegistryTest$\" --no-match-test testFuzz --snap .gas-snapshot",
-    "gas:check": "forge snapshot --match-contract \"^RegistryTest$\" --no-match-test testFuzz --snap .gas-snapshot --check"
+    "gas:check": "forge snapshot --match-contract \"^RegistryTest$\" --no-match-test testFuzz --snap .gas-snapshot --check",
+    "probe": "tsx tools/probe-monad.ts"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "^5.5.0",

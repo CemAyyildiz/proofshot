@@ -1,0 +1,32 @@
+{
+  "measuredAt": "2026-09-29T23:49:40.394Z",
+  "fixture": "software P-256 (tools/software-authenticator.ts)",
+  "testnet": {
+    "chainId": 10143,
+    "block": 66821112,
+    "validAssertion": {
+      "valid": true,
+      "gasUsed": 13853,
+      "precompileAccepted": true
+    },
+    "tamperedSignature": {
+      "valid": false,
+      "gasUsed": 21047,
+      "precompileAccepted": false
+    }
+  },
+  "mainnet": {
+    "chainId": 143,
+    "block": 109171324,
+    "validAssertion": {
+      "valid": true,
+      "gasUsed": 13853,
+      "precompileAccepted": true
+    },
+    "tamperedSignature": {
+      "valid": false,
+      "gasUsed": 21047,
+      "precompileAccepted": false
+    }
+  }
+}

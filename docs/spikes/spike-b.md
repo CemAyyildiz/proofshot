@@ -30,7 +30,23 @@ The fixture is a software P-256 authenticator that reproduces iCloud Keychain's 
 
 ## Live network results
 
-Pending. Run with a funded testnet key:
+**Keyless probe, 2026-09-30** (`pnpm --filter @proofshot/contracts probe`, raw output in `spike-b-probe.json`): the
+creation code of `script/WebAuthnProbe.sol` is executed with `eth_call` (nothing deployed, no key), so its constructor
+runs the Registry's exact OpenZeppelin `WebAuthn.verify` on each network's own EVM.
+
+| Network | P-256 precompile at `0x100` | Fixture assertion | Tampered signature | `WebAuthn.verify` gas |
+|---|---|---|---|---|
+| Monad testnet (10143) | present, accepts | valid | rejected | 13,853 |
+| Monad mainnet (143) | present, accepts | valid | rejected | 13,853 |
+
+This confirms the core assumption on the live chains: passkey signatures verify natively and cheaply on Monad.
+
+**Cost at the live gas price (both networks reported 102 gwei on 2026-09-30):** a Registry deploy simulated on a
+testnet fork uses ~3.2M gas (≈ 0.33 MON); one Seal at the locally measured 100,315 gas ≈ 0.010 MON, so 1,000 Seals
+≈ 10 MON and 5,000 ≈ 51 MON. The USD budget in PRD §10.2 depends on the MON price at submission — not asserted here.
+
+**Still pending (needs a funded key):** a deployed Registry on testnet, `seal()` gas on the live chain and
+shutter-to-receipt latency:
 
 ```bash
 cd contracts && forge build
