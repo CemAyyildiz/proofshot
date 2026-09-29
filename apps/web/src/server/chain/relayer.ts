@@ -1,10 +1,11 @@
 import "server-only";
 import { type CaptureRecord, type Hex, type WebAuthnAuth, registryAbi } from "@proofshot/shared";
-import { createPublicClient, createWalletClient, defineChain, http, type PublicClient } from "viem";
+import { createPublicClient, createWalletClient, defineChain, type PublicClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { env } from "@/lib/env";
 import { invalidateRegistry } from "../registry";
 import { processSingleton } from "../singleton";
+import { rpcTransport } from "./transport";
 
 export interface SealResult {
   txHash: Hex;
@@ -44,7 +45,7 @@ function createViemRelayer(): Relayer {
     nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 },
     rpcUrls: { default: { http: [e.rpcUrl] } },
   });
-  const transport = http(e.rpcUrl, { retryCount: 2 });
+  const transport = rpcTransport();
   const pub = createPublicClient({ chain, transport }) as PublicClient;
   const account = privateKeyToAccount(e.RELAYER_PRIVATE_KEY as Hex);
   const wallet = createWalletClient({ chain, transport, account });

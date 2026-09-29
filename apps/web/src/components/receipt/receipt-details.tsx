@@ -73,10 +73,11 @@ export function VerifyYourself() {
       <ol className="ml-5 list-decimal space-y-1 text-muted">
         <li>Get the image file you want to check.</li>
         <li>
-          Run the open-source verifier:
+          Run the open-source verifier from the Proofshot repository (Node 22 and pnpm):
           <pre className="mt-1 overflow-x-auto rounded bg-background p-2 text-xs">
-            npx proofshot-verify photo.jpg --rpc {rpcUrl} --registry {REGISTRY_ADDRESS ?? "<registry address>"}
+            {`pnpm install\npnpm --filter proofshot-verify start photo.jpg --rpc ${rpcUrl} --registry ${REGISTRY_ADDRESS ?? "<registry address>"}`}
           </pre>
+          It reads the Registry straight from the chain; no Proofshot server is involved.
         </li>
         <li>
           Or by hand: compute the file&apos;s SHA-256 (Exact Hash) and its PDQ fingerprints (whole image and a 4×4

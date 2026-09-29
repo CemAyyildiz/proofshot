@@ -1,27 +1,128 @@
 # Proofshot
 
-Claim photos that prove themselves. A policyholder seals each photo at capture with a device-bound passkey; the signature is verified onchain on Monad and the Capture Record (hashes and commitments only, never images) goes to a public Registry. Anyone holding any copy can check when it was sealed, whether it was altered, and whether it was already used in another claim.
+**Claim photos that prove themselves.** A policyholder takes a claim photo inside Proofshot; one Face ID prompt signs
+its fingerprints with a passkey that never leaves the phone, and a Monad contract verifies that signature onchain
+before recording the Seal. From then on, anyone holding *any* copy of the photo — even one compressed by WhatsApp — can
+check when it was sealed, whether it was altered and where, and whether it was already used in another claim,
+without an account and without trusting Proofshot.
 
-## Layout
+Built for the Monad Metropolis hackathon, Track 04 (Trust, Identity & AI Infrastructure).
 
-| Path | What |
+## What it does
+
+| Who | What they get |
 |---|---|
-| `apps/web` | Next.js app: Capture PWA, Carrier Console, Public Verifier, API routes |
-| `packages/fingerprint` | PDQ / tile / Exact Hash fingerprints and the Verdict engine (browser, server, CLI) |
-| `packages/shared` | Network config, typed env, shared types |
-| `contracts` | Foundry project for the Registry contract |
-| `cli` | `proofshot-verify`, reproduces a Verdict from public data only |
+| **Policyholder** | Opens a Claim Link, no install, no wallet. One biometric prompt, then every photo is sealed as it is taken and sent only to their insurer. They keep public receipt links. |
+| **Adjuster** (Carrier Console) | Every photo in a Claim File with its Verdict. Drops in an image that arrived by email and sees **Altered** with a map of the changed regions. |
+| **Investigator** | A **Duplicate Alert** when a photo matches one sealed in another claim — at another insurer too — without either insurer sharing a single photo. |
+| **Anyone** (Public Verifier) | Drops in any copy and gets exactly one Verdict: **Original**, **Derived Copy**, **Altered** (with a Tile Map) or **No Record**, plus a receipt they can re-check from public data. |
 
-## Develop
+Try it: the landing page's **Try it** flow seals a photo from your own phone and walks you through trying to fool
+the verifier.
 
-Requires Node 22, pnpm 10 and Foundry.
+## What a Seal proves — and what it does not
+
+A Seal proves that a specific device key signed these fingerprints, within a public time window (the Signing Window),
+whether the image changed since and where, and whether the same picture already exists elsewhere in the Registry.
+
+It does **not** prove that the pixels came from the camera sensor (a virtual camera can feed the capture screen —
+hardware attestation is the next milestone), that the scene is what the sender says it is, or who the person is
+legally. See [docs/threat-model.md](docs/threat-model.md).
+
+## Why Monad
+
+- **Passkeys verified onchain, cheaply.** Monad ships the P-256 signature precompile (EIP-7951), so the contract
+  verifies a WebAuthn assertion over the whole Capture Record for **100,315 gas per Seal** (vs 311,500 with the
+  Solidity fallback) — measured with Foundry on the Osaka EVM; the live-testnet measurement is pending
+  ([docs/spikes/spike-b.md](docs/spikes/spike-b.md)).
+- **Fast blocks and finality** are what make the "Sealed ✓ within 3 seconds" target (NFR-1) realistic; the live
+  latency report is pending with the testnet run.
+- **Per-photo economics**: at that gas, sealing every photo individually is affordable, so each Receipt points at
+  its own transaction.
+- **A shared, neutral registry**: cross-insurer duplicate detection works on public fingerprints instead of a
+  vendor-held photo pool.
+
+## How it works
+
+```mermaid
+sequenceDiagram
+  participant P as Policyholder phone
+  participant S as Proofshot server (relayer)
+  participant R as Registry (Monad)
+  participant V as Anyone with a copy
+  P->>P: live frame → JPEG → SHA-256 + PDQ (whole image + 4×4 tiles)
+  P->>S: seal context (Claim File ref, carrier ID, latest block)
+  P->>P: Face ID signs sha256(abi.encode(CaptureRecord))
+  P->>S: record + WebAuthn assertion
+  S->>R: seal() — fees sponsored
+  R->>R: verify P-256 signature (precompile), UV flag, RP ID, Signing Window, no replay
+  R-->>V: CaptureSealed event (hashes only, never the image)
+  V->>V: fingerprint the copy, compare with Registry events → one Verdict
+```
+
+More: [docs/architecture.md](docs/architecture.md).
+
+## Reproduce a Verdict yourself
+
+The Verdict engine is open source and the Registry is public. Given any image:
 
 ```bash
 pnpm install
-cp apps/web/.env.example apps/web/.env.local
-pnpm dev          # http://localhost:3000, health at /api/health
-pnpm test         # vitest + forge test
-pnpm typecheck && pnpm lint && pnpm build
+pnpm --filter proofshot-verify start photo.jpg --rpc <rpc-url> --registry <registry-address>
 ```
 
-Network is chosen by `PROOFSHOT_NETWORK` (`testnet` = Monad testnet 10143, `mainnet` = Monad 143).
+The CLI fingerprints the file locally, reads `CaptureSealed` / `RecordImported` events straight from the chain and
+applies the same `computeVerdict` the Public Verifier uses; an end-to-end test asserts they agree.
+
+## Run it locally
+
+Requires Node 22, pnpm 10 and [Foundry](https://getfoundry.sh).
+
+```bash
+pnpm install
+pnpm dev:chain     # terminal 1: local chain (Anvil, Osaka EVM) + Registry deploy; writes apps/web/.env.local
+pnpm seed          # demo carriers: marcus@northwind.demo, dana@harbor.demo
+pnpm dev           # terminal 2: http://localhost:3000
+```
+
+- **Carrier Console**: `/console/sign-in` with `marcus@northwind.demo`. Without an email provider the sign-in link is
+  printed in the `pnpm dev` terminal (and appended to `apps/web/.data/outbox.jsonl`).
+- **Capture**: open a Claim Link in Chrome or Safari on this computer (passkeys and the camera work on `localhost`).
+  Phones need HTTPS — use the deployed app or a tunnel.
+- **Verify**: `/verify`.
+
+## Quality
+
+```bash
+pnpm check                         # typecheck, lint, unit + contract tests, build
+pnpm e2e                           # Playwright: real passkey signatures sealed on a local chain
+E2E_PROD=1 pnpm e2e                # same suite against the production build
+pnpm --filter @proofshot/contracts coverage
+pnpm --filter @proofshot/benchmark bench   # SM-2 benchmark (needs benchmark/data)
+```
+
+End-to-end tests drive Chrome with a virtual platform authenticator and a fake camera, so every Seal carries a real
+WebAuthn assertion that the Registry verifies onchain. Registry branch coverage is 100%.
+
+## Status and honest limits
+
+- **Accuracy benchmark**: the harness is done and passes every SM-2 target on generated scenes
+  ([benchmark/README.synthetic.md](benchmark/README.synthetic.md)); the real-photo run is pending.
+- **Crops**: the whole-image PDQ fingerprint recognises crops of about 2–3%. A copy cropped by 10% comes back
+  **No Record**; a cropped copy is never shown as a clean result.
+- **Indexing** runs inside the app (viem log reader into Postgres); the chain is the source of truth.
+- **Relayer trust**: in v1 the relayer attests which carrier and claim a Seal belongs to; the admin (a separate cold
+  key) can pause the Registry and rotate a compromised relayer.
+- **Deployment**: runbook in [docs/deploy.md](docs/deploy.md).
+
+## Repository
+
+| Path | What |
+|---|---|
+| `apps/web` | Next.js app: capture PWA, Public Verifier, receipts, Carrier Console, API routes, relayer, indexer |
+| `packages/fingerprint` | SHA-256 + PDQ (vendored WebAssembly) fingerprints and the Verdict engine — browser, server and CLI |
+| `packages/shared` | Network config, typed env, WebAuthn helpers, CaptureRecord encoding, Registry ABI |
+| `contracts` | Registry (Solidity, Foundry), deploy script, local dev chain |
+| `cli` | `proofshot-verify`: reproduce a Verdict from public data only |
+| `benchmark` | SM-2 accuracy benchmark |
+| `docs` | Architecture, threat model, deploy runbook, spikes, review log |

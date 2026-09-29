@@ -159,3 +159,33 @@ Totals: 65 web unit tests, 26 fingerprint, 11 shared, 36 contract tests, 14 e2e 
 **Next: Iteration 5 — Docs/README.** Root README for judges (what, why Monad, how to run, architecture diagram,
 reproducing a Verdict), per-package READMEs, `.env.example` completeness, deploy runbook (testnet/mainnet, Vercel),
 threat model page, and consistency of claims with measured numbers.
+
+---
+
+## Iteration 5 — Docs/README (2026-09-30)
+
+Findings:
+
+- **H1** Receipts told third parties to run `npx proofshot-verify …`, but the package isn't published — a broken
+  instruction on the page whose whole point is independent reproduction.
+- **H2** The README didn't explain the product, the proof boundary or why Monad, and its quickstart didn't work
+  (no local chain, no seed; copying `.env.example` left capture unable to seal).
+- **H3** `RPC_URL_SECONDARY` was documented but unused: the NFR-4 "secondary RPC" didn't exist.
+- **M1** `.env.example` was incomplete ("Filled in by later stories").
+- **M2** No architecture, threat-model or deploy documentation outside the PRD.
+
+Done: all five.
+
+- Receipts show the from-source CLI command (`pnpm --filter proofshot-verify start …`) and state that it reads the chain
+  directly; `cli/README.md` added.
+- `rpcTransport()`: viem `fallback([primary, secondary])` for the relayer, indexer and block-time lookups.
+- New README (what, who, proof boundary, why Monad with the measured gas and what is still pending, sequence diagram,
+  reproduce a Verdict, working quickstart with `pnpm dev:chain` + `pnpm seed`, quality commands, honest limits).
+- `docs/architecture.md` (component diagram, data-placement table, flows), `docs/threat-model.md` (T-1…T-9 incl.
+  relayer compromise and crop+edit), `docs/deploy.md` (key roles, deploy script, env table, migrate/seed, pre-judging
+  checklist; notes the pending object-storage adapter).
+- Root `pnpm seed` / `pnpm e2e`; complete, commented `.env.example`.
+
+Rotation complete. **Next: Iteration 6 — Frontend UI/UX, pass 2**: receipts (desktop + mobile), Console Claim File
+page with many items, imports page, error/empty/loading states, dark mode, keyboard-only walkthrough of capture and
+Console, copy review against NFR-9 and PRD §12.
