@@ -29,6 +29,27 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
+  contracts-deep:
+    name: Contracts — deep fuzz and invariants (main only)
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - run: pnpm install --frozen-lockfile
+      - run: forge test
+        working-directory: contracts
+        env:
+          FOUNDRY_PROFILE: deep
+
   e2e:
     name: End-to-end (production build, local chain)
     runs-on: ubuntu-latest

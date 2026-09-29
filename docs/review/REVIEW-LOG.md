@@ -287,3 +287,29 @@ Contract tests: 40 (26 Registry, 10 spike, 4 invariant).
 **Next: Iteration 9 — Tests/CI, pass 2**: run the invariant suite in CI with a higher budget on main only, add a
 Lighthouse/axe accessibility pass over key pages in e2e, check e2e runtime and flakiness over 3 consecutive runs,
 and make the screenshot tool part of a manual "design check" script.
+
+---
+
+## Iteration 9 — Tests/CI, pass 2 (2026-09-30)
+
+Findings:
+
+- **M1** No automated accessibility checks: WCAG 2.1 AA was a stated requirement (NFR-7) verified only by eye.
+- **M2** Invariant and fuzz budgets were sized for fast PR runs only; nothing ran a deep campaign.
+- **M3** e2e stability was unmeasured.
+- **L1** The screenshot tool needed a remembered env var.
+
+Done: all four.
+
+- `e2e/a11y.spec.ts`: axe (`wcag2a/aa`, `wcag21a/aa`) over landing, Verifier, /try, sign-in (light and dark), Console
+  list, Claim File with an Altered upload and Tile Map, imports, capture intro and capture with photos (375 px),
+  Verdicts, and both receipts. **0 violations.** A throwaway sanity test confirmed axe does flag injected
+  `color-contrast` and `image-alt` problems, so the clean result is real.
+- `FOUNDRY_PROFILE=deep` (10,000 fuzz runs; invariants 512 × 128 = 65,536 calls each) passes in ~20 s; CI runs it in a
+  `contracts-deep` job on `main` only.
+- Stability: full e2e suite run 3× back to back — 17/17 each time (51/51), no retries.
+- `pnpm screens` for design screenshots; README "Quality" updated.
+
+**Next: Iteration 10 — Docs/README, pass 2**: `docs/demo-script.md` aligned with the shipped UI (the A6 script's
+exact clicks and copy), a submission write-up draft per A7 with only measured numbers and explicit "pending" marks,
+and a CHANGELOG/feature matrix mapping each FR to its code and test.

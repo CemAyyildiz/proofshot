@@ -25,3 +25,12 @@ fail_on_revert = true
 [rpc_endpoints]
 monad_testnet = "${MONAD_TESTNET_RPC_URL}"
 monad_mainnet = "${MONAD_MAINNET_RPC_URL}"
+
+# Deeper fuzz/invariant budget for CI on main (FOUNDRY_PROFILE=deep).
+[profile.deep.fuzz]
+runs = 10000
+
+[profile.deep.invariant]
+runs = 512
+depth = 128
+fail_on_revert = true

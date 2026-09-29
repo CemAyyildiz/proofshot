@@ -97,12 +97,15 @@ pnpm dev           # terminal 2: http://localhost:3000
 pnpm check                         # typecheck, lint, unit + contract tests, build
 pnpm e2e                           # Playwright: real passkey signatures sealed on a local chain
 E2E_PROD=1 pnpm e2e                # same suite against the production build
+pnpm screens                       # design screenshots of every surface → apps/web/test-results/screens
 pnpm --filter @proofshot/contracts coverage
 pnpm --filter @proofshot/benchmark bench   # SM-2 benchmark (needs benchmark/data)
 ```
 
 End-to-end tests drive Chrome with a virtual platform authenticator and a fake camera, so every Seal carries a real
-WebAuthn assertion that the Registry verifies onchain. Registry branch coverage is 100%.
+WebAuthn assertion that the Registry verifies onchain. Every page is scanned with axe for WCAG 2.1 AA in light and
+dark mode. Registry branch coverage is 100%, with stateful invariants (no re-seal, sealing is permanent, no import of a
+sealed photo) driven by Solidity-signed passkey assertions.
 
 ## Status and honest limits
 
