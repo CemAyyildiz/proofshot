@@ -27,6 +27,8 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test
+      # Fails when a change moves the gas of any Registry test; refresh with `pnpm --filter @proofshot/contracts gas:snapshot`.
+      - run: pnpm --filter @proofshot/contracts gas:check
       - run: pnpm build
 
   contracts-deep:

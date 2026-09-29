@@ -398,3 +398,32 @@ Done: all four.
 **Next: Iteration 13 — Contracts, pass 3**: review the dev-chain and deploy tooling end to end on a fresh checkout
 (does `pnpm dev:chain` + `pnpm seed` + `pnpm dev` work from zero?), gas snapshot file checked into CI to catch
 regressions (`forge snapshot --check`), and the PasskeySpike contract's future (keep as documentation or remove).
+
+---
+
+## Iteration 13 — Contracts & tooling, pass 3 (2026-09-30)
+
+Ran the README quickstart on a **fresh clone** in a scratch directory (`pnpm install --frozen-lockfile`,
+`pnpm dev:chain`, `pnpm seed`, `pnpm dev`, then `pnpm check`).
+
+Findings:
+
+- **H1** (bug, clean checkouts only) `copy-wasm` copied the PDQ binary into `apps/web/public/`, a directory that
+  only ever held gitignored files and therefore **does not exist in a clone**. `pnpm dev` and `pnpm build` failed on
+  every fresh checkout — including CI and any judge following the README. Local runs never saw it.
+- **M1** No gas regression guard: a change could quietly make `seal()` more expensive.
+- **L1** `PasskeySpike.sol` is superseded by `Registry.sol`. Kept deliberately: `docs/spikes/spike-b.md` and the
+  testnet runner (`tools/spike-b-testnet.ts`) use it to measure raw verification cost; it is never deployed by the
+  Registry script.
+- OK: `dev:chain` deploys and wires `.env.local` from zero; `seed` works; `/api/health` reports the funded relayer;
+  all pages 200; full `pnpm check` passes in the clone (68 web, 26 fingerprint, 11 shared, 40 contract tests).
+
+Done: H1, M1.
+
+- `copy-wasm` creates `public/` first; `public/.gitkeep` committed.
+- `contracts/.gas-snapshot` for the Registry unit tests (fuzz excluded, deterministic); CI's check job runs
+  `gas:check`; refresh with `pnpm --filter @proofshot/contracts gas:snapshot`.
+
+**Next: Iteration 14 — Tests/CI, pass 3**: add a "fresh clone" CI guard (the check job already starts clean — verify
+nothing else depends on untracked files: fixtures, `.env.local`), add a test that `.env.example` lists every
+variable in the env schema, and review test data builders for duplication across unit tests.

@@ -9,7 +9,7 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "copy-wasm": "node -e \"require('fs').copyFileSync(require.resolve('@proofshot/fingerprint/pdq.wasm'),'public/pdq.wasm')\"",
+    "copy-wasm": "node -e \"const fs=require('fs');fs.mkdirSync('public',{recursive:true});fs.copyFileSync(require.resolve('@proofshot/fingerprint/pdq.wasm'),'public/pdq.wasm')\"",
     "predev": "pnpm copy-wasm",
     "prebuild": "pnpm copy-wasm",
     "db:generate": "drizzle-kit generate",
