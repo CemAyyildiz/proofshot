@@ -33,3 +33,11 @@ Findings:
 - **L1** Next dev indicator visible in screenshots (dev only, not shipped).
 
 Fixed this iteration: H1, H2, M1, M2, M3, M4, M5, M6.
+
+Done (commit 6803c64): all eight findings fixed; `pnpm check` and 13 e2e green. Also fixed a build warning
+(dynamic storage path traced the whole project).
+
+**Next: Iteration 2 — Backend.** Review: authorization on every route (console APIs, receipts), input validation
+and size limits (multipart parsing before size checks), rate limits on the Public Verifier (none yet), error
+handling that could leak internals, Seal flow consistency if the DB insert fails after an onchain success,
+registry index staleness on multi-instance deploys, security headers (CSP, frame-ancestors), cookie flags.
