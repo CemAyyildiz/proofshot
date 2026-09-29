@@ -573,3 +573,33 @@ Done: all three.
 
 **Next: Iteration 19 — Tests/CI, pass 4**: run the keyless probe in CI on `main` as a scheduled canary (network drift
 would surface early), add a unit test for the deploy script's chain guard, and review the total CI duration.
+
+---
+
+## Iteration 19 — Tests/CI, pass 4 (2026-09-30)
+
+Findings:
+
+- **M1** The live-chain probe (iteration 18) was a one-off. If Monad changed the precompile or an RPC started
+  misbehaving, we'd learn during the demo.
+- **M2** The deploy script's chain guard and role wiring had no test. A first attempt using `vm.setEnv` was flaky
+  by construction: environment variables are process-global and Foundry runs test functions in parallel, so two
+  tests raced on `EXPECTED_CHAIN_ID`.
+- **M3** The probe always exited 0, so it couldn't gate anything.
+- OK: CI duration is dominated by the production build in the e2e job (~1 min locally) and web unit tests; jobs
+  already run in parallel and cache pnpm and Playwright.
+
+Done: all three.
+
+- `.github/workflows/monad-canary.yml`: every 6 hours (and on demand) runs the keyless probe against testnet and
+  mainnet; `--no-write` keeps the committed evidence file unchanged.
+- The probe exits non-zero if either network stops accepting a valid assertion natively or accepts a tampered one.
+- `DeployRegistry` gained an env-free `deploy(expectedChainId, admin, relayer, rpIds)`; `run()` reads env and calls it.
+  `test/DeployRegistry.t.sol` covers the wrong-chain revert and that roles and RP IDs are wired exactly (admin is not a
+  relayer, only listed RP IDs allowed).
+
+Contract tests: 42.
+
+**Next: Iteration 20 — Docs, pass 4**: a one-page "judge's guide" (5-minute path through the product, what to click,
+what each proof shows, where the evidence files are), linked from the README top; and a final pass on the landing
+page copy against the now-measured live-chain facts.

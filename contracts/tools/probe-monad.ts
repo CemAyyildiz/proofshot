@@ -38,4 +38,16 @@ for (const net of [networks.testnet, networks.mainnet]) {
   };
   console.log(net.name, JSON.stringify(results[net.name]));
 }
-writeFileSync(new URL("../../docs/spikes/spike-b-probe.json", import.meta.url), JSON.stringify(results, null, 2) + "\n");
+if (!process.argv.includes("--no-write")) {
+  writeFileSync(new URL("../../docs/spikes/spike-b-probe.json", import.meta.url), JSON.stringify(results, null, 2) + "\n");
+}
+
+// Canary: fail loudly if either network stops verifying passkeys natively or starts accepting a tampered signature.
+const broken = [networks.testnet, networks.mainnet].filter((n) => {
+  const r = results[n.name] as { validAssertion: { valid: boolean; precompileAccepted: boolean }; tamperedSignature: { valid: boolean } };
+  return !r.validAssertion.valid || !r.validAssertion.precompileAccepted || r.tamperedSignature.valid;
+});
+if (broken.length) {
+  console.error(`PROBE FAILED on ${broken.map((n) => n.name).join(", ")}`);
+  process.exitCode = 1;
+}
