@@ -337,3 +337,32 @@ Done: all four.
 **Next: Iteration 11 — Frontend UI/UX, pass 3**: motion and feedback polish (seal state transitions, a success
 moment when a photo seals, reduced-motion safe), loading skeletons for Console pages, empty states with next steps,
 the Claim File page at 10+ items (grid density), and copy consistency across Verdict texts.
+
+---
+
+## Iteration 11 — Frontend UI/UX, pass 3 (2026-09-30)
+
+Guidance: ui-ux-pro-max `ux` domain — success feedback, confirmation for irreversible actions, loading indicators.
+
+Findings:
+
+- **H1** "Revoke link" permanently closed a Claim Link on a single click — irreversible, no confirmation.
+- **H2** "Discard" on a failed capture deleted the photo (evidence) on a single tap.
+- **M1** A Seal landing changed only a text label; nothing on the photo itself confirmed success at a glance.
+- **M2** Empty Evidence state ("No photos yet.") gave no next step.
+- **M3** Claim Files with many items used two columns even on wide screens.
+- **M4** Console navigations show no loading state. Tried `loading.tsx`: it streams the page, so `notFound()` for
+  another carrier's Claim File returned **200** instead of 404 (the tenancy e2e caught it). Reverted — correct 404
+  semantics beat a skeleton for pages that render in < 200 ms. Revisit with a client-side route-change indicator.
+
+Done: H1, H2, M1, M2, M3 (M4 investigated and deliberately not shipped).
+
+- `ConfirmAction`: inline two-step confirmation stating the consequence; focus moves to Cancel (safe default).
+  Used for Revoke link and Discard. e2e asserts Cancel is focused before confirming.
+- Sealed thumbnails get a Verdict-green ring and a check badge that pops in (260 ms; off under reduced motion);
+  in-flight thumbnails show a spinner; failed ones a danger ring.
+- Evidence empty state points to the Claim Link and to upload; evidence grid goes to three columns on `lg`.
+
+**Next: Iteration 12 — Backend, pass 3**: idempotency of the send step under concurrent retries, the relayer's
+behaviour under nonce gaps and stuck transactions (timeouts, replacement), what happens when the relayer runs out of
+MON (clear Capturer message, alerting hook), and structured logging with request IDs.

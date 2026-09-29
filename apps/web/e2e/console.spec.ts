@@ -30,6 +30,10 @@ test("Carrier User creates a Claim File, shares and revokes its link; other Carr
 
   // Revoke → the Capturer page reports the link inactive.
   await page.getByRole("button", { name: "Revoke link" }).click();
+  // Irreversible: a second, explicit confirmation is required and Cancel gets focus.
+  const confirm = page.getByRole("group", { name: /Revoke this link\?/ });
+  await expect(confirm.getByRole("button", { name: "Cancel" })).toBeFocused();
+  await confirm.getByRole("button", { name: "Revoke link" }).click();
   await expect(page.getByText(/This link is revoked/)).toBeVisible();
   await capturer.reload();
   await expect(capturer.getByRole("heading", { name: "This link is no longer active" })).toBeVisible();

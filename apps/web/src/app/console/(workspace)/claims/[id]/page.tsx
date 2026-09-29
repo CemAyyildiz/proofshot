@@ -11,9 +11,9 @@ import type { VerdictKind } from "@/components/verdict/copy";
 import { claimLinkState, getClaimFile, listCaptures, listDuplicateAlerts, listUploads } from "@/server/dal/claim-files";
 import { matchStrength } from "@/server/evidence/duplicates";
 import { getVerification } from "@/server/verify/verify";
+import { RevokeLink } from "./revoke-link";
 import { UploadForm } from "./upload-form";
 import { carrierScope } from "@/server/dal/scope";
-import { revokeLink } from "../../actions";
 
 export const metadata: Metadata = { title: "Claim File · Proofshot Console" };
 
@@ -60,12 +60,7 @@ export default async function ClaimFilePage({ params }: PageProps<"/console/clai
               <input readOnly value={url} aria-label="Claim Link" className="flex-1 rounded-md border border-line bg-background px-3 py-2 font-mono text-sm" />
               <CopyButton value={url} label="Copy link" />
             </div>
-            <form action={revokeLink}>
-              <input type="hidden" name="claimFileId" value={file.id} />
-              <button type="submit" className="text-sm text-danger underline underline-offset-4">
-                Revoke link
-              </button>
-            </form>
+            <RevokeLink claimFileId={file.id} />
           </>
         ) : (
           <p className="text-sm">
@@ -107,9 +102,11 @@ export default async function ClaimFilePage({ params }: PageProps<"/console/clai
         </h2>
         <UploadForm claimFileId={file.id} />
         {evidence.length === 0 && uploaded.length === 0 ? (
-          <p className="text-muted">No photos yet.</p>
+          <p className="rounded-md border border-dashed border-line p-6 text-center text-muted">
+            No photos yet. Send the Claim Link above to the policyholder, or upload a photo you received by email.
+          </p>
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2">
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {evidence.map((c) => (
               <li key={c.id} className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3 text-sm">
                 {c.sentAt ? (

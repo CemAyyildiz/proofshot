@@ -2,6 +2,7 @@
 
 import type { Fingerprint } from "@proofshot/fingerprint/browser";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ConfirmAction } from "@/components/confirm-action";
 import { type StoredCapture, deleteCapture, listCaptures, putCapture } from "@/lib/capture-store";
 import type { StoredDeviceKey } from "@/lib/passkey";
 import { SealError, currentLocationIfAllowed, fingerprintCapture, grabFrame, signAndSeal, warmUpFingerprinting } from "@/lib/seal-pipeline";
@@ -240,16 +241,37 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
         <ul aria-label="Your photos" className="flex gap-2 overflow-x-auto pb-1">
           {captures.map((c) => (
             <li key={c.id} className="flex w-28 shrink-0 flex-col gap-1">
-              <Thumb blob={c.blob} className="aspect-[3/4] w-full rounded object-cover" />
+              <div className="relative">
+                <Thumb
+                  blob={c.blob}
+                  className={`aspect-[3/4] w-full rounded object-cover ring-2 transition-[box-shadow] ${
+                    c.status === "sealed" || c.status === "sent" ? "ring-verdict-original" : c.status === "failed" ? "ring-danger" : "ring-transparent"
+                  }`}
+                />
+                {(c.status === "sealed" || c.status === "sent") && (
+                  <span aria-hidden="true" className="seal-pop absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-verdict-original text-verdict-fg shadow">
+                    <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12.5l4.5 4.5L19 7" />
+                    </svg>
+                  </span>
+                )}
+                {(c.status === "processing" || c.status === "sealing") && (
+                  <span aria-hidden="true" className="absolute right-1 top-1 size-5 animate-spin rounded-full border-2 border-white/60 border-t-white" />
+                )}
+              </div>
               <CaptureStatusLine capture={c} />
               {c.status === "failed" && (
-                <span className="flex gap-2 text-xs">
+                <span className="flex flex-wrap gap-2 text-xs">
                   <button type="button" className="underline" onClick={() => seal(c, performance.now())}>
                     Retry
                   </button>
-                  <button type="button" className="underline" onClick={() => discard(c)}>
-                    Discard
-                  </button>
+                  <ConfirmAction
+                    trigger="Discard"
+                    triggerClassName="underline"
+                    question="Delete this photo?"
+                    confirmLabel="Delete"
+                    onConfirm={() => discard(c)}
+                  />
                 </span>
               )}
             </li>
