@@ -1,11 +1,9 @@
 import { readFile } from "node:fs/promises";
-import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Relayer } from "../chain/relayer";
 import type { Db } from "../db/client";
-import { carriers } from "../db/schema";
 import type { CarrierScope } from "../dal/claim-files";
-import { testDb } from "../test-db";
+import { carrierScope, testDb } from "../test-db";
 import { IMPORT_BATCH, IMPORTS_PER_CARRIER_PER_DAY, importBatch } from "./import";
 
 const fixture = new URL("../../../../../packages/fingerprint/test-fixtures/scene.jpg", import.meta.url);
@@ -17,9 +15,9 @@ const relayer = () => ({ importRecords }) as unknown as Relayer;
 
 beforeEach(async () => {
   db = await testDb();
-  const [c] = await db.select().from(carriers).where(eq(carriers.slug, "harbor"));
-  scope = { db, carrierId: c!.id };
-  pid = c!.pseudonymousId;
+  const harbor = await carrierScope(db, "harbor");
+  scope = harbor;
+  pid = harbor.pid;
   importRecords.mockReset().mockResolvedValue({ txHash: "0xabc", blockNumber: 5n });
 });
 

@@ -25,6 +25,8 @@ export const serverEnvSchema = z.object({
   /** /api/health reports unhealthy (503) below this relayer balance, so uptime monitoring alerts before Seals fail. */
   RELAYER_MIN_BALANCE_MON: z.coerce.number().nonnegative().default(1),
   DATABASE_URL: z.string().min(1).optional(),
+  /** Absolute directory for evidence images (filesystem storage). Unset: apps/web/.data/storage. */
+  STORAGE_DIR: z.string().startsWith("/").optional(),
   /** Public origin used in emailed links, e.g. https://proofshot.app. */
   APP_URL: z.url().default("http://localhost:3000"),
   RESEND_API_KEY: z.string().min(1).optional(),

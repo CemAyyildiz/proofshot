@@ -15,8 +15,7 @@ contracts/out/
 contracts/cache/
 contracts/broadcast/*/31337/
 
-# benchmark raw data (manifest is committed)
-benchmark/data/
+# benchmark raw data: see benchmark/.gitignore (the manifest is committed)
 
 # BMAD render cache
 _bmad/render/

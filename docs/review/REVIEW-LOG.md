@@ -427,3 +427,30 @@ Done: H1, M1.
 **Next: Iteration 14 — Tests/CI, pass 3**: add a "fresh clone" CI guard (the check job already starts clean — verify
 nothing else depends on untracked files: fixtures, `.env.local`), add a test that `.env.example` lists every
 variable in the env schema, and review test data builders for duplication across unit tests.
+
+---
+
+## Iteration 14 — Tests/CI, pass 3 (2026-09-30)
+
+Findings:
+
+- **M1** `benchmark/data/MANIFEST.md` was never committed: the root `.gitignore` excluded the whole `benchmark/data/`
+  directory, and Git can't re-include a file inside an excluded directory, so the package-level `!data/MANIFEST.md`
+  exception never applied.
+- **M2** Env drift: `STORAGE_DIR` was read straight from `process.env` (unvalidated, not in the schema) and nothing
+  checked that `.env.example` matches what the server actually reads.
+- **L1** Six test files each re-implemented "look up a seeded Carrier and build its scope".
+- OK: every fixture tests need is tracked (`scene.jpg`, `scene.heic`, the WebAuthn fixture); the e2e camera file is
+  generated in `globalSetup`; nothing depends on `.env.local`.
+
+Done: all three.
+
+- Root `.gitignore` defers to `benchmark/.gitignore`; the manifest is committed.
+- `STORAGE_DIR` is in the env schema (absolute path) and read through `env()`.
+- `env-example.test.ts` asserts `.env.example` documents exactly the schema's variables (it caught `STORAGE_DIR`).
+- `carrierScope(db, slug)` in `test-db.ts`; six test files use it.
+
+**Next: Iteration 15 — Docs/README, pass 3**: check every number and claim in README, write-up, traceability and
+spike docs against the current code (gas, test counts, limits, env names), add a CHANGELOG summarising the review
+iterations for judges, and make OWNER-TODO.html reflect everything that now needs the owner (CRON_SECRET, RESEND,
+uptime monitor on /api/health).

@@ -1,11 +1,10 @@
 import { randomBytes } from "node:crypto";
-import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Relayer } from "../chain/relayer";
 import type { Db } from "../db/client";
-import { captures, carriers, claimLinks, deviceKeys } from "../db/schema";
+import { captures, claimLinks, deviceKeys } from "../db/schema";
 import { createClaimFile, revokeClaimLink, type CarrierScope } from "../dal/claim-files";
-import { testDb } from "../test-db";
+import { carrierScope, testDb } from "../test-db";
 import { SEALS_PER_KEY_PER_DAY, SEALS_PER_LINK, claimRefFor, sealCapture, sealContext } from "./seal";
 
 const h32 = (): `0x${string}` => `0x${randomBytes(32).toString("hex")}`;
@@ -43,9 +42,9 @@ function body(overrides: Record<string, unknown> = {}) {
 
 beforeEach(async () => {
   db = await testDb();
-  const [c] = await db.select().from(carriers).where(eq(carriers.slug, "northwind"));
-  scope = { db, carrierId: c!.id };
-  carrierId = c!.pseudonymousId as `0x${string}`;
+  const nw = await carrierScope(db, "northwind");
+  scope = nw;
+  carrierId = nw.pid;
   const file = await createClaimFile(scope, "HAIL-1");
   token = file.link.token;
   fileId = file.id;

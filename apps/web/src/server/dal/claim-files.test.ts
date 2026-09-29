@@ -1,8 +1,6 @@
-import { eq } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { Db } from "../db/client";
-import { carriers, users } from "../db/schema";
-import { testDb } from "../test-db";
+import { carrierScope, testDb } from "../test-db";
 import { CLAIM_LINK_TTL_MS, type CarrierScope, createClaimFile, getClaimFile, listClaimFiles, resolveClaimLink, revokeClaimLink } from "./claim-files";
 
 let db: Db;
@@ -11,13 +9,8 @@ let harbor: CarrierScope;
 
 beforeAll(async () => {
   db = await testDb();
-  const scopeFor = async (slug: string): Promise<CarrierScope> => {
-    const [c] = await db.select().from(carriers).where(eq(carriers.slug, slug));
-    const [u] = await db.select().from(users).where(eq(users.carrierId, c!.id));
-    return { db, carrierId: c!.id, userId: u?.id };
-  };
-  northwind = await scopeFor("northwind");
-  harbor = await scopeFor("harbor");
+  northwind = await carrierScope(db, "northwind");
+  harbor = await carrierScope(db, "harbor");
 });
 
 describe("createClaimFile", () => {

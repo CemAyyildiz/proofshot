@@ -1,12 +1,11 @@
 import { generateKeyPairSync, randomBytes } from "node:crypto";
 import { base64UrlEncode, spkiToXY } from "@proofshot/shared";
-import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Relayer } from "../chain/relayer";
 import type { Db } from "../db/client";
-import { carriers, deviceKeys } from "../db/schema";
+import { deviceKeys } from "../db/schema";
 import { createClaimFile, revokeClaimLink, type CarrierScope } from "../dal/claim-files";
-import { testDb } from "../test-db";
+import { carrierScope, testDb } from "../test-db";
 import { ENROLLMENTS_PER_LINK_PER_DAY, enrollDeviceKey, keyIdFor } from "./enroll";
 
 let db: Db;
@@ -24,8 +23,7 @@ function passkey() {
 
 beforeEach(async () => {
   db = await testDb();
-  const [c] = await db.select().from(carriers).where(eq(carriers.slug, "northwind"));
-  scope = { db, carrierId: c!.id };
+  scope = await carrierScope(db, "northwind");
   const file = await createClaimFile(scope, "HAIL-1");
   token = file.link.token;
   fileId = file.id;

@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, normalize, sep } from "node:path";
+import { env } from "@/lib/env";
 import { processSingleton } from "./singleton";
 
 /**
@@ -43,5 +44,5 @@ export class FsStorage implements Storage {
 
 export function getStorage(): Storage {
   // STORAGE_DIR is an absolute path; the default is statically scoped so builds don't trace the whole project.
-  return processSingleton("storage", () => new FsStorage(process.env.STORAGE_DIR || join(process.cwd(), ".data", "storage")));
+  return processSingleton("storage", () => new FsStorage(env().STORAGE_DIR || join(process.cwd(), ".data", "storage")));
 }

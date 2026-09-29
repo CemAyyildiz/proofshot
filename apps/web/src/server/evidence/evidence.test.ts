@@ -3,15 +3,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Hex32, RegistryEntry } from "@proofshot/fingerprint";
 import { fingerprintFile } from "@proofshot/fingerprint/node";
-import { eq } from "drizzle-orm";
 import sharp from "sharp";
 import { beforeAll, describe, expect, it } from "vitest";
 import { claimRefFor } from "../capture/seal";
 import type { Db } from "../db/client";
-import { carriers, users } from "../db/schema";
 import { type CarrierScope, createClaimFile, evidenceImageKey, listDuplicateAlerts, listUploads } from "../dal/claim-files";
 import { FsStorage } from "../storage";
-import { testDb } from "../test-db";
+import { carrierScope, testDb } from "../test-db";
 import { matchStrength, raiseDuplicateAlerts } from "./duplicates";
 import { uploadIntoClaimFile } from "./upload";
 
@@ -22,11 +20,6 @@ let photo: Buffer;
 let northwind: CarrierScope & { pid: Hex32 };
 let harbor: CarrierScope & { pid: Hex32 };
 
-async function scopeFor(slug: string) {
-  const [c] = await db.select().from(carriers).where(eq(carriers.slug, slug));
-  const [u] = await db.select().from(users).where(eq(users.carrierId, c!.id));
-  return { db, carrierId: c!.id, userId: u?.id, pid: c!.pseudonymousId as Hex32 };
-}
 
 function sealedEntry(fp: Awaited<ReturnType<typeof fingerprintFile>>, carrierId: Hex32, claimRef: Hex32): RegistryEntry {
   return {
@@ -49,8 +42,8 @@ beforeAll(async () => {
   db = await testDb();
   storage = new FsStorage(await mkdtemp(join(tmpdir(), "ps-evidence-")));
   photo = await readFile(fixture);
-  northwind = await scopeFor("northwind");
-  harbor = await scopeFor("harbor");
+  northwind = await carrierScope(db, "northwind");
+  harbor = await carrierScope(db, "harbor");
 });
 
 describe("raiseDuplicateAlerts (FR-12)", () => {

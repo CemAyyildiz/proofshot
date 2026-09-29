@@ -5,10 +5,10 @@ import { join } from "node:path";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "../db/client";
-import { captures, carriers, claimFiles, deviceKeys } from "../db/schema";
+import { captures, claimFiles, deviceKeys } from "../db/schema";
 import { createClaimFile, revokeClaimLink, type CarrierScope } from "../dal/claim-files";
 import { FsStorage, captureKey } from "../storage";
-import { testDb } from "../test-db";
+import { carrierScope, testDb } from "../test-db";
 import { MAX_IMAGE_BYTES, receiveCaptureFile, recordTimings } from "./send";
 import { claimRefFor } from "./seal";
 
@@ -23,8 +23,7 @@ const exactHash = `0x${createHash("sha256").update(photo).digest("hex")}`;
 beforeEach(async () => {
   db = await testDb();
   storage = new FsStorage(await mkdtemp(join(tmpdir(), "ps-storage-")));
-  const [c] = await db.select().from(carriers).where(eq(carriers.slug, "northwind"));
-  scope = { db, carrierId: c!.id };
+  scope = await carrierScope(db, "northwind");
   const file = await createClaimFile(scope, "HAIL-1");
   token = file.link.token;
   fileId = file.id;
