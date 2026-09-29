@@ -99,3 +99,14 @@ test("the Public Verifier rate-limits a single client and unknown receipts are 4
   expect((await request.get(`/r/0x${"0".repeat(64)}`)).status()).toBe(404);
   expect((await request.get("/r/not-a-hash")).status()).toBe(404);
 });
+
+test("keyboard users can reach the verifier's file picker and see where focus is", async ({ page }) => {
+  await page.goto("/verify");
+  const drop = page.locator('label[for="verify-file"]');
+  for (let i = 0; i < 12 && !(await page.locator("#verify-file").evaluate((el) => el === document.activeElement)); i++) {
+    await page.keyboard.press("Tab");
+  }
+  await expect(page.locator("#verify-file")).toBeFocused();
+  const outline = await drop.evaluate((el) => getComputedStyle(el).outlineStyle);
+  expect(outline).not.toBe("none");
+});

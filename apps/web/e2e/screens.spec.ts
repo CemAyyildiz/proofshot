@@ -79,7 +79,32 @@ test("capture all surfaces", async ({ browser }) => {
     await shot(phone, `m-verify-${name}`);
   }
   await phone.getByRole("link", { name: "Open Verification Receipt" }).click();
+  await phone.waitForURL(/\/v\//);
+  await expect(phone.getByRole("heading", { name: /^Verdict:/ })).toBeAttached();
+  const receiptUrl = phone.url();
   await shot(phone, "m-receipt-verification");
   await phone.goto(`/r/${exactHash}`);
   await shot(phone, "m-receipt-seal");
+
+  // Desktop receipts and dark mode.
+  const desk = await (await browser.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
+  await desk.goto(receiptUrl);
+  await shot(desk, "d-receipt-verification");
+  await desk.goto(`/r/${exactHash}`);
+  await shot(desk, "d-receipt-seal");
+  const dark = await (await browser.newContext({ viewport: { width: 375, height: 812 }, colorScheme: "dark" })).newPage();
+  for (const [path, name] of [
+    ["/", "landing"],
+    ["/verify", "verify-empty"],
+    [receiptUrl, "receipt-verification"],
+  ] as const) {
+    await dark.goto(path);
+    await shot(dark, `dark-${name}`);
+  }
+  const darkConsole = await signedInPage(browser, "marcus@northwind.demo");
+  await darkConsole.emulateMedia({ colorScheme: "dark" });
+  await darkConsole.setViewportSize({ width: 1280, height: 800 });
+  await darkConsole.goto(claimUrl);
+  await expect(darkConsole.getByRole("region", { name: "Evidence" }).getByText("Altered")).toBeVisible();
+  await shot(darkConsole, "dark-d-console-claim");
 });

@@ -39,6 +39,20 @@ export default async function VerificationReceipt({ params }: PageProps<"/v/[id]
           Changed regions (row, column, 4×4 grid): {(v.alteredTiles ?? []).map((i) => `${Math.floor(i / 4) + 1},${(i % 4) + 1}`).join("; ")}.
         </p>
       )}
+      <section aria-labelledby="checked-heading" className="flex flex-col gap-2">
+        <h2 id="checked-heading" className="font-semibold">
+          File checked
+        </h2>
+        <dl className="grid gap-x-6 gap-y-2 rounded-md border border-line bg-surface p-4 text-sm sm:grid-cols-[max-content_1fr]">
+          <dt className="font-medium">Exact Hash (SHA-256)</dt>
+          <dd className="break-all font-mono text-muted">{v.submittedExactHash}</dd>
+          <dt className="font-medium">Dimensions</dt>
+          <dd className="text-muted">
+            {v.submittedWidth} × {v.submittedHeight} px
+          </dd>
+        </dl>
+        <p className="text-xs text-muted">Compute the SHA-256 of your file to confirm this receipt is about it. The image itself was not stored.</p>
+      </section>
       {record && <ReceiptDetails record={record} />}
       <VerifyYourself />
       <Link href="/verify" className="text-sm underline underline-offset-4">

@@ -189,3 +189,36 @@ Done: all five.
 Rotation complete. **Next: Iteration 6 — Frontend UI/UX, pass 2**: receipts (desktop + mobile), Console Claim File
 page with many items, imports page, error/empty/loading states, dark mode, keyboard-only walkthrough of capture and
 Console, copy review against NFR-9 and PRD §12.
+
+---
+
+## Iteration 6 — Frontend UI/UX, pass 2 (2026-09-30)
+
+Screenshots now also cover desktop receipts and dark mode (landing, verifier, receipt, Console).
+
+Findings:
+
+- **H1** At 375 px the public header nav wrapped into two-line items ("Verify a / photo", "Try / it").
+- **H2** The receipt's CLI command was clipped (horizontal scroll inside a narrow card) and not copyable in one step
+  — on the very section that exists for independent reproduction.
+- **H3** Keyboard focus was invisible on the Verifier drop zone, the Console upload control and the import pickers:
+  the focused element is a visually hidden file input, so the global focus ring drew nothing.
+- **M1** A Verification Receipt didn't identify the file that was checked, so its holder couldn't tie it to a file.
+- **M2** Import page didn't state its limits (500 images, formats, 20 MB).
+- OK: dark mode holds contrast on every surface checked; Verdict badges keep text + icon in both themes; capture
+  "sent" view and Console Claim File read well; no emoji icons remain in UI chrome.
+
+Done: all five.
+
+- Short nav labels on phones ("Verify", "Try it", "Console"), full labels from `sm`, no wrapping.
+- Receipt command wraps (`break-all`) and has a **Copy command** button.
+- Labels that wrap hidden file inputs draw the focus ring via `has-[:focus-visible]`; e2e asserts that tabbing
+  reaches the Verifier's picker and that an outline is shown.
+- Verification Receipt adds **File checked**: full Exact Hash (SHA-256) and dimensions, with "compute the SHA-256 of
+  your file to confirm".
+- Import page states its limits.
+
+**Next: Iteration 7 — Backend, pass 2**: data retention (verifications, rate_limits and sessions tables grow forever;
+magic-link tokens), DB indexes for hot queries (rate_limits by bucket, uploads/captures by exact hash, duplicate
+alert listing), Duplicate-Alert cost as the Registry grows (linear scan per Seal), timing-safe comparisons, logging
+hygiene (no tokens or keys in logs), and the `/seal-context` endpoint's lack of a rate limit.

@@ -1,4 +1,5 @@
 import type { RegistryEntry } from "@proofshot/fingerprint";
+import { CopyButton } from "@/components/copy-button";
 import { env } from "@/lib/env";
 import { formatDateTime } from "@/lib/format";
 import { blockTime } from "@/server/registry/chain-source";
@@ -62,6 +63,7 @@ export async function ReceiptDetails({ record }: { record: RegistryEntry }) {
 
 export function VerifyYourself() {
   const { network, REGISTRY_ADDRESS, rpcUrl } = env();
+  const command = `pnpm install\npnpm --filter proofshot-verify start photo.jpg --rpc ${rpcUrl} --registry ${REGISTRY_ADDRESS ?? "<registry address>"}`;
   return (
     <section aria-labelledby="diy-heading" className="flex flex-col gap-2 text-sm">
       <h2 id="diy-heading" className="font-semibold">
@@ -74,9 +76,10 @@ export function VerifyYourself() {
         <li>Get the image file you want to check.</li>
         <li>
           Run the open-source verifier from the Proofshot repository (Node 22 and pnpm):
-          <pre className="mt-1 overflow-x-auto rounded bg-background p-2 text-xs">
-            {`pnpm install\npnpm --filter proofshot-verify start photo.jpg --rpc ${rpcUrl} --registry ${REGISTRY_ADDRESS ?? "<registry address>"}`}
-          </pre>
+          <div className="mt-1 flex flex-col gap-2 rounded bg-background p-2">
+            <pre className="whitespace-pre-wrap break-all font-mono text-xs text-foreground">{command}</pre>
+            <CopyButton value={command} label="Copy command" />
+          </div>
           It reads the Registry straight from the chain; no Proofshot server is involved.
         </li>
         <li>

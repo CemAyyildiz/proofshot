@@ -60,11 +60,11 @@ export function Importer() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-3">
-        <label className="btn-primary cursor-pointer">
+        <label className="btn-primary cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
           Choose a folder
           <input type="file" className="sr-only" aria-label="Choose a folder of images" {...{ webkitdirectory: "", directory: "" }} multiple onChange={(e) => run(e.target.files)} />
         </label>
-        <label className="cursor-pointer rounded-md border border-line px-4 py-2.5 font-medium">
+        <label className="btn-secondary cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
           Choose images or a .zip
           <input type="file" className="sr-only" aria-label="Choose images or a zip file" multiple accept="image/*,.heic,.heif,.zip" onChange={(e) => run(e.target.files)} />
         </label>

@@ -25,9 +25,9 @@ export function UploadForm({ claimFileId }: { claimFileId: string }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="flex flex-wrap items-center gap-3">
+      <label className="flex flex-wrap items-center gap-3 rounded-md has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
         <span className="text-sm text-muted">Received a photo by email or another channel?</span>
-        <span className="rounded-md border border-line px-3 py-2 text-sm font-medium">{state.busy ? "Verifying…" : "Upload and verify"}</span>
+        <span className="rounded-md border border-line bg-surface px-3 py-2 text-sm font-medium hover:border-foreground/40">{state.busy ? "Verifying…" : "Upload and verify"}</span>
         <input
           ref={input}
           type="file"

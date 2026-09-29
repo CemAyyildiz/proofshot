@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Wordmark } from "./logo";
 
 const NAV = [
-  { href: "/verify", label: "Verify a photo" },
-  { href: "/try", label: "Try it" },
-  { href: "/console", label: "Carrier Console" },
+  { href: "/verify", label: "Verify a photo", short: "Verify" },
+  { href: "/try", label: "Try it", short: "Try it" },
+  { href: "/console", label: "Carrier Console", short: "Console" },
 ] as const;
 
 export function SiteHeader() {
@@ -14,10 +14,15 @@ export function SiteHeader() {
         <Link href="/" aria-label="Proofshot home" className="rounded">
           <Wordmark />
         </Link>
-        <nav aria-label="Main" className="flex items-center gap-1 text-sm">
+        <nav aria-label="Main" className="flex items-center gap-0.5 text-sm sm:gap-1">
           {NAV.map((n) => (
-            <Link key={n.href} href={n.href} className="rounded-md px-2.5 py-2 text-muted hover:bg-background hover:text-foreground">
-              {n.label}
+            <Link
+              key={n.href}
+              href={n.href}
+              className="whitespace-nowrap rounded-md px-2 py-2 text-muted hover:bg-background hover:text-foreground sm:px-2.5"
+            >
+              <span className="sm:hidden">{n.short}</span>
+              <span className="hidden sm:inline">{n.label}</span>
             </Link>
           ))}
         </nav>

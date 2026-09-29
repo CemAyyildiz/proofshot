@@ -107,7 +107,7 @@ export function Verifier() {
           const f = e.dataTransfer.files[0];
           if (f) void check(f);
         }}
-        className={`flex min-h-48 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-center ${
+        className={`flex min-h-48 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-center has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent ${
           dragging ? "border-accent bg-surface" : "border-line bg-surface/50 hover:border-foreground/30"
         }`}
       >
@@ -126,19 +126,20 @@ export function Verifier() {
             <span className="text-sm text-muted">JPEG, PNG, WebP or HEIC, up to 20 MB</span>
           </>
         )}
+        <input
+          ref={inputRef}
+          id="verify-file"
+          type="file"
+          accept={ACCEPT}
+          className="sr-only"
+          disabled={state.name === "checking"}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void check(f);
+          }}
+        />
       </label>
-      <input
-        ref={inputRef}
-        id="verify-file"
-        type="file"
-        accept={ACCEPT}
-        className="sr-only"
-        disabled={state.name === "checking"}
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) void check(f);
-        }}
-      />
+
       {state.name === "error" && (
         <p role="alert" className="text-danger">
           {state.message}

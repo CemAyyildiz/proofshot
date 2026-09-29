@@ -12,6 +12,7 @@ export default function ImportsPage() {
         and discarded — the images are not stored, and only fingerprints are shared, labelled &ldquo;imported
         (unsigned)&rdquo;.
       </p>
+      <p className="text-sm text-muted">Up to 500 JPEG, PNG, WebP or HEIC images per import, 20 MB each. Other files are skipped.</p>
       <Importer />
     </div>
   );
