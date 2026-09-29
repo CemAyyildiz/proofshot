@@ -14,10 +14,10 @@ export default async function Home() {
   const qr = await QRCode.toString(tryUrl, { type: "svg", margin: 1, errorCorrectionLevel: "M" });
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-14 px-4 py-12 sm:py-20">
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-14 px-4 py-10 sm:py-16">
       <section className="grid items-center gap-10 sm:grid-cols-[1.4fr_1fr]">
         <div className="flex flex-col gap-5">
-          <p className="eyebrow">Proofshot</p>
+          <p className="eyebrow">Capture provenance for insurance claims</p>
           <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">Claim photos that prove themselves.</h1>
           <p className="text-lg text-muted">
             Generative edits and recycled photos are hitting every claims desk. Proofshot seals each photo on the
@@ -25,12 +25,15 @@ export default async function Home() {
           </p>
           <div className="flex flex-col gap-3 sm:hidden">
             <StartDemoButton />
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/verify" className="rounded-md border border-line px-4 py-2.5 font-medium">
+            <Link href="/verify" className="btn-secondary">
               Verify a photo
             </Link>
-            <Link href="/console" className="rounded-md px-4 py-2.5 font-medium text-muted underline underline-offset-4">
+          </div>
+          <div className="hidden flex-wrap gap-3 sm:flex">
+            <Link href="/verify" className="btn-primary px-5">
+              Verify a photo
+            </Link>
+            <Link href="/console" className="btn-secondary">
               Carrier Console
             </Link>
           </div>

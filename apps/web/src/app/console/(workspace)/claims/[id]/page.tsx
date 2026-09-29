@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CopyButton } from "@/components/copy-button";
 import { env } from "@/lib/env";
 import { formatDate, formatDateTime } from "@/lib/format";
+import { ArrowLeftIcon, WarningIcon } from "@/components/icons";
 import { TileMap } from "@/components/verdict/tile-map";
 import { VerdictBadge } from "@/components/verdict/verdict-badge";
 import type { VerdictKind } from "@/components/verdict/copy";
@@ -38,11 +39,11 @@ export default async function ClaimFilePage({ params }: PageProps<"/console/clai
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link href="/console" className="text-sm text-muted underline underline-offset-4">
-          All Claim Files
+        <Link href="/console" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground">
+          <ArrowLeftIcon /> All Claim Files
         </Link>
         <h1 className="mt-2 text-2xl font-semibold">{file.reference}</h1>
-        <p className="text-sm text-muted">Created {formatDate(file.createdAt)}</p>
+        <p className="text-sm text-muted">Created {formatDate(file.createdAt)} · {evidence.length + uploaded.length} item{evidence.length + uploaded.length === 1 ? "" : "s"}{alerts.length ? ` · ${alerts.length} Duplicate Alert${alerts.length === 1 ? "" : "s"}` : ""}</p>
       </div>
 
       <section className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4" aria-labelledby="link-heading">
@@ -81,9 +82,11 @@ export default async function ClaimFilePage({ params }: PageProps<"/console/clai
           </h2>
           <ul className="flex flex-col gap-2">
             {alerts.map((a) => (
-              <li key={a.id} className="rounded-md border-2 border-foreground bg-surface p-3 text-sm">
+              <li key={a.id} className="flex gap-3 rounded-md border border-l-4 border-line border-l-foreground bg-surface p-3 text-sm">
+                <WarningIcon className="mt-0.5 size-5 shrink-0" />
+                <div className="flex flex-col gap-1">
                 <p className="font-semibold">
-                  ⚠ Duplicate Alert · {a.sameCarrier ? "same carrier" : "another carrier"}
+                  Duplicate Alert · {a.sameCarrier ? "same carrier" : "another carrier"}
                   {a.matchedKind === "imported" && " · imported (unsigned)"}
                 </p>
                 <p>
@@ -91,6 +94,7 @@ export default async function ClaimFilePage({ params }: PageProps<"/console/clai
                   {formatDateTime(a.matchedAt)} in a different Claim File{a.sameCarrier ? " at your carrier" : " at another carrier"}.
                 </p>
                 <p className="text-muted">Match strength: {matchStrength(a)}</p>
+                </div>
               </li>
             ))}
           </ul>

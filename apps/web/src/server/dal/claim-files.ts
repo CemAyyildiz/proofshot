@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import type { Db } from "../db/client";
 import { captures, carriers, claimFiles, claimLinks, duplicateAlerts, uploads } from "../db/schema";
 
@@ -50,6 +50,9 @@ export async function listClaimFiles(scope: CarrierScope) {
       status: claimFiles.status,
       createdAt: claimFiles.createdAt,
       link: { token: claimLinks.token, expiresAt: claimLinks.expiresAt, revokedAt: claimLinks.revokedAt },
+      items: sql<number>`(select count(*) from ${captures} where ${captures.claimFileId} = ${claimFiles.id})::int
+        + (select count(*) from ${uploads} where ${uploads.claimFileId} = ${claimFiles.id})::int`,
+      alerts: sql<number>`(select count(*) from ${duplicateAlerts} where ${duplicateAlerts.claimFileId} = ${claimFiles.id})::int`,
     })
     .from(claimFiles)
     .innerJoin(claimLinks, eq(claimLinks.claimFileId, claimFiles.id))

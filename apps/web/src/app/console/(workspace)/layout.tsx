@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoMark } from "@/components/brand/logo";
 import { signOut } from "@/app/auth/actions";
 import { requireSession } from "@/server/auth/session";
 
@@ -9,8 +10,8 @@ export default async function WorkspaceLayout({ children }: LayoutProps<"/consol
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3">
           <nav className="flex items-center gap-5">
-            <Link href="/console" className="font-semibold">
-              Proofshot <span className="font-normal text-muted">· {session.carrierName}</span>
+            <Link href="/console" className="inline-flex items-center gap-2 font-semibold">
+              <LogoMark /> Proofshot <span className="font-normal text-muted">· {session.carrierName}</span>
             </Link>
             <Link href="/console/imports" className="text-sm text-muted underline-offset-4 hover:underline">
               Import history

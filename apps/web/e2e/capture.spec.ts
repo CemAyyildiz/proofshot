@@ -22,7 +22,7 @@ test("a Capturer sets up a passkey, seals a burst of live photos onchain and sen
   const claimUrl = page.url();
 
   const phone = await openAsCapturer(browser, link);
-  await expect(phone.getByText("Northwind Mutual")).toBeVisible();
+  await expect(phone.getByText("Northwind Mutual", { exact: true })).toBeVisible();
   await expect(phone.getByText("Claim HAIL-E2E-1")).toBeVisible();
   expect(await phone.locator("main").innerText()).not.toMatch(FORBIDDEN);
 
@@ -61,7 +61,7 @@ test("a Capturer sets up a passkey, seals a burst of live photos onchain and sen
   await page.reload();
   await expect(page.getByText("Photo received")).toHaveCount(3);
   await page.goto("/console");
-  await expect(page.getByRole("link", { name: /HAIL-E2E-1/ })).toContainText("Evidence received");
+  await expect(page.getByRole("row", { name: /HAIL-E2E-1/ })).toContainText("Evidence received");
 
   // Returning Capturer on the same device: no second setup, earlier photos still listed.
   await phone.reload();

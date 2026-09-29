@@ -200,7 +200,7 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
 
   return (
     <section aria-label="Camera" className="flex flex-col gap-3">
-      <div className="relative overflow-hidden rounded-lg bg-black">
+      <div className="relative overflow-hidden rounded-xl bg-black">
         <video ref={videoRef} playsInline muted autoPlay className="aspect-[3/4] w-full object-cover" aria-label="Camera preview" />
         {camera.state === "starting" && <p className="absolute inset-0 grid place-items-center text-white">Starting camera…</p>}
         {(camera.state === "denied" || camera.state === "unavailable") && (
@@ -217,14 +217,23 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
         )}
       </div>
 
-      <div className="flex items-center justify-center py-2">
+      <div className="flex flex-col items-center gap-2 py-1">
         <button
           type="button"
           onClick={shoot}
           disabled={camera.state !== "on" || inFlightCount >= MAX_IN_FLIGHT}
           aria-label="Take photo"
-          className="size-18 rounded-full border-4 border-foreground bg-surface shadow-md active:scale-95 disabled:opacity-40"
-        />
+          className="grid size-20 place-items-center rounded-full border-4 border-foreground bg-transparent active:scale-95 disabled:opacity-40"
+        >
+          <span className="size-15 rounded-full bg-foreground" />
+        </button>
+        <p className="text-sm text-muted" aria-live="polite">
+          {inFlightCount >= MAX_IN_FLIGHT
+            ? "Waiting for earlier photos to seal…"
+            : captures.length === 0
+              ? "Tap to take a sealed photo"
+              : `${captures.length} photo${captures.length === 1 ? "" : "s"} · ${sealedCount + captures.filter((c) => c.status === "sent").length} sealed`}
+        </p>
       </div>
 
       {captures.length > 0 && (

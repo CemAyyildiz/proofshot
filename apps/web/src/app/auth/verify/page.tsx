@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Wordmark } from "@/components/brand/logo";
 import Link from "next/link";
 import { completeSignIn } from "../actions";
 
@@ -13,6 +14,9 @@ export default async function VerifyPage({ searchParams }: PageProps<"/auth/veri
   const valid = typeof token === "string" && token.length > 0 && !error;
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-4 py-16">
+      <Link href="/" aria-label="Proofshot home" className="self-start">
+        <Wordmark />
+      </Link>
       <p className="eyebrow">Carrier Console</p>
       {valid ? (
         <form action={completeSignIn} className="flex flex-col gap-4">

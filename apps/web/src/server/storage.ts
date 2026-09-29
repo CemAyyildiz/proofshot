@@ -42,5 +42,6 @@ export class FsStorage implements Storage {
 }
 
 export function getStorage(): Storage {
-  return processSingleton("storage", () => new FsStorage(join(process.cwd(), process.env.STORAGE_DIR ?? ".data/storage")));
+  // STORAGE_DIR is an absolute path; the default is statically scoped so builds don't trace the whole project.
+  return processSingleton("storage", () => new FsStorage(process.env.STORAGE_DIR || join(process.cwd(), ".data", "storage")));
 }

@@ -17,7 +17,7 @@ test("Carrier User creates a Claim File, shares and revokes its link; other Carr
   // Capturer view of the active link.
   const capturer = await browser.newPage();
   await capturer.goto(link);
-  await expect(capturer.getByText("Northwind Mutual")).toBeVisible();
+  await expect(capturer.getByText("Northwind Mutual", { exact: true })).toBeVisible();
   await expect(capturer.getByRole("heading", { name: "Take photos of the damage" })).toBeVisible();
 
   // Another Carrier gets a 404 for the same Claim File.
