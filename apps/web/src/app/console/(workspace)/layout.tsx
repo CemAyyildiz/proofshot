@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LogoMark } from "@/components/brand/logo";
 import { signOut } from "@/app/auth/actions";
 import { requireSession } from "@/server/auth/session";
+import { DEMO_RETENTION_DAYS } from "@/server/maintenance";
 
 export default async function WorkspaceLayout({ children }: LayoutProps<"/console">) {
   const session = await requireSession();
@@ -27,7 +28,7 @@ export default async function WorkspaceLayout({ children }: LayoutProps<"/consol
       </header>
       {session.isDemo && (
         <p className="border-b border-line bg-background px-4 py-2 text-center text-sm text-muted">
-          Demo workspace · {session.carrierName} is a fictional carrier. Anything you add here is visible to other visitors.
+          Demo workspace · {session.carrierName} is a fictional carrier. Anything you add here is visible to other visitors and removed after {DEMO_RETENTION_DAYS} days.
         </p>
       )}
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">{children}</main>

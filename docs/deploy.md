@@ -38,7 +38,7 @@ Set these in the hosting provider (see `apps/web/.env.example`):
 | `APP_URL` | public origin, e.g. `https://proofshot.app` |
 | `RESEND_API_KEY`, `MAIL_FROM` | sign-in email. Required in production: without it no link is sent (tokens are never logged), and `/api/health` returns 503 with `sign-in-email-not-configured` |
 | `DEMO_ACCESS` | `1` on the judging deployment: one-tap entry into the two seeded demo carriers (never real ones) |
-| `CRON_SECRET` | ≥ 16 random characters; `vercel.json` schedules the daily `/api/cron/maintenance` cleanup |
+| `CRON_SECRET` | ≥ 16 random characters; `vercel.json` schedules the daily `/api/cron/maintenance` cleanup (expired sessions and tokens, old rate-limit windows, and demo/sandbox Claim Files older than 7 days with their images; real carriers are never touched) |
 
 Then migrate and seed once:
 

@@ -1528,3 +1528,41 @@ form).
 Files, uploads and images in storage from every visitor). Extend the daily maintenance job to prune demo-carrier Claim
 Files older than a set window, together with their stored images, never touching real carriers. Check it is
 idempotent and tenant-safe.
+
+---
+
+## Iteration 46 — Backend, pass 10: retention for the public demo workspaces (2026-09-30)
+
+Findings:
+
+- **M1** The shared demo carriers and the Try-it sandbox grew without bound. Every visitor's Claim Files, captures,
+  uploads, alerts and images were kept forever. On a public judging deployment that meant unbounded Postgres and
+  bucket growth, plus other people's leftovers piling up in a workspace each new visitor sees. The daily maintenance
+  job pruned only tokens, sessions and rate-limit windows.
+- **L1** `Storage` had no way to delete, so even a manual cleanup would have left images in the bucket.
+- OK (by design): Seals stay onchain and `/r/<hash>` receipts read the Registry, so they survive any database
+  cleanup.
+
+Done: both.
+
+- `Storage.deleteClaimFile(prefix)` works on the filesystem (`rm -r`) and on S3 (ListObjectsV2 plus batched
+  DeleteObjects, with continuation). It only accepts an exact `<carrierId>/<claimFileId>/` prefix, so a whole carrier
+  or the bucket can't be deleted by mistake.
+  - The contract test runs against both implementations. It deletes one Claim File's five objects while keeping a
+    sibling whose name shares a string prefix, checks the delete is idempotent, and rejects six unsafe prefixes.
+  - The fake S3 pages two keys at a time with key-based continuation. Its first version used offsets, and while
+    deleting it skipped keys; the test caught this.
+- `pruneDemoData(db, storage)` removes Claim Files of **demo and sandbox carriers only** that are older than 7 days,
+  at most 500 per run. Images are deleted first, then one transaction deletes alerts, uploads, captures, links and
+  files. Verification Receipts are kept, detached (`claimFileId = null`), so shared `/v/<id>` links keep working.
+  - Test: old demo and old sandbox files are deleted with their images and rows. A recent demo file and an old
+    real-carrier file are untouched. Receipts survive. A second run deletes nothing.
+- The cron route runs both prunes. The demo banner says entries are "removed after 7 days", and `deploy.md` describes
+  the job.
+
+`pnpm check` is green. e2e: 23/23 in dev mode and 23/23 in production mode.
+
+**Next: Iteration 47 — Contracts, pass 10**: nothing structural is left from the audit, so look at the operational
+side. Write a short admin runbook script, or `cast` one-liners in `deploy.md`, for pausing, rotating the relayer,
+allowing a preview RP ID and the two-step admin transfer. Test each command against a local Anvil deploy so the docs
+are executable, not aspirational.

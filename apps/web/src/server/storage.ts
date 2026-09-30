@@ -1,5 +1,5 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { GetObjectCommand, NoSuchKey, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { DeleteObjectsCommand, GetObjectCommand, ListObjectsV2Command, NoSuchKey, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { dirname, join, normalize, sep } from "node:path";
 import { env } from "@/lib/env";
 import { processSingleton } from "./singleton";
@@ -11,6 +11,15 @@ import { processSingleton } from "./singleton";
 export interface Storage {
   put(key: string, bytes: Uint8Array, contentType: string): Promise<void>;
   get(key: string): Promise<Uint8Array | null>;
+  /** Deletes every object of one Claim File: `prefix` must be exactly `<carrierId>/<claimFileId>/`. Idempotent. */
+  deleteClaimFile(prefix: string): Promise<void>;
+}
+
+export const claimFilePrefix = (carrierId: string, claimFileId: string) => `${carrierId}/${claimFileId}/`;
+
+/** Only a whole Claim File can be deleted at once — never a Carrier's whole prefix or the bucket. */
+function assertClaimFilePrefix(prefix: string) {
+  if (!/^[A-Za-z0-9-]+\/[A-Za-z0-9-]+\/$/.test(prefix)) throw new Error("invalid Claim File prefix");
 }
 
 export const captureKey = (carrierId: string, claimFileId: string, exactHash: string) =>
@@ -42,6 +51,12 @@ export class FsStorage implements Storage {
       throw e;
     }
   }
+
+  async deleteClaimFile(prefix: string) {
+    assertClaimFilePrefix(prefix);
+    const dir = dirname(this.path(`${prefix}x`)); // resolved and root-checked like any key
+    await rm(dir, { recursive: true, force: true });
+  }
 }
 
 /** Rejects keys that could escape a Carrier prefix or address another object. */
@@ -70,6 +85,19 @@ export class S3Storage implements Storage {
       if (e instanceof NoSuchKey || (e as { name?: string }).name === "NoSuchKey") return null;
       throw e;
     }
+  }
+
+  async deleteClaimFile(prefix: string) {
+    assertClaimFilePrefix(prefix);
+    let token: string | undefined;
+    do {
+      const page = await this.client.send(new ListObjectsV2Command({ Bucket: this.bucket, Prefix: prefix, ContinuationToken: token }));
+      const keys = (page.Contents ?? []).map((o) => ({ Key: o.Key! }));
+      if (keys.length) {
+        await this.client.send(new DeleteObjectsCommand({ Bucket: this.bucket, Delete: { Objects: keys, Quiet: true } }));
+      }
+      token = page.IsTruncated ? page.NextContinuationToken : undefined;
+    } while (token);
   }
 }
 
