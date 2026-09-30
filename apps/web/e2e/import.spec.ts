@@ -27,7 +27,9 @@ test("FR-13: imported history makes duplicate detection work before any policyho
     mimeType: "application/zip",
     buffer: Buffer.from(zipSync({ "claims/2024-0117.jpg": new Uint8Array(history), "claims/readme.txt": new TextEncoder().encode("x") })),
   });
-  await expect(dana.getByRole("status")).toHaveText("1 of 1 processed · 1 imported", { timeout: 30_000 });
+  await expect(dana.getByRole("status")).toHaveText("Import complete: 1 of 1 processed · 1 imported", { timeout: 30_000 });
+  // One import at a time: the pickers are usable again only once it has finished.
+  await expect(dana.getByLabel("Choose images or a zip file")).toBeEnabled();
 
   // A new claim arrives with a forwarded copy of that old photo.
   await dana.goto("/console");

@@ -1,15 +1,16 @@
 "use client";
 
 import { unzipSync } from "fflate";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const MAX_FILES = 500;
+const MAX_BYTES = 20 * 1024 * 1024;
 const BATCH = 10;
 const IMAGE = /\.(jpe?g|png|webp|heic|heif)$/i;
 
 interface Row {
   name: string;
-  status: "imported" | "unreadable" | "too-large" | "failed";
+  status: "imported" | "unreadable" | "too-large" | "too-big" | "failed";
 }
 
 async function collect(files: FileList): Promise<File[]> {
@@ -29,14 +30,37 @@ export function Importer() {
   const [rows, setRows] = useState<Row[]>([]);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [finished, setFinished] = useState(false);
+
+  // Leaving mid-import stops it; the browser asks first.
+  useEffect(() => {
+    if (!busy) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [busy]);
 
   async function run(list: FileList | null) {
-    if (!list?.length) return;
+    if (!list?.length || busy) return;
+    setBusy(true);
+    try {
+      await runImport(list);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runImport(list: FileList) {
     setError("");
     setRows([]);
-    const files = await collect(list);
-    if (files.length === 0) return setError("No JPEG, PNG, WebP or HEIC images found.");
-    if (files.length > MAX_FILES) return setError(`Import at most ${MAX_FILES} images at a time; this selection has ${files.length}.`);
+    setFinished(false);
+    const all = await collect(list);
+    if (all.length === 0) return setError("No JPEG, PNG, WebP or HEIC images found.");
+    if (all.length > MAX_FILES) return setError(`Import at most ${MAX_FILES} images at a time; this selection has ${all.length}.`);
+    // Oversized files are reported here rather than sent: one would otherwise make its whole batch fail.
+    const files = all.filter((f) => f.size <= MAX_BYTES);
+    setRows(all.filter((f) => f.size > MAX_BYTES).map((f) => ({ name: f.name, status: "too-big" as const })));
     setProgress({ done: 0, total: files.length });
     for (let i = 0; i < files.length; i += BATCH) {
       const batch = files.slice(i, i + BATCH);
@@ -51,7 +75,9 @@ export function Importer() {
       }
       setRows((r) => [...r, ...(body.items as Row[])]);
       setProgress({ done: Math.min(i + BATCH, files.length), total: files.length });
+      if (i + BATCH >= files.length) setFinished(true);
     }
+    if (files.length === 0) setFinished(true);
   }
 
   const imported = rows.filter((r) => r.status === "imported").length;
@@ -60,19 +86,20 @@ export function Importer() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-3">
-        <label className="btn-primary cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
+        <label className="btn-primary cursor-pointer has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
           Choose a folder
-          <input type="file" className="sr-only" aria-label="Choose a folder of images" {...{ webkitdirectory: "", directory: "" }} multiple onChange={(e) => run(e.target.files)} />
+          <input type="file" className="sr-only" aria-label="Choose a folder of images" disabled={busy} {...{ webkitdirectory: "", directory: "" }} multiple onChange={(e) => run(e.target.files)} />
         </label>
-        <label className="btn-secondary cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
+        <label className="btn-secondary cursor-pointer has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
           Choose images or a .zip
-          <input type="file" className="sr-only" aria-label="Choose images or a zip file" multiple accept="image/*,.heic,.heif,.zip" onChange={(e) => run(e.target.files)} />
+          <input type="file" className="sr-only" aria-label="Choose images or a zip file" disabled={busy} multiple accept="image/*,.heic,.heif,.zip" onChange={(e) => run(e.target.files)} />
         </label>
       </div>
       {progress && (
         <div className="flex flex-col gap-1">
           <progress value={progress.done} max={progress.total} className="w-full" aria-label="Import progress" />
           <p role="status" className="text-sm">
+            {finished ? "Import complete: " : busy ? "Importing — keep this tab open. " : ""}
             {progress.done} of {progress.total} processed · {imported} imported{skipped ? ` · ${skipped} not imported` : ""}
           </p>
         </div>
@@ -90,7 +117,7 @@ export function Importer() {
               .filter((r) => r.status !== "imported")
               .map((r, i) => (
                 <li key={`${r.name}-${i}`}>
-                  {r.name} — {r.status === "unreadable" ? "not a readable image" : r.status === "too-large" ? "over 50 megapixels" : "not sent"}
+                  {r.name} — {r.status === "unreadable" ? "not a readable image" : r.status === "too-large" ? "over 50 megapixels" : r.status === "too-big" ? "over 20 MB" : "not sent"}
                 </li>
               ))}
           </ul>
