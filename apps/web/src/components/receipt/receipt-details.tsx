@@ -92,8 +92,9 @@ export async function ReceiptDetails({ record }: { record: RegistryEntry }) {
 }
 
 export function VerifyYourself() {
-  const { network, REGISTRY_ADDRESS, rpcUrl } = env();
-  const command = `pnpm install\npnpm --filter proofshot-verify start ./photo.jpg --rpc ${rpcUrl} --registry ${REGISTRY_ADDRESS ?? "<registry address>"}`;
+  // The public RPC, never the app's own RPC_URL: a provider URL often carries an API key.
+  const { network, REGISTRY_ADDRESS, publicRpcUrl } = env();
+  const command = `pnpm install\npnpm --filter proofshot-verify start ./photo.jpg --rpc ${publicRpcUrl} --registry ${REGISTRY_ADDRESS ?? "<registry address>"}`;
   return (
     <section aria-labelledby="diy-heading" className="flex flex-col gap-2 text-sm">
       <h2 id="diy-heading" className="font-semibold">

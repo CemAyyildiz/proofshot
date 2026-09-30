@@ -11,6 +11,11 @@ export const serverEnvSchema = z.object({
   PROOFSHOT_NETWORK: z.enum(["local", "testnet", "mainnet"]).default("testnet"),
   RPC_URL: z.url().optional(),
   RPC_URL_SECONDARY: z.url().optional(),
+  /**
+   * RPC shown to the public (the receipt's "Verify it yourself" command). Never RPC_URL: a provider URL often embeds an
+   * API key. Defaults to the network's public endpoint.
+   */
+  PUBLIC_RPC_URL: z.url().optional(),
   REGISTRY_ADDRESS: address.optional(),
   /** Block the Registry was deployed in; the indexer starts here. */
   REGISTRY_DEPLOY_BLOCK: z.coerce.bigint().nonnegative().default(0n),
@@ -58,7 +63,7 @@ export const serverEnvSchema = z.object({
   DEMO_CLAIM_FILES_PER_VISITOR: z.coerce.number().int().positive().default(20),
 });
 
-export type ServerEnv = z.infer<typeof serverEnvSchema> & { network: NetworkConfig; rpcUrl: string };
+export type ServerEnv = z.infer<typeof serverEnvSchema> & { network: NetworkConfig; rpcUrl: string; publicRpcUrl: string };
 
 export class EnvError extends Error {
   constructor(public readonly issues: string[]) {
@@ -75,5 +80,10 @@ export function loadServerEnv(source: Record<string, string | undefined> = proce
     throw new EnvError(parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`));
   }
   const network = networks[parsed.data.PROOFSHOT_NETWORK];
-  return { ...parsed.data, network, rpcUrl: parsed.data.RPC_URL ?? network.defaultRpcUrl };
+  return {
+    ...parsed.data,
+    network,
+    rpcUrl: parsed.data.RPC_URL ?? network.defaultRpcUrl,
+    publicRpcUrl: parsed.data.PUBLIC_RPC_URL ?? network.defaultRpcUrl,
+  };
 }

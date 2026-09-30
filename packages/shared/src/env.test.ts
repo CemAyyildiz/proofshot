@@ -14,6 +14,12 @@ describe("loadServerEnv", () => {
     expect(env.rpcUrl).toBe("https://rpc.example.org");
   });
 
+  it("never offers the private RPC_URL (which may embed a provider API key) as the public one", () => {
+    const env = loadServerEnv({ PROOFSHOT_NETWORK: "mainnet", RPC_URL: "https://monad.provider.example/v2/SECRET-KEY" });
+    expect(env.publicRpcUrl).toBe("https://rpc.monad.xyz");
+    expect(loadServerEnv({ PUBLIC_RPC_URL: "https://public.example.org" }).publicRpcUrl).toBe("https://public.example.org");
+  });
+
   it("treats empty strings as unset", () => {
     expect(() => loadServerEnv({ REGISTRY_ADDRESS: "" })).not.toThrow();
   });

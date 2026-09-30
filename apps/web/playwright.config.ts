@@ -66,7 +66,9 @@ export default defineConfig({
         MAIL_DEV_OUTBOX: "1",
         DEMO_ACCESS: "1",
         PROOFSHOT_NETWORK: "local",
-        RPC_URL: E2E_RPC,
+        // Shaped like a provider URL with an API key, to prove the app never shows RPC_URL to the public.
+        RPC_URL: `${E2E_RPC}/?apikey=E2E-SECRET-KEY`,
+        PUBLIC_RPC_URL: E2E_RPC,
         REGISTRY_ADDRESS: E2E_REGISTRY,
         RELAYER_PRIVATE_KEY: "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
       },

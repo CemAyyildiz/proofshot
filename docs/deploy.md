@@ -44,7 +44,8 @@ Set these on the host (see `apps/web/.env.example`):
 | Variable | Value |
 |---|---|
 | `PROOFSHOT_NETWORK` | `testnet` or `mainnet` |
-| `RPC_URL`, `RPC_URL_SECONDARY` | primary and fallback RPC |
+| `RPC_URL`, `RPC_URL_SECONDARY` | primary and fallback RPC; may be provider URLs with API keys, they are never shown |
+| `PUBLIC_RPC_URL` | optional: the RPC printed in receipts' "Verify it yourself" command (default: the network's public RPC) |
 | `REGISTRY_ADDRESS`, `REGISTRY_DEPLOY_BLOCK` | from `deployments/<chainId>.json` |
 | `LOGS_BLOCK_RANGE` | max blocks per `eth_getLogs`; set it to your RPC's limit (the indexer halves the range automatically if the RPC refuses) |
 | `RELAYER_PRIVATE_KEY` | the relayer key |
