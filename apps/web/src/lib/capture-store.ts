@@ -1,6 +1,7 @@
 "use client";
 
 import type { Hex } from "@proofshot/shared";
+import type { SealFailure } from "./seal-pipeline";
 
 /**
  * On-device store for Captures. The photo stays here until it is sent to the insurer or discarded, so a
@@ -15,6 +16,8 @@ export interface StoredCapture {
   blob: Blob;
   status: CaptureStatus;
   error?: string;
+  /** Why it failed; offline failures are retried automatically when the connection returns. */
+  failure?: SealFailure;
   exactHash?: Hex;
   receiptUrl?: string;
   sealMs?: number;

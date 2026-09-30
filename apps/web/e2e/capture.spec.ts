@@ -145,3 +145,37 @@ test("a frame the camera fails to deliver once is retried, not reported to the C
   await expect(phone.getByText("The camera didn't return a photo")).toHaveCount(0);
   await phone.context().close();
 });
+
+test("offline: a plain message, the photo is kept, and it seals by itself when the connection returns", async ({ page, browser }) => {
+  await signIn(page, "marcus@northwind.demo");
+  const phone = await openAsCapturer(browser, await createClaimLink(page, "HAIL-OFFLINE-1"));
+  await phone.getByRole("button", { name: "Continue" }).click();
+  await expect(phone.getByRole("button", { name: "Take photo" })).toBeEnabled();
+  await phone.context().setOffline(true);
+  await phone.getByRole("button", { name: "Take photo" }).click();
+  const photos = phone.getByRole("list", { name: "Your photos" });
+  await expect(photos).toContainText("No connection. This photo is kept on your phone", { timeout: 15_000 });
+  await expect(photos).not.toContainText(/Failed to fetch|TypeError|network/i);
+  await phone.context().setOffline(false);
+  await expect(photos.getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
+  await phone.context().close();
+});
+
+test("a link revoked mid-session stops new photos with a clear next step; sealed photos stay", async ({ page, browser }) => {
+  await signIn(page, "marcus@northwind.demo");
+  const phone = await openAsCapturer(browser, await createClaimLink(page, "HAIL-REVOKED-1"));
+  await phone.getByRole("button", { name: "Continue" }).click();
+  await phone.getByRole("button", { name: "Take photo" }).click();
+  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
+
+  await page.getByRole("button", { name: "Revoke link" }).click();
+  await page.getByRole("group", { name: /Revoke this link\?/ }).getByRole("button", { name: "Revoke link" }).click();
+  await expect(page.getByText(/This link is revoked/)).toBeVisible();
+
+  await phone.getByRole("button", { name: "Take photo" }).click();
+  await expect(phone.getByRole("alert").filter({ hasText: "This link is no longer active" })).toBeVisible({ timeout: 15_000 });
+  await expect(phone.getByRole("button", { name: "Take photo" })).toBeDisabled();
+  await expect(phone.getByRole("button", { name: "Retry" })).toHaveCount(0);
+  await expect(phone.getByRole("list", { name: "Your photos" }).getByText(/Sealed ✓/)).toHaveCount(1);
+  await phone.context().close();
+});

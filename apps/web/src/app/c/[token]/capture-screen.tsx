@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ConfirmAction } from "@/components/confirm-action";
 import { type StoredCapture, deleteCapture, listCaptures, putCapture } from "@/lib/capture-store";
 import type { StoredDeviceKey } from "@/lib/passkey";
-import { SealError, currentLocationIfAllowed, fingerprintCapture, grabFrame, signAndSeal, warmUpFingerprinting } from "@/lib/seal-pipeline";
+import { GENERIC_SEAL_MESSAGE, SealError, currentLocationIfAllowed, fingerprintCapture, grabFrame, signAndSeal, warmUpFingerprinting } from "@/lib/seal-pipeline";
 
 /** FR-5: up to 10 photos may be in flight before the shutter waits. */
 const MAX_IN_FLIGHT = 10;
@@ -44,6 +44,8 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
   const [sending, setSending] = useState(false);
   const [sentView, setSentView] = useState<{ skipped: number } | null>(null);
   const [sendError, setSendError] = useState("");
+  /** The Carrier revoked (or the link expired) mid-session: no new Seals, but everything sealed stays valid. */
+  const [linkClosed, setLinkClosed] = useState(false);
   const fingerprints = useRef(new Map<string, Fingerprint>());
   const signQueue = useRef<Promise<void>>(Promise.resolve());
 
@@ -82,7 +84,7 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
       let release!: () => void;
       signQueue.current = new Promise<void>((r) => (release = r));
       void prev.then(async () => {
-        let current: StoredCapture = { ...capture, status: "processing", error: undefined };
+        let current: StoredCapture = { ...capture, status: "processing", error: undefined, failure: undefined };
         update(current);
         try {
           let fp = fingerprints.current.get(capture.id);
@@ -110,7 +112,14 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
           }).catch(() => undefined);
         } catch (e) {
           if (e instanceof SealError && e.alreadySealed) update({ ...current, status: "sealed", receiptUrl: e.receiptUrl });
-          else update({ ...current, status: "failed", error: e instanceof Error ? e.message : "This photo couldn't be sealed. Tap retry." });
+          else if (e instanceof SealError) {
+            update({ ...current, status: "failed", error: e.message, failure: e.reason });
+            if (e.reason === "link-closed") setLinkClosed(true);
+          } else {
+            // Anything else (decoding, storage) is not the Capturer's to act on beyond a retry; keep details in the console.
+            console.warn("[capture] seal failed", e);
+            update({ ...current, status: "failed", error: GENERIC_SEAL_MESSAGE, failure: "other" });
+          }
         } finally {
           release();
         }
@@ -118,6 +127,19 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
     },
     [deviceKey, token, update],
   );
+
+  // Photos that failed only because the connection dropped seal on their own once it's back.
+  const capturesRef = useRef(captures);
+  useEffect(() => {
+    capturesRef.current = captures;
+  }, [captures]);
+  useEffect(() => {
+    const retryOffline = () => {
+      for (const c of capturesRef.current) if (c.status === "failed" && c.failure === "offline") seal(c, performance.now());
+    };
+    window.addEventListener("online", retryOffline);
+    return () => window.removeEventListener("online", retryOffline);
+  }, [seal]);
 
   async function shoot() {
     const video = videoRef.current;
@@ -202,6 +224,14 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
 
   return (
     <section aria-label="Camera" className="flex flex-col gap-3">
+      {linkClosed && (
+        <div role="alert" className="rounded-md border border-danger bg-surface p-3 text-sm">
+          <p className="font-semibold">This link is no longer active</p>
+          <p className="text-muted">
+            New photos can&apos;t be sealed with it. Photos already sealed stay valid. Ask your insurer for a new link.
+          </p>
+        </div>
+      )}
       {/* Width follows the height budget so the viewfinder, shutter and count fit one screen in any orientation. */}
       <div className="relative mx-auto w-full overflow-hidden rounded-xl bg-black" style={{ maxWidth: "min(100%, calc(58svh * 3 / 4))" }}>
         <video ref={videoRef} playsInline muted autoPlay className="aspect-[3/4] w-full object-cover" aria-label="Camera preview" />
@@ -224,7 +254,7 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
         <button
           type="button"
           onClick={shoot}
-          disabled={camera.state !== "on" || inFlightCount >= MAX_IN_FLIGHT}
+          disabled={camera.state !== "on" || inFlightCount >= MAX_IN_FLIGHT || linkClosed}
           aria-label="Take photo"
           className="grid size-20 place-items-center rounded-full border-4 border-foreground bg-transparent active:scale-95 disabled:opacity-40"
         >
@@ -266,13 +296,15 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
                 <span className="text-xs text-muted">{c.error}</span>
               )}
               {c.status === "failed" && (
-                <span className="flex flex-wrap gap-2 text-xs">
-                  <button type="button" className="underline" onClick={() => seal(c, performance.now())}>
-                    Retry
-                  </button>
+                <span className="flex flex-wrap gap-x-3 text-sm">
+                  {!linkClosed && (
+                    <button type="button" className="min-h-9 underline underline-offset-4" onClick={() => seal(c, performance.now())}>
+                      Retry
+                    </button>
+                  )}
                   <ConfirmAction
                     trigger="Discard"
-                    triggerClassName="underline"
+                    triggerClassName="min-h-9 underline underline-offset-4"
                     question="Delete this photo?"
                     confirmLabel="Delete"
                     onConfirm={() => discard(c)}

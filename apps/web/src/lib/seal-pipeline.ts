@@ -62,14 +62,35 @@ export async function fingerprintCapture(blob: Blob): Promise<Fingerprint> {
   return fingerprintBlob(blob);
 }
 
+/** Why a Seal failed, so the capture screen can recover the right way. */
+export type SealFailure = "offline" | "link-closed" | "cancelled" | "other";
+
+export const OFFLINE_MESSAGE = "No connection. This photo is kept on your phone and seals when you're back online.";
+export const GENERIC_SEAL_MESSAGE = "This photo couldn't be sealed. Tap retry.";
+
 export class SealError extends Error {
   constructor(
     message: string,
     readonly receiptUrl?: string,
     readonly alreadySealed = false,
+    readonly reason: SealFailure = "other",
   ) {
     super(message);
   }
+}
+
+/** fetch, but a dropped connection becomes a plain-language SealError instead of the browser's "Failed to fetch". */
+async function request(url: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch {
+    throw new SealError(OFFLINE_MESSAGE, undefined, false, "offline");
+  }
+}
+
+async function failure(res: Response, fallback = GENERIC_SEAL_MESSAGE): Promise<SealError> {
+  const body = (await res.json().catch(() => ({}))) as { error?: string };
+  return new SealError(body.error ?? fallback, undefined, false, res.status === 410 ? "link-closed" : "other");
 }
 
 export interface SealOutcome {
@@ -97,8 +118,8 @@ export async function signAndSeal(opts: {
   onSigned?: () => void;
 }): Promise<SealOutcome> {
   const { token, key, fingerprint: fp, location } = opts;
-  const ctxRes = await fetch(`/api/claim-links/${token}/seal-context`, { cache: "no-store" });
-  if (!ctxRes.ok) throw new SealError((await ctxRes.json().catch(() => ({}))).error ?? "This photo couldn't be sealed. Tap retry.");
+  const ctxRes = await request(`/api/claim-links/${token}/seal-context`, { cache: "no-store" });
+  if (!ctxRes.ok) throw await failure(ctxRes);
   const ctx = (await ctxRes.json()) as SealContext;
 
   const record: CaptureRecord = {
@@ -118,12 +139,12 @@ export async function signAndSeal(opts: {
   try {
     auth = await signWithPasskey(key.credentialId, hexToBytes(sealChallenge(record)));
   } catch {
-    throw new SealError("Sealing was cancelled. Tap retry.");
+    throw new SealError("Sealing was cancelled. Tap retry.", undefined, false, "cancelled");
   }
   const signedAt = performance.now();
   opts.onSigned?.();
 
-  const res = await fetch(`/api/claim-links/${token}/seals`, {
+  const res = await request(`/api/claim-links/${token}/seals`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -133,8 +154,9 @@ export async function signAndSeal(opts: {
       locSalt: location?.salt,
     }),
   });
+  if (res.status === 410) throw await failure(res);
   const body = (await res.json().catch(() => ({}))) as { receiptUrl?: string; error?: string };
   if (res.status === 409 && body.receiptUrl) throw new SealError("Already sealed.", body.receiptUrl, true);
-  if (!res.ok || !body.receiptUrl) throw new SealError(body.error ?? "This photo couldn't be sealed. Tap retry.");
+  if (!res.ok || !body.receiptUrl) throw new SealError(body.error ?? GENERIC_SEAL_MESSAGE);
   return { receiptUrl: body.receiptUrl, signedAt };
 }

@@ -1114,3 +1114,45 @@ Done: all.
 **Next: Iteration 35 — Frontend UI/UX, pass 8**: the capture error and recovery states at 375px (camera denied, no
 passkey support, a Seal failing mid-burst, offline and then back online, a revoked link while capturing). Check that
 each has a clear next step and that nothing already sealed is lost.
+
+---
+
+## Iteration 35 — Frontend UI/UX, pass 8: capture failure and recovery (2026-09-30)
+
+Method: walked through every way a Seal can fail on the capture screen, checking three things for each: what the
+Capturer reads, what they can do next, and whether anything already sealed is lost.
+
+Findings:
+
+- **H1** Offline showed the browser's own error. `fetch` rejects with `TypeError: Failed to fetch`, and the capture
+  screen put `e.message` under the photo. That is jargon on the Capturer surface, and it gives no next step.
+- **H2** Nothing retried when the connection came back. The photo was kept in IndexedDB, but the Capturer had to
+  notice and tap Retry on each one.
+- **H3** A link revoked mid-session left the shutter live. Every new photo failed one by one with "This link is no
+  longer active." and offered a Retry that could never work.
+- **M1** Retry and Discard under a failed photo were 12px underlined text with tiny tap targets, although they are
+  the only recovery actions on a phone.
+- **L1** Non-network failures (decoding, storage) also surfaced raw `Error.message` text.
+- OK: camera denied or missing, no platform authenticator, a cancelled Face ID prompt and a lost response after
+  sealing (409 → sealed) already had clear handling and tests. Photos persist on the device until sent or
+  discarded.
+
+Done: all.
+
+- `SealError.reason` is one of `offline`, `link-closed`, `cancelled` or `other`. Network errors become "No connection.
+  This photo is kept on your phone and seals when you're back online."; a 410 becomes `link-closed`. Any other
+  exception shows the generic retry message and the details go to the console.
+- `failure` is stored with the capture. On the browser's `online` event, every offline-failed photo seals again by
+  itself.
+- If the link closes, a banner explains it ("New photos can't be sealed with it. Photos already sealed stay valid.
+  Ask your insurer for a new link."), the shutter is disabled and Retry is hidden. Discard stays.
+- Retry and Discard are now 14px with 36px-high targets.
+- Two new e2e tests. Offline: the plain message is shown, no "Failed to fetch", and the photo seals automatically
+  after reconnecting. Revoked mid-session: the banner is shown, the shutter is disabled, there is no Retry, and the
+  earlier Seal remains.
+
+`pnpm check` is green. e2e: 22/22 in dev mode and 22/22 in production mode.
+
+**Next: Iteration 36 — Backend, pass 8**: the send-to-insurer path (`PUT …/captures/:hash/file`). Check that the
+bytes must hash to the sealed Exact Hash, the per-link size and count limits, the behaviour on a revoked link after
+sealing (should the Capturer still be able to deliver already-sealed photos?), and idempotent re-sends.
