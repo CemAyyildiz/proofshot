@@ -2601,3 +2601,59 @@ Done:
 `pnpm check` is green. e2e: 29/29 in dev mode and 29/29 in production mode.
 
 **Next: Iteration 73 — Tests/CI, pass 15.**
+
+## Design pass 1 — a senior review of every surface with ui-ux-pro-max (owner request)
+
+The owner rightly pointed out that the recent frontend iterations (65, 70) had not used the ui-ux-pro-max skill,
+and that 70 changed the capture screen without looking at it. This pass started over.
+
+Method:
+- Invoked the skill and ran its design-system query (insurance, trust, institutional). The result matched the
+  existing direction: "Trust & Authority" pattern, "Accessible & Ethical" style, IBM Plex Sans, navy/grey.
+- Ran targeted domain searches: landing "product demo", ux "progress indicators" and "loading", "input labels"
+  (High), and "color only".
+- Reviewed 44 screenshots and states: 375 px and 1280 px, light and dark, print, 320 px, landscape, loading, error,
+  and the sign-in "sent" state.
+- Wrote a local design review (`apps/web/test-results/screens/review.html`, not committed): executive summary,
+  systemic issues, per-surface critique, prioritised roadmap.
+
+Systemic findings:
+1. The product tells but doesn't show. There was no Verdict, map or receipt on the landing page. Trust claims
+   weren't linked to evidence, and the footer had no links.
+2. Hierarchy is flat. One card style is used for everything, and important body copy is set in muted grey.
+3. Status and progress are weak exactly where they matter:
+   - the seal status was 12 px;
+   - the verifier showed "Uploading… 0%" during the longest stage;
+   - cross-carrier matches, the fraud signal, looked the same as same-carrier ones.
+
+Done (P1):
+- **Landing**:
+  - a real-component Verdict example in the hero (Altered plus Tile Map over an illustrated panel, labelled
+    "Illustration, not a real claim");
+  - the QR moved to a secondary strip;
+  - a "Don't take our word for it" strip that links to the Registry on the explorer and to the source code, where
+    those exist (`PUBLIC_REPO_URL`, new);
+  - icon steps, and a check / minus "proves / does not prove" comparison;
+  - a linked footer, and a 44 px nav with `aria-current`.
+- **Capture**:
+  - 14 px status with an icon ("Sealed · 0.3 s"); sealed thumbnails use the accent colour, not Verdict green;
+  - Send is hidden until something is sealed, then sits beside the shutter in a camera-style control row. A sticky
+    bar was tried first and dropped: the screenshot showed it covering the shutter.
+  - the counter reads "2 sealed";
+  - the sent view closes with "<carrier> received N sealed photos. You can close this page."
+- **Verifier**: during a check, the file plus two honest stages (upload, then fingerprint-and-compare). The server's
+  work isn't split into stages it doesn't report. The file row now leads the result, and actions stack full width on
+  phones.
+- **Console**:
+  - "Claim Files · Import past photos" nav with the current page marked. "Import history" read like a log of past
+    imports.
+  - Alerts list cross-carrier matches first and in bold. Same-carrier matches link to their Claim File (the
+    Carrier's own data, resolved in `listDuplicateAlerts`); other carriers stay anonymous. Unit test added.
+  - A visible "Claim reference" label, and status pills.
+
+`pnpm check` is green. e2e in production mode: 29/29. Dev-mode e2e could not run, because the owner's `pnpm dev` is
+using the app directory. Copy changes are reflected in the docs; the PRD and epics were left as historical
+planning.
+
+**Next (P2)**: restructure receipts as documents (summary, technical record, collapsible "Verify it yourself", a QR
+when printed); design-system rules (surface levels, muted text for metadata only, button widths, 44 px text links).
