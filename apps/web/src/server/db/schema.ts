@@ -187,6 +187,8 @@ export const registryRecords = pgTable(
     blockTimestamp: bigint("block_timestamp", { mode: "number" }).notNull(),
     txHash: text("tx_hash").notNull(),
     logIndex: integer("log_index").notNull(),
+    /** Lets a re-scan tell a reorged block (hash changed) from a lagging RPC that just omitted the log. */
+    blockHash: text("block_hash"),
   },
   (t) => [
     // A hash can be both imported and later sealed (the contract allows that order), so key by kind too.

@@ -58,4 +58,6 @@ a different Claim File raises an alert labelled same/another carrier.
 
 **Indexing.** The app reads Registry events in bounded `eth_getLogs` ranges into `registry_records` and keeps them in
 memory; it resyncs at most once a second, and immediately after its own writes. An RPC outage yields an honest 503,
-never a stale Verdict.
+never a stale Verdict. On Monad networks every sync also re-reads the last 64 blocks. A log that a lagging RPC node
+left out is picked up on a later pass. A record whose block hash changed (a reorg) is dropped. A record that is only
+missing from one read, while its block is unchanged, is kept.

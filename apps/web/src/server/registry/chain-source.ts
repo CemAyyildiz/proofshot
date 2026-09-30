@@ -17,15 +17,23 @@ export function chainEventSource(): EventSource | null {
     registry: address,
     deployBlock: e.REGISTRY_DEPLOY_BLOCK,
     maxRange: e.LOGS_BLOCK_RANGE,
+    rescanBlocks: e.network.rescanBlocks,
     latestBlock: () => client.getBlockNumber({ cacheTime: 0 }),
     async events(fromBlock, toBlock) {
       const logs = await client.getContractEvents({ address, abi: registryAbi, fromBlock, toBlock, strict: true });
       return logs
         .filter((l) => l.eventName === "CaptureSealed" || l.eventName === "RecordImported")
-        .map((l) => ({ ...l, txHash: l.transactionHash as Hex32, logIndex: l.logIndex }) as unknown as RegistryEvent);
+        .map((l) => ({ ...l, txHash: l.transactionHash as Hex32, blockHash: l.blockHash as Hex32, logIndex: l.logIndex }) as unknown as RegistryEvent);
     },
     async blockTimestamp(blockNumber) {
       return Number((await client.getBlock({ blockNumber })).timestamp);
+    },
+    async blockHash(blockNumber) {
+      try {
+        return (await client.getBlock({ blockNumber })).hash;
+      } catch {
+        return null; // this node doesn't have the block yet
+      }
     },
   };
 }

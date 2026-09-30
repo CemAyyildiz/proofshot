@@ -1,0 +1,1 @@
+ALTER TABLE "registry_records" ADD COLUMN "block_hash" text;

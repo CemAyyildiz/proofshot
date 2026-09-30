@@ -972,3 +972,40 @@ Done: all.
 **Next: Iteration 31 — Backend, pass 7**: review the indexer and registry cache under chain reorgs and RPC
 inconsistencies (Monad finality, a log served then missing, duplicate logs across range boundaries). Also check
 `registryEntries` memory growth as the Registry grows (every request loads every entry).
+
+---
+
+## Iteration 31 — Backend, pass 7: indexer under reorgs and inconsistent RPCs (2026-09-30)
+
+Findings:
+
+- **H1** Missed logs were permanent. Each sync read `lastBlock + 1 … head` and never looked back. With the fallback
+  transport (`RPC_URL_SECONDARY`) or any load-balanced RPC, the head can come from one node and `eth_getLogs` from
+  another that is a block behind. The logs in that gap were skipped forever, so a real Seal would read as **No Record**.
+- **H2** A reorged block left a phantom record: a Seal indexed from a block that was later replaced stayed in
+  `registry_records` and in memory. A file could then verify as **Original** against something the chain no longer
+  holds.
+- **L1** A halved `eth_getLogs` range isn't remembered between syncs, so a provider with a small cap costs a few
+  refused calls on each sync. Left as is: `LOGS_BLOCK_RANGE` lets the operator set the right cap.
+- OK: memory. `registryEntries` holds every entry, about 2 KB each, so the 10,000-entry NFR-2 scale is about 20 MB.
+  Documented in the code; revisit past that scale.
+
+Done: H1, H2.
+
+- New `NetworkConfig.rescanBlocks` (local 0, Monad testnet and mainnet 64, about 25 s): every sync re-reads that many
+  already-indexed blocks. Within each chunk, indexed rows are reconciled with the fresh read:
+  - New logs, and logs that moved to a different block, are upserted.
+  - An indexed record that is missing is removed **only if its block's hash changed** (a reorg).
+  - If the hash is unchanged, or the node doesn't have the block yet, it is an RPC omission and the record stays.
+  This is why logs alone are not enough: a lagging node must never delete a real Seal.
+- `registry_records.block_hash` was added (migration 0006). `syncRegistry` returns `{ added, removed }`; the in-memory
+  index drops removed and moved records and appends the new ones.
+- Four new tests: a lagging node's log is caught on the next pass; an omitted record in an unchanged block is kept;
+  a reorg drops one record and moves another to its new block; re-reading unchanged blocks writes nothing.
+- The architecture doc describes the behaviour.
+
+`pnpm check` is green. e2e: 19/19 in dev mode and 19/19 in production mode.
+
+**Next: Iteration 32 — Contracts, pass 7**: gas and calldata review of `seal()` (can `tiles` be packed? calldata
+dominates on L1s but Monad pricing differs, so measure first). Re-check that every NatSpec `@dev` still matches the
+code after iterations 22 and 27, and run `forge fmt --check` and `slither` if available.

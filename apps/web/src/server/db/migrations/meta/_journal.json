@@ -43,6 +43,13 @@
       "when": 1790726733527,
       "tag": "0005_demo_carriers",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790731716926,
+      "tag": "0006_registry_block_hash",
+      "breakpoints": true
     }
   ]
 }

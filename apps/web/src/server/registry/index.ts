@@ -50,8 +50,15 @@ export async function registryEntries(): Promise<RegistryEntry[]> {
         }
         const source = chainEventSource();
         if (source) {
-          const added = await syncRegistry(db, source);
-          if (added.length) idx.entries = [...idx.entries, ...added.map((r) => toEntry(r as typeof registryRecords.$inferSelect))];
+          const { added, removed } = await syncRegistry(db, source);
+          if (added.length || removed.length) {
+            // Rows that moved block come back in `added`; drop their old copy along with reorged ones.
+            const gone = new Set([...removed, ...added].map((r) => `${r.kind}:${r.exactHash}`));
+            idx.entries = [
+              ...idx.entries.filter((e) => !gone.has(`${e.kind}:${e.exactHash}`)),
+              ...added.map((r) => toEntry(r as typeof registryRecords.$inferSelect)),
+            ];
+          }
         }
         idx.lastSync = Date.now();
       } catch (err) {
