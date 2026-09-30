@@ -9,20 +9,24 @@ import { registryAbi } from "@proofshot/shared";
 import { createPublicClient, createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { foundry } from "viem/chains";
+import type { CliResult } from "../../../cli/src/index";
 import { sealAndSendPhoto, signIn } from "./helpers";
 
 const TITLES = { original: "Original", "derived-copy": "Derived Copy", altered: "Altered", "no-record": "No Record" } as const;
 const tmp = mkdtempSync(join(tmpdir(), "ps-cli-"));
 
-/** FR-10: the open-source CLI, reading only the chain, must reach the same Verdict as the Public Verifier. */
-function cliVerdict(name: string, buffer: Buffer): string {
+/** Runs the open-source CLI, which reads only the chain, on `buffer` and returns its JSON result. */
+function cli(name: string, buffer: Buffer): CliResult {
   const file = join(tmp, name);
   writeFileSync(file, buffer);
   const out = execFileSync(resolve("../../node_modules/.bin/tsx"), [resolve("../../cli/src/index.ts"), file, "--rpc", E2E_RPC, "--registry", E2E_REGISTRY, "--json"], {
     encoding: "utf8",
   });
-  return TITLES[(JSON.parse(out) as { verdict: keyof typeof TITLES }).verdict];
+  return JSON.parse(out) as CliResult;
 }
+
+/** FR-10: the CLI must reach the same Verdict as the Public Verifier. */
+const cliVerdict = (name: string, buffer: Buffer) => TITLES[cli(name, buffer).verdict];
 
 test("the Public Verifier returns one honest Verdict per copy and a public receipt", async ({ page, browser }) => {
   test.setTimeout(90_000);
@@ -101,7 +105,7 @@ test("the Public Verifier returns one honest Verdict per copy and a public recei
 
 test("a Seal whose Device Key was later revoked says so on its receipt", async ({ page, browser }) => {
   await signIn(page, "marcus@northwind.demo");
-  const { exactHash } = await sealAndSendPhoto(page, browser, `REVOKE-${Date.now()}`);
+  const { exactHash, file } = await sealAndSendPhoto(page, browser, `REVOKE-${Date.now()}`);
   const chain = createPublicClient({ chain: foundry, transport: http(E2E_RPC) });
   const [log] = await chain.getContractEvents({
     address: E2E_REGISTRY,
@@ -122,6 +126,12 @@ test("a Seal whose Device Key was later revoked says so on its receipt", async (
   }).toPass({ timeout: 15_000 });
   // The Seal itself still stands.
   await expect(page.getByRole("heading", { name: "Sealed photo" })).toBeVisible();
+
+  // Someone checking from the chain alone, without our site, is told the same.
+  const { verdict, matched } = cli("revoked.jpg", file);
+  expect(verdict).toBe("original");
+  expect(matched).toMatchObject({ keyId: keyId.toLowerCase(), keyRevokedAtBlock: expect.stringMatching(/^\d+$/) });
+  expect(BigInt(matched!.keyRevokedAtBlock!)).toBeGreaterThan(BigInt(matched!.blockNumber));
 });
 
 test("a file picked before the page finished loading is still checked", async ({ page }) => {

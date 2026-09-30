@@ -8,7 +8,9 @@ pnpm --filter proofshot-verify start photo.jpg --rpc https://testnet-rpc.monad.x
 ```
 
 It computes the file's SHA-256 (Exact Hash) and PDQ fingerprints (whole image + 4×4 tiles) with the same code as the
-Public Verifier, reads every `CaptureSealed` and `RecordImported` event, and applies `computeVerdict` with the
-published thresholds. `--json` prints the Verdict, the matched record, the distances and the thresholds used.
+Public Verifier, reads every `CaptureSealed`, `RecordImported` and `DeviceKeyRevoked` event, and applies
+`computeVerdict` with the published thresholds. For a matched Seal it prints the Signing Window, the Device Key and
+whether that key was later revoked. `--json` prints the Verdict, the matched record, the distances and the thresholds
+used.
 
 `pnpm --filter proofshot-verify build` produces a self-contained `dist/` (with the PDQ WebAssembly) for publishing.

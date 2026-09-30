@@ -20,7 +20,7 @@ holds it; run them with `pnpm --filter @proofshot/contracts test` (deep campaign
 | A photo can be sealed once, and a Seal is permanent | `isSealed` | `test_RejectsReplay`, `invariant_NoReseal`, `invariant_SealedStaysSealed` |
 | A sealed photo can't be re-registered as an unsigned import | `importRecords` skips sealed hashes | `test_ImportRecordsSkipsDuplicatesAndSealed`, `invariant_NoImportAfterSeal` |
 | A signature is only usable for ~30 s after the block it names | `refBlock` within `MAX_LAG = 100` blocks (~300 ms each, measured) | `test_RejectsExpiredOrFutureSigningWindow`, `test_SealAcceptsFullSigningWindow` |
-| A revoked Device Key can't seal again; its earlier Seals stand, and their receipts say the key was revoked | `revokedAtBlock`, `DeviceKeyRevoked` indexed by the app | `test_RevokedKeyCannotSealButEarlierSealsStand`, `test_RevokeEdgeCases`, `indexer.test.ts`, e2e `verify.spec.ts` |
+| A revoked Device Key can't seal again; its earlier Seals stand, and their receipts and the CLI say the key was revoked | `revokedAtBlock`, `DeviceKeyRevoked` indexed by the app and read by the CLI | `test_RevokedKeyCannotSealButEarlierSealsStand`, `test_RevokeEdgeCases`, `indexer.test.ts`, e2e `verify.spec.ts` |
 | Keys are immutable once registered | `DeviceKeyExists` | `test_RegisterDeviceKeyIsRelayerOnlyAndImmutable` |
 | Writes are relayer-only and stop when paused | `onlyRole`, `whenNotPaused` | `test_SealIsRelayerOnly`, `test_ImportIsRelayerOnlyAndNeedsCarrier`, `test_IncidentResponse_PauseRevokeRotate` |
 | Exactly one admin; it moves only by an accepted, 1-day-delayed transfer; it can't be renounced in one call | OpenZeppelin `AccessControlDefaultAdminRules` | `test_AdminCannotBeOrphanedOrMovedInOneStep`, `invariant_ExactlyOneAdmin` |

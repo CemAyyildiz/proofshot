@@ -2,9 +2,15 @@ import type { Hex32, RegistryEntry } from "@proofshot/fingerprint";
 import { registryAbi } from "@proofshot/shared";
 import type { Hex, PublicClient } from "viem";
 
+export interface RegistryLog {
+  entries: RegistryEntry[];
+  /** Device Key ID (lowercase) → block from which it can no longer seal. Seals made before stay valid. */
+  revocations: Map<string, bigint>;
+}
+
 /**
- * Every Capture Record and Imported Record of a Registry, read straight from chain events — no Proofshot API.
- * Block timestamps are filled in lazily by the caller for the matched record only.
+ * Every Capture Record and Imported Record of a Registry, plus every Device Key revocation, read straight from chain
+ * events — no Proofshot API. Block timestamps are filled in lazily by the caller for the matched record only.
  */
 export async function readRegistry(
   client: PublicClient,
@@ -12,9 +18,10 @@ export async function readRegistry(
   fromBlock: bigint,
   range: bigint,
   onProgress?: (done: bigint, head: bigint) => void,
-): Promise<RegistryEntry[]> {
+): Promise<RegistryLog> {
   const head = await client.getBlockNumber();
   const entries: RegistryEntry[] = [];
+  const revocations = new Map<string, bigint>();
   let from = fromBlock;
   let step = range;
   while (from <= head) {
@@ -30,6 +37,11 @@ export async function readRegistry(
       throw e;
     }
     for (const l of logs) {
+      if (l.eventName === "DeviceKeyRevoked") {
+        const a = l.args as { keyId: string; atBlock: bigint };
+        revocations.set(a.keyId.toLowerCase(), a.atBlock);
+        continue;
+      }
       if (l.eventName !== "CaptureSealed" && l.eventName !== "RecordImported") continue;
       const a = l.args as Record<string, unknown>;
       const base = {
@@ -60,5 +72,5 @@ export async function readRegistry(
     onProgress?.(to, head);
     from = to + 1n;
   }
-  return entries;
+  return { entries, revocations };
 }

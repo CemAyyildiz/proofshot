@@ -2146,3 +2146,40 @@ Done:
 `pnpm check` is green. e2e: 28/28 in dev mode and 28/28 in production mode.
 
 **Next: Iteration 62 — Contracts, pass 13.**
+
+## Iteration 62 — Contracts, pass 13: what a verifier who trusts only the chain is told
+
+Method: re-read `Registry.sol` for anything new since pass 12, then followed its events to the one consumer that
+must not depend on us: the `proofshot-verify` CLI, the "without trusting Proofshot" path (FR-10).
+
+Findings:
+
+- Re-checked, no change: domain separation. The challenge is still `sha256(abi.encode(record))`. Iteration 42's
+  decision stands: `seal()` is relayer-only and `refBlock` pins a record to one chain's last ~30 s. Changing the
+  encoding would touch the contract, client, fixtures and every quoted gas figure, so it stays the documented
+  prerequisite of a permissionless `seal()`.
+- Re-checked, OK: a Seal and a revocation of the same key in one block are ordered by the contract itself. A Seal
+  after the revocation reverts, so a receipt's "revoked … after this photo was sealed" is always true.
+- **M1** The CLI ignored `DeviceKeyRevoked`. Since iteration 57, our receipt tells a reader that a Seal's key was
+  later revoked (a lost phone, or a key a compromised relayer registered, T-7/T-8). Someone checking from the chain
+  alone was told less than our own site tells them, which inverts the trust story.
+- **L1** The CLI printed only the inclusion block's time. The trustworthy time of a Seal is the Signing Window
+  (signed after `refBlock`, sealed in the inclusion block), which the receipt shows. The CLI also printed no Device
+  Key.
+- **L2** The CLI had no unit tests (`--passWithNoTests`); only the e2e Verdict comparison covered it.
+
+Done: all.
+
+- `readRegistry` now also returns the `DeviceKeyRevoked` events (keyId → block). For a matched Seal, `--json` adds
+  `signedAfterBlock`, `keyId` and `keyRevokedAtBlock`. The text output prints the Signing Window, the Device Key,
+  and the receipt's revocation sentence when the key was revoked.
+- New `cli/src/index.test.ts`:
+  - reading records and revocations from events, including narrowing the block range when the RPC refuses it;
+  - the text output with and without a revocation.
+- The revocation e2e test also runs the CLI after the admin revokes the key, and asserts the same key and a
+  revocation block after the Seal.
+- README, `cli/README.md`, the threat model (T-7) and `security.md` updated.
+
+`pnpm check` is green. e2e: 28/28 in dev mode and 28/28 in production mode.
+
+**Next: Iteration 63 — Tests/CI, pass 13.**

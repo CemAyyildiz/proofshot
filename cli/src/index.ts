@@ -28,7 +28,19 @@ export interface CliResult {
   alterationCheck: string | null;
   alteredTiles: number[];
   distance: number | null;
-  matched: { kind: string; exactHash: string; txHash: string; blockNumber: string; sealedAt: string | null } | null;
+  matched: {
+    kind: string;
+    exactHash: string;
+    txHash: string;
+    blockNumber: string;
+    sealedAt: string | null;
+    /** Seals only: the Signing Window starts after this block (the device signed a record naming it). */
+    signedAfterBlock: string | null;
+    /** Seals only: the Device Key that signed. */
+    keyId: string | null;
+    /** Seals only: the block from which that key was revoked, if it was. The Seal still stands; the reader should ask why. */
+    keyRevokedAtBlock: string | null;
+  } | null;
   submitted: { exactHash: string; width: number; height: number };
   registry: { address: string; chainId: number; entries: number };
   thresholds: typeof DEFAULT_THRESHOLDS;
@@ -54,18 +66,24 @@ export async function run(argv: string[]): Promise<CliResult> {
   // `pnpm --filter proofshot-verify start photo.jpg` runs inside cli/; resolve the path from where the user typed it.
   const imagePath = resolve(process.env.INIT_CWD ?? process.cwd(), image);
   const [fp, chainId] = await Promise.all([fingerprintFile(await readFile(imagePath)), client.getChainId()]);
-  const entries = await readRegistry(client, values.registry as Hex, BigInt(values["from-block"]), BigInt(values.range));
+  const { entries, revocations } = await readRegistry(client, values.registry as Hex, BigInt(values["from-block"]), BigInt(values.range));
   const v = computeVerdict(fp, entries, DEFAULT_THRESHOLDS);
 
   let matched: CliResult["matched"] = null;
   if ("record" in v) {
-    const block = await client.getBlock({ blockNumber: v.record.blockNumber }).catch(() => null);
+    const r = v.record;
+    const block = await client.getBlock({ blockNumber: r.blockNumber }).catch(() => null);
+    const keyId = r.kind === "sealed" ? (r.keyId ?? null) : null;
+    const revokedAt = keyId ? revocations.get(keyId) : undefined;
     matched = {
-      kind: v.record.kind,
-      exactHash: v.record.exactHash,
-      txHash: v.record.txHash,
-      blockNumber: v.record.blockNumber.toString(),
+      kind: r.kind,
+      exactHash: r.exactHash,
+      txHash: r.txHash,
+      blockNumber: r.blockNumber.toString(),
       sealedAt: block ? new Date(Number(block.timestamp) * 1000).toISOString() : null,
+      signedAfterBlock: r.refBlock?.toString() ?? null,
+      keyId,
+      keyRevokedAtBlock: revokedAt === undefined ? null : revokedAt.toString(),
     };
   }
   return {
@@ -89,6 +107,13 @@ export function describe(r: CliResult): string {
   if (r.matched) {
     lines.push(`Matched record: ${r.matched.exactHash}`);
     lines.push(`  ${r.matched.kind === "sealed" ? "sealed" : "imported"} ${r.matched.sealedAt ?? "(time unavailable)"} in block ${r.matched.blockNumber}, tx ${r.matched.txHash}`);
+    if (r.matched.signedAfterBlock) lines.push(`  Signing Window: signed after block ${r.matched.signedAfterBlock}, sealed in block ${r.matched.blockNumber}`);
+    if (r.matched.keyId) lines.push(`  Device Key: ${r.matched.keyId}`);
+    if (r.matched.keyRevokedAtBlock) {
+      lines.push(
+        `  Key revoked in block ${r.matched.keyRevokedAtBlock}, after this photo was sealed. Revoking stops a key from sealing anything new; ask the carrier why it was revoked before relying on this Seal.`,
+      );
+    }
   }
   if (r.verdict === "no-record") lines.push("No Record means the image was not sealed with Proofshot. It does not mean the image is fake.");
   lines.push(`Checked against ${r.registry.entries} Registry entries at ${r.registry.address} on chain ${r.registry.chainId}.`);

@@ -85,8 +85,9 @@ pnpm --filter proofshot-verify start ./photo.jpg --rpc <rpc-url> --registry <reg
 
 Relative paths resolve from the directory you run the command in. Add `--json` for machine-readable output.
 
-The CLI fingerprints the file locally, reads `CaptureSealed` / `RecordImported` events straight from the chain and
-applies the same `computeVerdict` the Public Verifier uses; an end-to-end test asserts they agree.
+The CLI fingerprints the file locally, reads `CaptureSealed`, `RecordImported` and `DeviceKeyRevoked` events straight
+from the chain and applies the same `computeVerdict` the Public Verifier uses; an end-to-end test asserts they agree.
+For a Seal it also prints the Signing Window, the Device Key and, like the receipt, whether that key was later revoked.
 
 ## Run it locally
 
