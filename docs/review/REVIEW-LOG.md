@@ -2678,3 +2678,30 @@ when printed); design-system rules (surface levels, muted text for metadata only
   ~40 s). Run alone, both specs passed twice, and the next full run passed 29/29 in 1.0 min.
 
 `pnpm check` is green. e2e in production mode: 29/29.
+
+## Design pass 1, continued: the Console on a phone
+
+The Console had only been reviewed at desktop width. `screens.spec.ts` now also captures the list, a Claim File and
+imports at 375 px.
+
+Findings, with the fix for each:
+
+- **H** The Claim File table was cut off at 375 px. Alerts, Claim Link and Created sat off-screen with no hint that
+  the table scrolls. Alerts are what an adjuster checks on a phone.
+  - Fixed: below `sm`, each Claim File is a card with its reference, status pill, alerts (bold, with an icon),
+    items, link state and date. The table remains from `sm` up.
+- **M** The header took three rows, with Sign out alone on the third. With the demo banner that was about 225 px of
+  chrome before any content.
+  - Fixed: logo, carrier and Sign out share one row, with the tabs under them. The banner is one short line on
+    phones and unchanged on desktop.
+- **M** On a phone, the adjuster's job is to text the Claim Link, and only "Copy link" was offered.
+  - Fixed: "Share link" opens the phone's share sheet (Web Share API). Support is detected with
+    `useSyncExternalStore`, so the server and first client render agree, and the button is shown only where the
+    browser supports it. Copy and Share share one button style.
+- **M** "Choose a folder" was the primary import action, but phones can't pick folders.
+  - Fixed: on touch devices (`pointer-coarse`) it is hidden, and "Choose images or a .zip" becomes the full-width
+    primary action.
+- **L** The "Evidence received" pill wrapped to two lines.
+  - Fixed: pills don't wrap.
+
+`pnpm check` is green. e2e in production mode: 29/29.
