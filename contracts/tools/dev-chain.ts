@@ -79,6 +79,8 @@ if (!deployed) {
   env.set("RPC_URL", RPC);
   env.set("REGISTRY_ADDRESS", registry);
   env.set("RELAYER_PRIVATE_KEY", RELAYER_KEY);
+  // Local only: one tap into the seeded demo carriers' Console (kept if the developer set it explicitly).
+  if (!env.has("DEMO_ACCESS")) env.set("DEMO_ACCESS", "1");
   if (envPath) writeFileSync(envPath, [...env].map(([k, v]) => `${k}=${v}`).join("\n") + "\n");
   console.log(`Registry deployed at ${registry}${envPath ? `; wrote ${envPath}` : ""}`);
 } else {

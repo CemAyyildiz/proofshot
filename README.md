@@ -71,8 +71,10 @@ The Verdict engine is open source and the Registry is public. Given any image:
 
 ```bash
 pnpm install
-pnpm --filter proofshot-verify start photo.jpg --rpc <rpc-url> --registry <registry-address>
+pnpm --filter proofshot-verify start ./photo.jpg --rpc <rpc-url> --registry <registry-address>
 ```
+
+Relative paths resolve from the directory you run the command in. Add `--json` for machine-readable output.
 
 The CLI fingerprints the file locally, reads `CaptureSealed` / `RecordImported` events straight from the chain and
 applies the same `computeVerdict` the Public Verifier uses; an end-to-end test asserts they agree.
@@ -88,8 +90,9 @@ pnpm seed          # demo carriers: marcus@northwind.demo, dana@harbor.demo
 pnpm dev           # terminal 2: http://localhost:3000
 ```
 
-- **Carrier Console**: `/console/sign-in` with `marcus@northwind.demo`. Without an email provider the sign-in link is
-  printed in the `pnpm dev` terminal (and appended to `apps/web/.data/outbox.jsonl`).
+- **Carrier Console**: `/console/sign-in` → **Explore the demo Console** (enabled locally by `pnpm dev:chain`), or sign
+  in as `marcus@northwind.demo`: without an email provider the link is printed in the `pnpm dev` terminal (and appended
+  to `apps/web/.data/outbox.jsonl`).
 - **Capture**: open a Claim Link in Chrome or Safari on this computer (passkeys and the camera work on `localhost`).
   Phones need HTTPS — use the deployed app or a tunnel.
 - **Verify**: `/verify`.
@@ -109,6 +112,10 @@ End-to-end tests drive Chrome with a virtual platform authenticator and a fake c
 WebAuthn assertion that the Registry verifies onchain. Every product surface is scanned with axe for WCAG 2.1 AA in light and
 dark mode. Registry branch coverage is 100%, with stateful invariants (no re-seal, sealing is permanent, no import of a
 sealed photo) driven by Solidity-signed passkey assertions.
+
+CI (`.github/workflows/ci.yml`) runs `pnpm check`, the Registry gas snapshot check and the e2e suite against the
+production build on every push and pull request, plus a deep fuzz/invariant campaign on `main`. A separate **Monad canary**
+(`monad-canary.yml`) re-runs the keyless passkey-verification probe against Monad testnet and mainnet every six hours.
 
 ## Status and honest limits
 

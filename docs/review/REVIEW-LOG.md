@@ -716,3 +716,45 @@ Done: all.
 **Next: Iteration 24 — Docs, pass 5**: check README, judge's guide and submission write-up against the code as it is
 now (the CI section, canary, batch cap and demo access), and fix any stale numbers or commands. Then run a fresh-clone
 quickstart dry run as described in the README.
+
+---
+
+## Iteration 24 — Docs, pass 5: every documented command and claim, run against the code (2026-09-30)
+
+Method: ran each README and runbook command as written, and traced each claim in the judge's guide and write-up back to
+a test.
+
+Findings:
+
+- **H1 (privacy)** `docs/deploy.md` told the operator to seed `northwind=you@example.com`. `openDemoSession` then picked
+  *any* user of the demo carrier (`limit(1)`, unordered), so a visitor who tapped "Explore the demo Console" could be
+  signed in as the operator and see their real email in the Console header.
+- **H2** The README's `pnpm --filter proofshot-verify start photo.jpg …` failed with ENOENT for a photo in the repo
+  root. pnpm runs the script inside `cli/`, and the CLI read the path relative to that directory.
+- **M1** README, judge's guide and write-up said axe scans "every surface, light and dark". In fact only the four
+  public pages ran in dark mode; the Console, capture, Verdicts and receipts ran in light mode only.
+- **M2** The Try-it screen and the judge's guide both suggested "crop it", and the guide promised **Derived Copy**
+  for a crop. Any real crop beyond about 3% returns **No Record** (a documented limit), so a judge following the guide
+  would see the product apparently fail.
+- **L1** A local setup had no one-tap demo Console (`DEMO_ACCESS` defaults to `0`), and the README did not mention CI
+  or the Monad canary.
+
+Done: all.
+
+- H1: demo sessions act only as the seeded `*.demo` placeholder for that carrier. A new unit test proves that a real
+  person on a demo carrier is never chosen. `deploy.md` now says demo tenants are public and must never hold real
+  data.
+- H2: the CLI resolves the image path against `INIT_CWD`, the directory where the user typed the command. Checked from
+  the repo root.
+- M1: `audit()` scans every page in both colour schemes (`emulateMedia`): 0 violations. The claim is now true as
+  written.
+- M2: the Try-it screen no longer suggests cropping and states the crop limit in one line. The guide now says a thin
+  edge trim gives **Derived Copy · check unavailable** and a bigger crop gives **No Record**.
+- L1: `pnpm dev:chain` sets `DEMO_ACCESS=1` locally unless the developer has already set it. The README documents the
+  demo Console, CLI path handling, `--json`, CI and the canary.
+
+`pnpm check` is green. e2e: 19/19 in dev mode and 19/19 in production mode.
+
+**Next: Iteration 25 — Frontend UI/UX, pass 6**: review the Try-it flow end to end at 375px (landing QR → capture →
+fool-it → verifier → receipt) for copy density, tap targets and loading states. Also review the Console claim page on
+desktop for information hierarchy now that Duplicate Alerts and uploads share it.

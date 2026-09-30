@@ -338,7 +338,10 @@ function TryToFoolIt({ capture }: { capture?: StoredCapture }) {
             Save your sealed photo
           </a>
         </li>
-        <li>Change it: paint over a detail, crop it, or send it to yourself on WhatsApp and save the copy.</li>
+        <li>
+          Change it: paint over a detail, or send it to yourself on WhatsApp and save the copy. (A crop beyond a thin
+          edge comes back &ldquo;No Record&rdquo;, a known limit.)
+        </li>
         <li>
           <a href="/verify" target="_blank" rel="noopener" className="font-medium underline underline-offset-4">
             Drop the copy into the verifier

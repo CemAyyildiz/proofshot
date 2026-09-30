@@ -8,13 +8,14 @@ Five minutes, a phone, no sign-up.
    phone**.
 2. Tap **Continue** and confirm with Face ID / fingerprint. That single prompt creates a passkey; no wallet, no app.
 3. Tap the shutter. Within the burst, each photo turns **Sealed ✓** with the time it took.
-4. Under **Now try to fool it**: save the photo, then change it — paint over a detail, crop it, or send it to
-   yourself on WhatsApp and save that copy.
+4. Under **Now try to fool it**: save the photo, then change it — paint over a detail, or send it to yourself on
+   WhatsApp and save that copy.
 5. Drop the copy into **Verify a photo**:
    - the untouched file → **Original**;
    - the WhatsApp copy → **Derived Copy**, "no regions were changed";
    - the painted copy → **Altered**, with the changed regions outlined on a 4×4 map;
-   - a crop → **Derived Copy · check unavailable**, stated as prominently as the Verdict;
+   - a thin edge trim (≈2–3%) → **Derived Copy · check unavailable**, stated as prominently as the Verdict; a bigger
+     crop → **No Record** (the known limit below);
    - any other photo → **No Record** — "not sealed with Proofshot", never "fake".
 6. Open the **Verification Receipt**: Signing Window, a shortened device key, "a carrier", and "Verify it yourself".
 
