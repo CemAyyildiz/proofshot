@@ -35,11 +35,14 @@ Five minutes, a phone, no sign-up.
 ## 3. The Carrier side (2 minutes, laptop)
 
 1. Open **Carrier Console** → **Explore the demo Console** → **Northwind Mutual · adjuster** (no email; a banner
-   marks it as a demo shared with other visitors).
+   marks it as a demo shared with other visitors, cleared after 7 days).
 2. Create a Claim File, open it, and **Upload and verify** the edited copy from step 1 → **Altered** with the Tile Map.
+   Find your file again later with **Find a Claim File**.
 3. Go back to sign-in in a private window and choose **Harbor Insurance · investigator**. Create a Claim File and
-   upload the WhatsApp copy → **Duplicate Alert · another carrier**, showing match strength and date only — nothing
-   about Northwind, its claim or its image.
+   upload the WhatsApp copy → under **Duplicate Alerts**, "Team upload 1 matches a record in another Claim File":
+   *Sealed photo · another carrier*, with the date and match strength only — nothing about Northwind, its claim or
+   its image. The alert links to the upload it is about.
+4. Open any **Receipt** and print it (or save as PDF): full hashes and the receipt's own URL, ready for a claim file.
 
 The same flows are in the demo video (script: `docs/demo-script.md`) and run locally via README → "Run it locally".
 

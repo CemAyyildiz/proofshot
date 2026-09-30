@@ -15,7 +15,7 @@ review findings behind the hardening work are in [docs/review/REVIEW-LOG.md](doc
 - **Try it** (FR-18): a no-sign-up sandbox that reaches a ready camera in ≤ 3 taps and guides visitors to try to fool
   the verifier.
 
-## Hardening from 38 review iterations (senior review → fix loop)
+## Hardening from 58 review iterations (senior review → fix loop)
 
 - **Correctness**: a Seal final onchain can never be lost (DB write and relay split, reconcile from the Registry);
   the Registry index resyncs after the app's own writes; crops are never shown as clean and never as Altered; the
@@ -43,6 +43,26 @@ review findings behind the hardening work are in [docs/review/REVIEW-LOG.md](doc
   least-privilege tokens and SHA-pinned actions, failing on flaky tests; Slither and a deep fuzz/invariant campaign; a
   six-hourly Monad canary that opens an issue when it fails; a test that every file the docs name is committed; a
   fresh clone runs `pnpm check` and the e2e suite (verified after fixing an ignored `.env.example`).
+
+### Iterations 39–58 in brief
+
+- **Security**: rate limits keyed on the edge-set client address — a client-written `X-Forwarded-For` minted a fresh
+  bucket per request on Railway-style proxies (reproduced, fixed); no account enumeration by sign-in timing or error;
+  `__Host-` session cookie; evidence images `no-store`; a security model (`docs/security.md`) with the test behind
+  every contract guarantee and the deployment assumptions they rest on.
+- **Money**: relayer fee ceiling (Monad charges the gas limit — measured ≈ 100k gas, ≈ 0.010 MON per Seal, no
+  padding, asserted in e2e); a transaction that would sit pending and block every later nonce is never sent.
+- **Hosting**: Vercel's 4.5 MB function body cap would reject ordinary phone photos — the deploy target is now a
+  long-running Node host (`railway.json`), fonts are vendored so builds never fetch Google Fonts, the daily
+  maintenance runs from GitHub Actions, and demo/sandbox data is pruned after 7 days.
+- **Correctness**: the indexer re-scans recent blocks (a lagging RPC can't hide a Seal; a reorg can't leave a phantom
+  one); a device-key registration whose response was lost is adopted instead of locking the passkey out; receipts
+  state when a Seal's Device Key was later revoked; a photo picked before the page finished loading is still checked.
+- **Product**: Console search and paging; alerts name the photo they are about; printable receipts; imports that can't
+  run twice; verifier retries keep the chosen file; honest receipt-retention copy.
+- **Quality gates**: every Verdict threshold pinned by boundary tests (26/26 mutants killed), Slither and `forge fmt`
+  in CI, an executable admin runbook, docs that may only reference committed files and existing tests, a server
+  coverage floor, e2e on two workers.
 
 ## Pending (needs the owner)
 

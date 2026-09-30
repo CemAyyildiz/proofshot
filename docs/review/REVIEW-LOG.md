@@ -2047,3 +2047,32 @@ Done: all.
 **Next: Iteration 59 — Docs, pass 12**: a CHANGELOG and judge's-guide refresh for iterations 39–58 (host change,
 security fixes, revocation receipts). Re-read the judge's guide steps against the current UI (numbered evidence,
 receipts with revocation, Try-it guidance).
+
+---
+
+## Iteration 59 — Docs, pass 12: judge-facing docs caught up with iterations 39–58 (2026-09-30)
+
+Findings:
+
+- **M1** The judge's guide described the Carrier-side alert as it was before iteration 25: "Duplicate Alert · another
+  carrier", one card per match. A judge following it would look for text the UI no longer shows. It also didn't
+  mention search (iteration 45), printable receipts (iteration 30) or the 7-day demo retention (iteration 46).
+- **M2** `CHANGELOG.md` still said "38 review iterations". Twenty iterations of security, money, hosting and
+  correctness work since then (among them the rate-limit bypass, the Vercel body cap, the fee ceiling and revocation
+  receipts) were visible only in this log.
+- OK: the Try-it steps in the guide still match the UI word for word (the guide now scrolls into view on its own).
+
+Done: both.
+
+- The guide's Carrier section uses the current wording: "Team upload 1 matches a record in another Claim File",
+  *Sealed photo · another carrier* with date and strength only, linked to the upload. It points to **Find a Claim
+  File**, mentions the demo retention, and adds step 4, print a receipt.
+- The changelog header now says 58 iterations, and a new "Iterations 39–58 in brief" section groups the work under
+  security, money, hosting, correctness, product and quality gates.
+
+`pnpm check` is green (docs tests included). e2e: 27/27 in dev mode.
+
+**Next: Iteration 60 — Frontend UI/UX, pass 13**: the capture intro screen (before "Continue"). It is the first thing
+a policyholder sees from an SMS link. Check trust signals (who is asking, why, what happens to photos), copy length
+at 375px, and whether the carrier's name is prominent enough to spot a phishing-looking link. Use ui-ux-pro-max
+guidance on trust and onboarding.
