@@ -6,6 +6,7 @@ import { env } from "@/lib/env";
 import { invalidateRegistry } from "../registry";
 import { processSingleton } from "../singleton";
 import { capFees } from "./fees";
+import { assertWindowOpen } from "./readiness";
 import { sendAtMostOnce } from "./send";
 import { rpcTransport } from "./transport";
 
@@ -58,7 +59,7 @@ function createViemRelayer(): Relayer {
   /** Current fees, capped; throws FeeTooHigh (before anything is sent) when the network is above the cap. */
   const fees = async () => {
     const [estimate, block] = await Promise.all([pub.estimateFeesPerGas(), pub.getBlock({ blockTag: "latest" })]);
-    return capFees(estimate, block.baseFeePerGas ?? 0n, feeCap);
+    return { fees: capFees(estimate, block.baseFeePerGas ?? 0n, feeCap), head: block.number };
   };
 
   // Serialise submissions from this process so nonces are handed out in order. Races with another instance (e.g.
@@ -71,14 +72,18 @@ function createViemRelayer(): Relayer {
   };
 
   type WriteName = "registerDeviceKey" | "seal" | "importRecords";
-  /** Estimates against the ABI (so a revert is reported by name, e.g. `DeviceKeyExists`), signs, and sends once. */
-  const write = (functionName: WriteName, args: readonly unknown[]) =>
+  /**
+   * Estimates against the ABI (so a revert is reported by name, e.g. `DeviceKeyExists`), signs, and sends once.
+   * `guard` sees the latest block first and can refuse to send.
+   */
+  const write = (functionName: WriteName, args: readonly unknown[], guard?: (head: bigint) => void) =>
     submit(() =>
       sendAtMostOnce({
         sign: async () => {
           const call = { address, abi: registryAbi, functionName, args, account } as never;
           // The estimate is the gas limit, unpadded: Monad charges the limit, not the gas used.
-          const [f, gas] = await Promise.all([fees(), pub.estimateContractGas(call)]);
+          const [{ fees: f, head }, gas] = await Promise.all([fees(), pub.estimateContractGas(call)]);
+          guard?.(head);
           const request = await wallet.prepareTransactionRequest({ to: address, data: encodeFunctionData({ abi: registryAbi, functionName, args } as never), gas, ...f });
           return wallet.signTransaction(request as never);
         },
@@ -112,11 +117,11 @@ function createViemRelayer(): Relayer {
       return write("registerDeviceKey", [keyId, qx, qy]);
     },
     async seal(keyId, record, auth) {
-      const txHash = await write("seal", [
-        keyId,
-        { ...record, tiles: record.tiles },
-        { ...auth, challengeIndex: BigInt(auth.challengeIndex), typeIndex: BigInt(auth.typeIndex) },
-      ]);
+      const txHash = await write(
+        "seal",
+        [keyId, { ...record, tiles: record.tiles }, { ...auth, challengeIndex: BigInt(auth.challengeIndex), typeIndex: BigInt(auth.typeIndex) }],
+        (head) => assertWindowOpen(record.refBlock, head),
+      );
       const receipt = await pub.waitForTransactionReceipt({ hash: txHash, pollingInterval: 100, timeout: e.RELAYER_RECEIPT_TIMEOUT_MS });
       if (receipt.status !== "success") throw new Error(`seal reverted: ${txHash}`);
       invalidateRegistry();

@@ -1,8 +1,10 @@
 import type { CaptureRecord, Hex, WebAuthnAuth } from "@proofshot/shared";
 import { and, eq, lt, sql } from "drizzle-orm";
-import { keccak256, toBytes } from "viem";
+import { keccak256, parseGwei, toBytes } from "viem";
 import { z } from "zod";
+import { env } from "@/lib/env";
 import { isServiceUnavailable, relayerErrorKind } from "../chain/errors";
+import { cachedStatus, sealingBlocked } from "../chain/readiness";
 import type { Relayer } from "../chain/relayer";
 import type { Db } from "../db/client";
 import { captures, claimLinks, deviceKeys } from "../db/schema";
@@ -53,6 +55,8 @@ export type SealResponse =
   | { ok: true; txHash: Hex; blockNumber: string; receiptUrl: string }
   | { ok: false; status: 400 | 404 | 409 | 410 | 429 | 502 | 503 | 504; error: string; receiptUrl?: string; limit?: true };
 
+export const SEALING_PAUSED_MESSAGE = "Sealing is paused on our side for a moment. Your photo is kept on this phone — try again in a few minutes.";
+
 /** A limit that won't lift within minutes: the capture screen stops the shutter instead of failing photo by photo. */
 export const linkFullMessage = () => `This link has reached its limit of ${SEALS_PER_LINK} photos. Ask your insurer for a new link.`;
 
@@ -67,6 +71,12 @@ export async function sealContext(db: Db, relayer: () => Relayer, token: string)
   if (!link || link.state !== "active") return null;
   if (link.sealCount >= SEALS_PER_LINK) return { limit: linkFullMessage() };
   if (await sponsoredBudgetSpent(db, link)) return { limit: SPONSOR_BUDGET_MESSAGE };
+  // A paused Registry, an empty relayer or a fee spike: say so now rather than after the prompt. If the status can't
+  // be read, carry on; the Seal itself reports what went wrong.
+  const status = await Promise.resolve()
+    .then(() => cachedStatus(relayer()))
+    .catch(() => null);
+  if (status && sealingBlocked(status, parseGwei(String(env().RELAYER_MAX_FEE_GWEI)))) return { unavailable: SEALING_PAUSED_MESSAGE };
   if (!(await consume(db, `context:${token}`, CONTEXTS_PER_LINK_PER_HOUR, 60 * 60 * 1000)).allowed) return "limited" as const;
   const block = await relayer().latestBlock();
   return {
@@ -162,7 +172,7 @@ export async function sealCapture(db: Db, relayer: () => Relayer, token: string,
     await release();
     console.error(`[seal] failed (${kind})`, err);
     if (isServiceUnavailable(kind)) {
-      return { ok: false, status: 503, error: "Sealing is paused on our side for a moment. Your photo is kept on this phone — try again in a few minutes." };
+      return { ok: false, status: 503, error: SEALING_PAUSED_MESSAGE };
     }
     if (kind === "timeout") {
       return { ok: false, status: 504, error: "Sealing is taking longer than usual. Tap retry — if it already went through, we'll pick it up." };

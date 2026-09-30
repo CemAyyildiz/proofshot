@@ -2556,3 +2556,48 @@ Done:
 `pnpm check` is green. e2e: 29/29 in dev mode and 29/29 in production mode.
 
 **Next: Iteration 72 — Contracts, pass 15.**
+
+## Iteration 72 — Contracts, pass 15: conditions that make a Seal impossible, checked before anyone pays
+
+Method: listed every chain-side reason `seal()` cannot succeed: Registry paused, relayer unfunded, base fee above
+the relayer cap, Signing Window closed. For each, asked two things. Does the policyholder find out before or after
+the Face ID prompt? And on Monad, where a reverted transaction still pays its full gas limit, can we end up paying
+for a transaction that is certain to fail?
+
+Findings:
+
+- **M1** A paused Registry, an empty relayer or a fee spike was only discovered at `POST /seals`, **after** the
+  device had signed. Every photo during an incident cost the policyholder a Face ID prompt before "Sealing is paused
+  on our side". (Iteration 70 fixed the same pattern for app-side limits.)
+- **M2 (Monad-specific)** The relayer's gas estimate runs one block before inclusion. A record whose Signing Window
+  (100 blocks, ≈ 30 s) has only a block or two left passes the estimate, is included after the window, and reverts
+  with `SigningWindowExpired`. On Monad that costs the full ≈ 100k-gas limit for a result the server could have
+  predicted. It happens when the policyholder took almost 30 s over the prompt (a passcode fallback, a distraction).
+- OK: `AlreadySealed` and `DeviceKeyExists` races are covered by the estimate plus reconciliation (51, 68), and
+  revocation between context and send is rare and admin-driven.
+
+Done:
+
+- New `chain/readiness.ts`:
+  - `cachedStatus()` reads relayer status at most once per 15 s per relayer. The health route (71) and every Seal's
+    pre-check share it; a failed read isn't reused.
+  - `sealingBlocked()` reports paused, fee above cap, or a balance that can't pay one Seal (150k gas at the current
+    base fee).
+  - `assertWindowOpen()` refuses when fewer than 10 blocks (≈ 3 s) of the window are left.
+- `seal-context` returns 503 "Sealing is paused on our side…" **before** the prompt when sealing is blocked. If the
+  status can't be read, it carries on, and the Seal itself reports what went wrong.
+- The relayer's `seal` passes `assertWindowOpen` as a guard. It runs on the block the fees were read from, before
+  signing, and surfaces as `window-expired` ("This photo took too long to seal. Tap retry."): nothing is sent, no gas
+  is paid.
+- Tests:
+  - `readiness.test.ts`: the TTL and failure handling; each blocked reason, including the balance boundary; the
+    window boundary at 90 / 91 blocks, classified as `window-expired`.
+  - `sealContext` when paused never reaches the chain.
+  - The health cache test uses one relayer object, as `getRelayer()` does.
+  - e2e: the Seal's gas limit still equals gas used.
+- The full e2e ran slower this time (2.0 min dev, 1.2 min prod) because the machine was loaded (load average 10).
+  The capture spec with and without this change took the same time (42.9 s and 42.5 s).
+
+`pnpm check` is green. e2e: 29/29 in dev mode and 29/29 in production mode.
+
+**Next: Iteration 73 — Tests/CI, pass 15.**

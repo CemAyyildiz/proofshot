@@ -69,6 +69,12 @@ describe("sealContext", () => {
     expect(await sealContext(db, relayer, token)).toBeNull();
   });
 
+  it("says sealing is paused before the device asks for Face ID when the Registry is paused", async () => {
+    const paused = { seal, latestBlock, status: async () => ({ balanceWei: 10n ** 19n, paused: true, baseFeeWei: 10n ** 11n }) } as unknown as Relayer;
+    expect(await sealContext(db, () => paused, token)).toEqual({ unavailable: expect.stringContaining("paused on our side") });
+    expect(latestBlock).not.toHaveBeenCalled();
+  });
+
   it("reports a full link or a spent carrier budget before the device asks for Face ID", async () => {
     await db.update(claimLinks).set({ sealCount: SEALS_PER_LINK });
     expect(await sealContext(db, relayer, token)).toEqual({ limit: expect.stringContaining("limit of 50 photos") });

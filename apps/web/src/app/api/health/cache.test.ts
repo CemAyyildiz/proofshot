@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 const status = vi.fn(async () => ({ balanceWei: 5n * 10n ** 18n, paused: false, baseFeeWei: 100n * 10n ** 9n }));
+const relayer = { status }; // one process-wide relayer, as getRelayer() returns
 vi.mock("@/server/chain/relayer", async (orig) => ({
   ...(await orig<typeof import("@/server/chain/relayer")>()),
-  getRelayer: () => ({ status }),
+  getRelayer: () => relayer,
 }));
 
 describe("GET /api/health under load", () => {
