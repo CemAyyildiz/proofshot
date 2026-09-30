@@ -58,6 +58,17 @@ test("capture all surfaces", async ({ browser }) => {
   await shot(marcus, "d-console-claim");
   await marcus.goto("/console/imports");
   await shot(marcus, "d-console-imports");
+  // The same Console on a phone: adjusters check alerts away from their desk.
+  await marcus.setViewportSize({ width: 375, height: 812 });
+  for (const [path, name] of [
+    ["/console", "list"],
+    [claimUrl, "claim"],
+    ["/console/imports", "imports"],
+  ] as const) {
+    await marcus.goto(path);
+    await shot(marcus, `m-console-${name}`);
+  }
+  await marcus.setViewportSize({ width: 1280, height: 800 });
 
   // Capturer flow on a phone.
   const phone = await (await browser.newContext({ viewport: { width: 375, height: 812 }, permissions: ["camera"], isMobile: true, hasTouch: true })).newPage();

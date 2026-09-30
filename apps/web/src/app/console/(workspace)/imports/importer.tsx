@@ -85,12 +85,13 @@ export function Importer() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-3">
-        <label className="btn-primary cursor-pointer has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
+      {/* Phones and tablets can't pick a folder: there, images or a .zip is the one action, full width. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        <label className="btn-primary cursor-pointer pointer-coarse:hidden has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
           Choose a folder
           <input type="file" className="sr-only" aria-label="Choose a folder of images" disabled={busy} {...{ webkitdirectory: "", directory: "" }} multiple onChange={(e) => run(e.target.files)} />
         </label>
-        <label className="btn-secondary cursor-pointer has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
+        <label className="btn-secondary cursor-pointer pointer-coarse:border-transparent pointer-coarse:bg-accent pointer-coarse:text-accent-fg has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
           Choose images or a .zip
           <input type="file" className="sr-only" aria-label="Choose images or a zip file" disabled={busy} multiple accept="image/*,.heic,.heif,.zip" onChange={(e) => run(e.target.files)} />
         </label>

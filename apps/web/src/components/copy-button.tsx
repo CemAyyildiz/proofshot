@@ -20,7 +20,7 @@ export function CopyButton({
       type="button"
       autoFocus={autoFocus}
       aria-describedby={describedBy}
-      className="self-start rounded-md border print:hidden border-line bg-surface px-3 py-2 text-sm hover:border-foreground/40"
+      className="btn-secondary self-start text-sm print:hidden"
       onClick={async () => {
         await navigator.clipboard.writeText(value);
         setCopied(true);

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CopyButton } from "@/components/copy-button";
+import { ShareButton } from "@/components/share-button";
 import { env } from "@/lib/env";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { ArrowLeftIcon, WarningIcon } from "@/components/icons";
@@ -76,7 +77,10 @@ export default async function ClaimFilePage({ params, searchParams }: PageProps<
             <div className="flex flex-col gap-2 sm:flex-row">
               <input readOnly value={url} aria-label="Claim Link" className="flex-1 rounded-md border border-line bg-background px-3 py-2 font-mono text-sm" />
               {/* Keyed by token: a new link remounts the button, so a "Copied" state never carries over to it. */}
-              <CopyButton key={file.link.token} value={url} label="Copy link" autoFocus={replaced} describedBy={replaced ? "link-status" : undefined} />
+              <div className="grid grid-cols-2 gap-2 empty:hidden sm:flex [&>*]:w-full sm:[&>*]:w-auto">
+                <CopyButton key={file.link.token} value={url} label="Copy link" autoFocus={replaced} describedBy={replaced ? "link-status" : undefined} />
+                <ShareButton url={url} title={`Photos for claim ${file.reference}`} label="Share link" />
+              </div>
             </div>
             {/* Keyed by token too, so a finished confirmation doesn't stay open over the new link. */}
             <div key={file.link.token} className="flex flex-wrap gap-x-6 gap-y-2">
