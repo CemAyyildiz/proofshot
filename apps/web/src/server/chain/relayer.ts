@@ -1,11 +1,12 @@
 import "server-only";
 import { type CaptureRecord, type Hex, type WebAuthnAuth, registryAbi } from "@proofshot/shared";
-import { createPublicClient, createWalletClient, defineChain, parseGwei, type PublicClient } from "viem";
+import { createPublicClient, createWalletClient, defineChain, encodeFunctionData, parseGwei, type PublicClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { env } from "@/lib/env";
 import { invalidateRegistry } from "../registry";
 import { processSingleton } from "../singleton";
 import { capFees } from "./fees";
+import { sendAtMostOnce } from "./send";
 import { rpcTransport } from "./transport";
 
 export interface SealResult {
@@ -39,8 +40,6 @@ export class RelayerNotConfigured extends Error {
   override name = "RelayerNotConfigured";
 }
 
-const NONCE_ERRORS = /nonce too low|nonce has already been used|replacement transaction underpriced|already known/i;
-
 function createViemRelayer(): Relayer {
   const e = env();
   if (!e.RELAYER_PRIVATE_KEY || !e.REGISTRY_ADDRESS) throw new RelayerNotConfigured("RELAYER_PRIVATE_KEY and REGISTRY_ADDRESS are required");
@@ -62,26 +61,31 @@ function createViemRelayer(): Relayer {
     return capFees(estimate, block.baseFeePerGas ?? 0n, feeCap);
   };
 
-  // Serialise submissions from this process so nonces are handed out in order; retry, with a short backoff, if
-  // another instance (e.g. during a zero-downtime deploy) or a lagging fallback RPC raced us to a nonce.
+  // Serialise submissions from this process so nonces are handed out in order. Races with another instance (e.g.
+  // during a zero-downtime deploy) and lost responses are handled per write by `sendAtMostOnce`.
   let queue: Promise<unknown> = Promise.resolve();
   const submit = <T>(fn: () => Promise<T>): Promise<T> => {
-    const run = queue.then(async () => {
-      for (let attempt = 0; ; attempt++) {
-        try {
-          return await fn();
-        } catch (err) {
-          if (attempt < 3 && NONCE_ERRORS.test(String(err))) {
-            await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
-            continue;
-          }
-          throw err;
-        }
-      }
-    });
+    const run = queue.then(fn);
     queue = run.catch(() => undefined);
     return run;
   };
+
+  type WriteName = "registerDeviceKey" | "seal" | "importRecords";
+  /** Estimates against the ABI (so a revert is reported by name, e.g. `DeviceKeyExists`), signs, and sends once. */
+  const write = (functionName: WriteName, args: readonly unknown[]) =>
+    submit(() =>
+      sendAtMostOnce({
+        sign: async () => {
+          const call = { address, abi: registryAbi, functionName, args, account } as never;
+          // The estimate is the gas limit, unpadded: Monad charges the limit, not the gas used.
+          const [f, gas] = await Promise.all([fees(), pub.estimateContractGas(call)]);
+          const request = await wallet.prepareTransactionRequest({ to: address, data: encodeFunctionData({ abi: registryAbi, functionName, args } as never), gas, ...f });
+          return wallet.signTransaction(request as never);
+        },
+        send: (raw) => wallet.sendRawTransaction({ serializedTransaction: raw }),
+        known: (hash) => pub.getTransaction({ hash }).then(() => true),
+      }),
+    );
 
   return {
     async status() {
@@ -105,37 +109,21 @@ function createViemRelayer(): Relayer {
       return { qx: k.qx, qy: k.qy, revokedAtBlock: k.revokedAtBlock };
     },
     registerDeviceKey(keyId, qx, qy) {
-      return submit(async () => wallet.writeContract({ address, abi: registryAbi, functionName: "registerDeviceKey", args: [keyId, qx, qy], ...(await fees()) }));
+      return write("registerDeviceKey", [keyId, qx, qy]);
     },
     async seal(keyId, record, auth) {
-      const txHash = await submit(async () =>
-        wallet.writeContract({
-          ...(await fees()),
-          address,
-          abi: registryAbi,
-          functionName: "seal",
-          args: [
-            keyId,
-            { ...record, tiles: record.tiles as never },
-            { ...auth, challengeIndex: BigInt(auth.challengeIndex), typeIndex: BigInt(auth.typeIndex) },
-          ],
-        }),
-      );
+      const txHash = await write("seal", [
+        keyId,
+        { ...record, tiles: record.tiles },
+        { ...auth, challengeIndex: BigInt(auth.challengeIndex), typeIndex: BigInt(auth.typeIndex) },
+      ]);
       const receipt = await pub.waitForTransactionReceipt({ hash: txHash, pollingInterval: 100, timeout: e.RELAYER_RECEIPT_TIMEOUT_MS });
       if (receipt.status !== "success") throw new Error(`seal reverted: ${txHash}`);
       invalidateRegistry();
       return { txHash, blockNumber: receipt.blockNumber };
     },
     async importRecords(carrierId, records) {
-      const txHash = await submit(async () =>
-        wallet.writeContract({
-          ...(await fees()),
-          address,
-          abi: registryAbi,
-          functionName: "importRecords",
-          args: [carrierId, records.map((r) => ({ ...r, tiles: r.tiles as never }))],
-        }),
-      );
+      const txHash = await write("importRecords", [carrierId, records]);
       const receipt = await pub.waitForTransactionReceipt({ hash: txHash, pollingInterval: 100, timeout: e.RELAYER_RECEIPT_TIMEOUT_MS });
       if (receipt.status !== "success") throw new Error(`importRecords reverted: ${txHash}`);
       invalidateRegistry();

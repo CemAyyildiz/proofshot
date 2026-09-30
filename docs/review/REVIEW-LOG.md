@@ -2406,3 +2406,49 @@ Done: all.
 `pnpm check` is green and the runbook check passes. e2e: 28/28 in dev mode and 28/28 in production mode.
 
 **Next: Iteration 68 — Tests/CI, pass 14.**
+
+## Iteration 68 — Tests/CI, pass 14: the code the unit suite never runs
+
+Method:
+- Ran `actionlint` 1.7.12 over the workflows, including the new `postgres` job that can't run here without a
+  remote.
+- Printed per-file server coverage and read what sits below 70%, and why.
+
+Findings:
+
+- OK: `actionlint` is clean on all three workflows.
+- OK, and why:
+  - `session.ts` and `scope.ts` read Next request context and are covered by e2e.
+  - `chain-source.ts` and `registry/index.ts` are covered by e2e on a real chain, and the indexer logic itself by
+    unit tests.
+- **H1 (real bug, found by reading the uncovered code)** `relayer.ts` sat at 17% unit coverage. Its retry loop
+  answered "already known" and "nonce too low" by signing a **new** transaction with the next nonce.
+  - Both errors can mean our own transaction already reached the network and only the response was lost. For
+    example, the primary RPC accepts it and times out, then the fallback RPC, or viem's own HTTP retry, is told
+    "already known".
+  - The loop then broadcast a duplicate. It reverts (`AlreadySealed`, `DeviceKeyExists`), still costs its full gas
+    limit on Monad, and the relayer waited on the duplicate's receipt.
+  - A Seal that succeeded was therefore reported as failed. Its reservation was released, and the photo showed
+    "couldn't be sealed" until reconciliation.
+  - No test could see this: the retry lived inside a closure over live viem clients.
+
+Done:
+
+- New `chain/send.ts` `sendAtMostOnce()`. Each attempt signs once, so the hash is known before broadcasting.
+  - "already known" returns that hash.
+  - "nonce too low" first asks the node whether our own transaction exists, and returns its hash if it does.
+  - Only a nonce taken by someone else (another instance, a replacement) leads to signing a fresh transaction, up to
+    4 attempts with backoff.
+  - Every other error is thrown at once.
+- The relayer's three writes go through one `write()`. It estimates against the ABI, so reverts are still named, and
+  uses the estimate as the unpadded gas limit, then signs and sends. The per-process queue stays.
+- Tests:
+  - `send.test.ts`, 5 tests: happy path; "already known" never signs twice; our landed transaction under "nonce too
+    low"; a race lost to another transaction re-signs; bounded retries; other errors are not retried.
+  - Checked on Anvil: a registration lands, and a second one fails with `DeviceKeyExists` named in the error, which
+    the enrollment adoption path relies on.
+  - e2e: the Seal's gas limit still equals gas used (99,961).
+
+`pnpm check` is green. e2e: 28/28 in dev mode and 28/28 in production mode.
+
+**Next: Iteration 69 — Docs/README, pass 14.**
