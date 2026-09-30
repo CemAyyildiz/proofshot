@@ -15,8 +15,9 @@ REGISTRY_ADMIN=0x<admin> REGISTRY_RELAYER=0x<relayer> REGISTRY_RP_IDS=<your-doma
 forge verify-contract <address> src/Registry.sol:Registry --chain 10143 --verifier sourcify
 ```
 
-The script refuses to run on the wrong chain and writes `contracts/deployments/<chainId>.json` with the address and
-deploy block. `REGISTRY_RP_IDS` must list the exact hostname passkeys are created on (e.g. `proofshot.app`); preview
+The script refuses the wrong chain, an empty RP ID list (the Registry would accept no passkey at all) and `localhost`
+on mainnet. It writes `contracts/deployments/<chainId>.json` with the address, the deploy block (a lower bound for
+`REGISTRY_DEPLOY_BLOCK`), the admin, relayer and deployer addresses, the admin-transfer delay and the RP IDs. `REGISTRY_RP_IDS` must list the exact hostname passkeys are created on (e.g. `proofshot.app`); preview
 hostnames need their own entry (`setRpIdHash` from the admin key).
 
 Mainnet: the same with `MONAD_MAINNET_RPC_URL` and `pnpm deploy:mainnet` (chain 143).

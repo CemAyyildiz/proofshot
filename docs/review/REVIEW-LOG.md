@@ -1192,3 +1192,40 @@ Done: all.
 DefaultAdminRules (does the deploy record the admin transfer delay, and does `DeployRegistry.t.sol` assert it?), and
 check the keyless probe still matches the Registry's verification path after the fmt changes (re-run
 `pnpm --filter @proofshot/contracts probe --no-write`).
+
+---
+
+## Iteration 37 — Contracts, pass 8: the deploy script after the admin changes (2026-09-30)
+
+Method: read `DeployRegistry.s.sol` against iteration 27's DefaultAdminRules, then broadcast it for real to a
+throwaway Anvil and read the `deployments/31337.json` it wrote. I deleted the file and the broadcast log afterwards.
+I also re-ran the keyless Monad probe.
+
+Findings:
+
+- **H1** An empty RP ID list deployed without complaint. `REGISTRY_RP_IDS=` (or unset, if an env wrapper supplied an
+  empty string) produces a Registry that can never accept a single passkey. Nobody would notice until the first
+  Seal failed on the live demo, and fixing it takes the cold admin key (`setRpIdHash`).
+- **M1** `localhost` was accepted as an RP ID on mainnet. Copying the local `RP_IDS` default would make passkeys
+  created on any developer machine valid on the production Registry.
+- **M2** The deployment record didn't capture the new admin rules (transfer delay) or who deployed. An auditor had to
+  read the chain to learn either.
+- **L1** `deployBlock` is the block the script simulated against, not the inclusion block (0 vs 1 on Anvil). That is
+  correct as the indexer's inclusive lower bound, but it was undocumented.
+- OK: the probe still matches. Testnet and mainnet accept the valid assertion (13,853 gas, precompile accepted) and
+  reject the tampered one.
+
+Done: all.
+
+- The script reverts with `NoRpIds`, `EmptyRpId` and `LocalhostOnMainnet`; testnet may keep `localhost` for
+  development. The deployment JSON now also records `deployer` and `adminTransferDelaySeconds` (86400).
+- `DeployRegistry.t.sol` asserts `defaultAdmin` and the delay, and has a new test for all three refusals plus the
+  testnet exception.
+- `deploy.md` describes the guards and every field of the record.
+
+`pnpm check` is green (contract suites included). The gas snapshot is unchanged. e2e: 22/22 in dev mode.
+
+**Next: Iteration 38 — Tests/CI, pass 8**: extend the fresh-clone check from iteration 34 into CI. Add a job, or a
+step in `check`, that fails when a file referenced by the README or tests is git-ignored, e.g. by running
+`git ls-files --others --ignored --exclude-standard` against an allow-list. Also make sure the canary would alert:
+decide how a failed scheduled run notifies the owner.
