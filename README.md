@@ -140,8 +140,14 @@ README and `docs/` mention must be committed.
   **No Record**; a cropped copy is never shown as a clean result.
 - **Indexing** runs inside the app (viem log reader into Postgres); the chain is the source of truth.
 - **Relayer trust**: in v1 the relayer attests which carrier and claim a Seal belongs to; the admin (a separate cold
-  key) can pause the Registry and rotate a compromised relayer.
-- **Deployment**: runbook in [docs/deploy.md](docs/deploy.md).
+  key) can pause the Registry and rotate a compromised relayer. Signatures are not yet bound to the chain and
+  Registry address — required before `seal()` is opened to anyone ([docs/security.md](docs/security.md)).
+- **Sponsored fees**: Proofshot pays every Seal. Rate limits (per Claim Link, Device Key, sandbox visitor and carrier)
+  and a gas-price ceiling bound the spend, but someone with many real IP addresses can still use up the relayer's
+  budget faster than intended; the health check alarms on a low balance.
+- **Hosting**: needs a long-running Node server behind a proxy — not serverless functions, whose 4.5 MB request cap
+  rejects ordinary phone photos. Runbook and assumptions: [docs/deploy.md](docs/deploy.md),
+  [docs/security.md](docs/security.md#deployment-assumptions).
 
 ## Repository
 

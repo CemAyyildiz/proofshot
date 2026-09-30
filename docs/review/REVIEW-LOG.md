@@ -1850,3 +1850,45 @@ isolation still works: a single value is also the rightmost).
 **Next: Iteration 54 — Docs, pass 11**: the security model after iterations 50–53 (host assumptions: the client IP
 from the edge, the body limits, the fee cap). Make `security.md` state the hosting assumptions the guarantees
 depend on, and check the README "Status and honest limits" is still true.
+
+---
+
+## Iteration 54 — Docs, pass 11: the assumptions behind the guarantees (2026-09-30)
+
+Findings:
+
+- **M1** `security.md` stated guarantees without the deployment assumptions they rest on. Iterations 50–53 showed
+  that several of them are host-dependent:
+  - the rate limits need an edge-set client address;
+  - uploads need bodies of up to 20 MB;
+  - passkeys and the `__Host-` cookie need HTTPS on the allowlisted hostname;
+  - evidence needs a private store;
+  - incident response needs a cold admin key;
+  - the alarms need `/api/health` to be watched.
+
+  An operator could honour every guarantee in the table and still deploy them away. The clearest case: exposing the
+  app without a proxy makes `X-Forwarded-For` fully client-controlled, which reopens the rate-limit bypass fixed in
+  iteration 53.
+- **M2** The README's "honest limits" said nothing about three things: that sponsored fees can still be drained by
+  someone with many real IPs (the limits bound the rate, not the attacker's reach), that signatures aren't
+  domain-separated, and that the app needs a long-running host.
+- OK: the application-safeguards summary was accurate but predated the edge-IP and fee-ceiling fixes.
+
+Done: all.
+
+- `security.md` gains a "Deployment assumptions" table. Each of the six assumptions is paired with why it matters and
+  what breaks if it's violated. The safeguards summary now mentions the edge-keyed rate limits and the fee ceiling.
+- The README limits now cover:
+  - the relayer trust, including domain separation as the prerequisite for a permissionless `seal()`;
+  - sponsored-fee exposure, with the health alarm;
+  - the hosting requirement, linking `deploy.md` and the new section.
+
+`pnpm check` is green (the docs tests confirm every new link resolves). e2e: 24/24 in dev mode.
+
+**Next: Iteration 55 — Frontend UI/UX, pass 12**: the Public Verifier's error and edge states at 375px:
+- the new 413 messages ("over 50 megapixels", "larger than 20 MB");
+- rate-limited (429);
+- the registry unreachable (503);
+- a HEIC on Chrome (no preview but a Verdict).
+
+Check that each state has a clear next step and doesn't lose the chosen file.
