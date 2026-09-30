@@ -898,3 +898,38 @@ Done: all.
 **Next: Iteration 29 — Docs, pass 6**: read the submission write-up end to end as a judge would (structure, the first
 100 words, claims-to-evidence links, ⏳ items) and tighten it. Also make sure `docs/demo-script.md` matches the UI as it
 is now (Try-it scroll, numbered evidence, grouped alerts).
+
+---
+
+## Iteration 29 — Docs, pass 6: the write-up and demo script, read as a judge (2026-09-30)
+
+Findings:
+
+- **H1** The write-up's latency line points at `docs/latency.md`, but nothing produced that file. Seal timings
+  (`captures.timings`) were stored on every Seal and never aggregated, so after launch the owner had no way to fill
+  in the NFR-1 / SM-5 p95.
+- **H2** The demo script opened with "99% of insurers have already received manipulated evidence" stated as fact.
+  The write-up itself says to re-check that citation before quoting it.
+- **M1** The demo script quoted Duplicate Alert copy that no longer exists after iteration 25's grouping.
+- **M2** Section 2 of the write-up ("what a Seal proves") was still a paste-me placeholder, and the first 100 words
+  opened with the problem, without saying what Proofshot is.
+- **L1** The write-up's engineering section did not mention the role invariants or the review hardening.
+- OK: every other on-screen label quoted in the demo script matches the UI strings exactly (checked by grep).
+
+Done: all.
+
+- `pnpm --filter web report:latency [--since] [--out]` reads the deployment's database and writes `docs/latency.md`:
+  nearest-rank p50/p95/max of shutter → "Sealed ✓", split into Claim Links and Try-it sandbox, plus the on-device
+  signing part and the p95 ≤ 3 s verdict. It says "no data" rather than inventing numbers. Unit-tested, and run
+  against the e2e database (local: p95 1.12 s over 11 Seals; that is a local chain, so it is not quoted as Monad).
+  Added to `deploy.md` and to the owner checklist.
+- The demo opener no longer states the statistic; it is an optional ⏳ line that requires a source check first. The
+  alert beat uses the current copy.
+- The write-up opens with a one-paragraph summary; §2 carries the threat model's proves/does-not-prove statement;
+  §8 lists the role invariants and the hardening.
+
+`pnpm check` is green. e2e: 19/19 in dev mode.
+
+**Next: Iteration 30 — Frontend UI/UX, pass 7**: review the Public Verifier result states at 375px (all four
+Verdicts plus the crop warning) for scannability, and receipts on desktop for print/PDF (an adjuster will attach them
+to a claim file). Consider a print stylesheet.

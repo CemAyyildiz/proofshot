@@ -3,6 +3,13 @@
 > Draft. ⏳ marks numbers that are not measured yet; fill them from the named source before submitting. Nothing here
 > is a projection.
 
+**In one paragraph.** Proofshot seals insurance claim photos at the moment of capture. The policyholder opens a link,
+with no app and no wallet, and one Face ID prompt signs each photo's fingerprints with a passkey. A Monad contract
+verifies that passkey signature onchain through the P-256 precompile before recording the Seal. From then on, anyone
+with *any* copy of the photo (even a WhatsApp-compressed one) gets exactly one Verdict: Original, Derived Copy, Altered
+(with the changed regions mapped) or No Record. Insurers also learn when a photo was already used in another claim,
+including at another insurer, without either of them sharing a photo.
+
 ## 1. Problem
 
 Claims now run on photos, and photos can no longer be trusted: generative editors add a dent or a water stain in
@@ -12,7 +19,12 @@ before quoting.)
 
 ## 2. What Proofshot proves — and what it does not
 
-*(Paste `docs/threat-model.md` §"What a Seal proves" verbatim.)*
+A Seal proves: (a) a specific Device Key signed these fingerprints; (b) within the Signing Window; (c) whether the
+image changed since, and where; (d) whether the same visual content already exists elsewhere in the Registry.
+
+It does not prove that the pixels came from the device's camera sensor, that the scene is what the Capturer says it
+is, or who the Capturer is legally. The full threat model, with what is accepted in v1 and what is planned, is in
+`docs/threat-model.md`.
 
 ## 3. Why onchain
 
@@ -26,7 +38,8 @@ can check a photo without asking anyone.
   **100,340 gas per Seal** (Foundry, Osaka EVM) vs 326,571 without it. On the live chains, a keyless probe ran the same
   OpenZeppelin verification on Monad testnet and mainnet: passkey assertion accepted (13,853 gas), tampered one
   rejected (`docs/spikes/spike-b-probe.json`). Live `seal()` on a deployed Registry: ⏳ `docs/spikes/spike-b-testnet.json`.
-- Seal latency p95 shutter → "Sealed ✓": ⏳ (target ≤ 3 s, NFR-1; `docs/latency.md`).
+- Seal latency p95 shutter → "Sealed ✓": ⏳ (target ≤ 3 s, NFR-1). Generate `docs/latency.md` from the deployment
+  with `DATABASE_URL=… PROOFSHOT_NETWORK=mainnet pnpm --filter web report:latency`; quote the Claim Links row.
 - Cost per Seal: ≈ 0.010 MON at the 102 gwei observed on 2026-09-30 (100,340 gas); confirm with the live `seal()` gas.
 
 ## 5. Demo
@@ -48,8 +61,11 @@ Known limit, stated up front: crops beyond ~3% fall to No Record; a crop is neve
 ## 8. Engineering quality
 
 - Real WebAuthn signatures sealed on a chain in every end-to-end run (Chrome virtual authenticator + fake camera).
-- Registry: 100% branch coverage; stateful invariants (no re-seal, permanent seals, no import of a sealed photo)
-  over 65k calls with Solidity-signed passkeys; pause and relayer-rotation runbook tested.
+- Registry: 100% branch coverage; stateful invariants (no re-seal, permanent seals, no import of a sealed photo,
+  exactly one admin, never admin and relayer at once) over 65k calls with Solidity-signed passkeys and random role
+  changes; pause and relayer-rotation runbook tested.
+- Hardening found by review and fixed with tests: decompression-bomb images are refused before decoding (50 MP
+  budget), and demo access can never act as a real person.
 - WCAG 2.1 AA: axe scans every surface, light and dark: 0 violations.
 - CLI and Public Verifier are asserted to return the same Verdict.
 

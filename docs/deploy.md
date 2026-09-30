@@ -61,4 +61,6 @@ are served only through the tenant-checked Console routes.
 - External uptime check on `/`, `/verify` and `/api/health`. Health returns **503** when the relayer's balance is
   below `RELAYER_MIN_BALANCE_MON` (default 1 MON), the Registry is paused, or the chain is unreachable — so the
   uptime monitor is also the low-balance alarm. Each Seal costs ~100k gas.
+- Seal latency (SM-5): once real Seals exist, `DATABASE_URL=… PROOFSHOT_NETWORK=mainnet pnpm --filter web
+  report:latency --since <launch date>` writes `docs/latency.md` (p50/p95/max, Claim Links vs Try-it).
 - Keep the admin key offline; the incident runbook is in the Registry's NatSpec and `docs/threat-model.md` (T-8).
