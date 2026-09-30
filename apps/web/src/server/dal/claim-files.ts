@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, sql } from "drizzle-orm";
 import type { Db } from "../db/client";
 import { captures, carriers, claimFiles, claimLinks, duplicateAlerts, uploads } from "../db/schema";
 
@@ -42,8 +42,13 @@ export async function createClaimFile(scope: CarrierScope, reference: string, no
   });
 }
 
-export async function listClaimFiles(scope: CarrierScope) {
-  return scope.db
+/** `%`, `_` and `\` are wildcards in ILIKE; a reference search must match them literally. */
+const likeLiteral = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
+
+/** This Carrier's Claim Files, newest first; optionally filtered by reference (case-insensitive substring) and paged. */
+export async function listClaimFiles(scope: CarrierScope, opts: { q?: string; limit?: number; offset?: number } = {}) {
+  const q = opts.q?.trim();
+  const query = scope.db
     .select({
       id: claimFiles.id,
       reference: claimFiles.reference,
@@ -56,8 +61,12 @@ export async function listClaimFiles(scope: CarrierScope) {
     })
     .from(claimFiles)
     .innerJoin(claimLinks, eq(claimLinks.claimFileId, claimFiles.id))
-    .where(eq(claimFiles.carrierId, scope.carrierId))
-    .orderBy(desc(claimFiles.createdAt));
+    .where(and(eq(claimFiles.carrierId, scope.carrierId), q ? ilike(claimFiles.reference, `%${likeLiteral(q)}%`) : undefined))
+    .orderBy(desc(claimFiles.createdAt), desc(claimFiles.id))
+    .$dynamic();
+  if (opts.limit !== undefined) query.limit(opts.limit);
+  if (opts.offset) query.offset(opts.offset);
+  return query;
 }
 
 export async function getClaimFile(scope: CarrierScope, id: string) {

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { lastLinkFor, signIn } from "./helpers";
+import { createClaimLink, lastLinkFor, signIn } from "./helpers";
 
 test("Carrier User creates a Claim File, shares and revokes its link; other Carriers cannot see it", async ({ page, browser }) => {
   await signIn(page, "marcus@northwind.demo");
@@ -67,4 +67,23 @@ test("judges can enter a demo carrier's Console with one tap, clearly labelled a
   await expect(page).toHaveURL(/\/console$/);
   await expect(page.getByText(/Demo workspace · Harbor Insurance is a fictional carrier/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Claim Files" })).toBeVisible();
+});
+
+test("an adjuster finds a Claim File by reference among many", async ({ page }) => {
+  await signIn(page, "dana@harbor.demo");
+  const stamp = Date.now().toString(36).toUpperCase();
+  for (const ref of [`FLOOD-${stamp}-A`, `FLOOD-${stamp}-B`, `THEFT-${stamp}`]) {
+    await page.goto("/console");
+    await createClaimLink(page, ref);
+  }
+  await page.goto("/console");
+  await page.getByRole("searchbox", { name: "Find a Claim File" }).fill(`flood-${stamp.toLowerCase()}`);
+  await page.getByRole("button", { name: "Search" }).click();
+  const rows = page.getByRole("table").getByRole("rowheader");
+  await expect(rows).toHaveText([`FLOOD-${stamp}-B`, `FLOOD-${stamp}-A`]);
+  await page.getByRole("searchbox", { name: "Find a Claim File" }).fill(`nothing-${stamp}`);
+  await page.getByRole("button", { name: "Search" }).click();
+  await expect(page.getByText(`No Claim Files match “nothing-${stamp}”.`)).toBeVisible();
+  await page.getByRole("link", { name: "Clear" }).click();
+  await expect(page).toHaveURL(/\/console$/);
 });

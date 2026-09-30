@@ -77,3 +77,20 @@ describe("tenant isolation (FR-15)", () => {
     expect(await getClaimFile(northwind, "../etc/passwd")).toBeNull();
   });
 });
+
+describe("listClaimFiles search and paging", () => {
+  it("filters by reference, case-insensitively and literally, and pages newest first", async () => {
+    const db = await testDb();
+    const scope = await carrierScope(db, "northwind");
+    for (const ref of ["HAIL-100", "hail-200", "FIRE-300", "WIND_50%"]) await createClaimFile(scope, ref);
+    expect((await listClaimFiles(scope, { q: "hail" })).map((f) => f.reference).sort()).toEqual(["HAIL-100", "hail-200"]);
+    // % and _ are data, not wildcards.
+    expect((await listClaimFiles(scope, { q: "_50%" })).map((f) => f.reference)).toEqual(["WIND_50%"]);
+    expect(await listClaimFiles(scope, { q: "%" })).toHaveLength(1);
+    const page1 = await listClaimFiles(scope, { limit: 3 });
+    const page2 = await listClaimFiles(scope, { limit: 3, offset: 3 });
+    expect(page1).toHaveLength(3);
+    expect(page2).toHaveLength(1);
+    expect(new Set([...page1, ...page2].map((f) => f.id)).size).toBe(4);
+  });
+});

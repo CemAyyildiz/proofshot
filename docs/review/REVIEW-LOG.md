@@ -1494,3 +1494,37 @@ Done: all.
 **Next: Iteration 45 — Frontend UI/UX, pass 10**: the Console list page at 1280px with many Claim Files (20+): scan
 speed, status column clarity ("Evidence received" and "Awaiting evidence"), sorting, an empty search. Also check the
 imports page's result list for a 10-file batch with mixed outcomes, including the new "over 50 megapixels".
+
+---
+
+## Iteration 45 — Frontend UI/UX, pass 10: the Console list at scale (2026-09-30)
+
+Findings:
+
+- **H1** No search and no paging. The list rendered every Claim File of the carrier, each with two correlated count
+  subqueries. On the shared demo carriers every judge and visitor adds files, so after a day of judging a judge's own
+  Claim File would sit somewhere in hundreds of rows with no way to find it, and the page would get slower with every
+  visitor. A real carrier has the same problem from the first busy week.
+- **L1** The create field and the new search field both mention "Claim reference". The search field has a visible
+  label ("Find a Claim File") and secondary styling, so I accept this as is.
+- OK: status wording, the right-aligned tabular item count, alerts flagged with an icon plus bold text (not colour
+  alone), long references truncated with a `title`, horizontal scroll only inside the table on small screens.
+
+Done: H1.
+
+- `listClaimFiles(scope, { q, limit, offset })` does a case-insensitive substring match on the reference and escapes
+  `%`, `_` and `\` so they are literal. Order is stable (created, then id). Unit tests cover case-insensitivity,
+  literal wildcards and disjoint pages.
+- The Console list has a GET search form (`role="search"`, labelled), a "No Claim Files match “…”." state with
+  Clear, and 50 rows per page with Newer and Older. It fetches one extra row to detect an older page, so there is no
+  count query. The table caption reflects the filter.
+- New e2e: three files are created and a search by lower-case reference returns exactly the two matching rows, newest
+  first; a no-match search shows the message; Clear resets.
+
+`pnpm check` is green. e2e: 23/23 in dev mode and 23/23 in production mode (the a11y scan now includes the search
+form).
+
+**Next: Iteration 46 — Backend, pass 10**: demo data retention. The shared demo carriers grow without bound (Claim
+Files, uploads and images in storage from every visitor). Extend the daily maintenance job to prune demo-carrier Claim
+Files older than a set window, together with their stored images, never touching real carriers. Check it is
+idempotent and tenant-safe.
