@@ -17,7 +17,8 @@ Five minutes, a phone, no sign-up.
    - a thin edge trim (≈2–3%) → **Derived Copy · check unavailable**, stated as prominently as the Verdict; a bigger
      crop → **No Record** (the known limit below);
    - any other photo → **No Record** — "not sealed with Proofshot", never "fake".
-6. Open the **Verification Receipt**: Signing Window, a shortened device key, "a carrier", and "Verify it yourself".
+6. Open the **Verification Receipt**: the Signing Window, the full device key and hashes (a receipt is audit evidence,
+   so nothing is shortened), "a carrier", and "Verify it yourself".
 
 ## 2. What makes it trustworthy (2 minutes of reading)
 
@@ -25,7 +26,7 @@ Five minutes, a phone, no sign-up.
 |---|---|
 | Passkey signatures verify natively on Monad testnet **and mainnet** | `docs/spikes/spike-b-probe.json` (keyless probe of the Registry's exact verification; re-run with `pnpm --filter @proofshot/contracts probe`) |
 | Seal costs 100,340 gas with the precompile (326,571 without) | `pnpm --filter @proofshot/contracts gas:seal` (Osaka, then Prague gas report), `docs/spikes/spike-b.md` |
-| Every Verdict can be reproduced without our servers | `cli/` — e2e asserts the CLI and the website agree on every copy |
+| Every Verdict can be reproduced without our servers | `cli/` — e2e asserts the CLI and the website agree on every copy, and that the CLI reports a later key revocation just as the receipt does |
 | Real WebAuthn signatures are sealed onchain in every test run | `apps/web/e2e/capture.spec.ts` (Chrome virtual authenticator + a local chain) |
 | The Registry can't be re-sealed, un-sealed, or have a sealed photo re-imported; it always has exactly one admin, never also the relayer | `contracts/test/invariant/` (65k-call campaign on `main`), 100% branch coverage |
 | Other carriers learn nothing from a Duplicate Alert | `apps/web/e2e/duplicates.spec.ts` (UJ-3 asserts no name, claim or image leaks) |
@@ -37,7 +38,8 @@ Five minutes, a phone, no sign-up.
 1. Open **Carrier Console** → **Explore the demo Console** → **Northwind Mutual · adjuster** (no email; a banner
    marks it as a demo shared with other visitors, cleared after 7 days).
 2. Create a Claim File, open it, and **Upload and verify** the edited copy from step 1 → **Altered** with the Tile Map.
-   Find your file again later with **Find a Claim File**.
+   Find your file again later with **Find a Claim File**. Sent the link to the wrong person? **Replace link** issues a
+   new one for the same Claim File; the old one stops taking photos.
 3. Go back to sign-in in a private window and choose **Harbor Insurance · investigator**. Create a Claim File and
    upload the WhatsApp copy → under **Duplicate Alerts**, "Team upload 1 matches a record in another Claim File":
    *Sealed photo · another carrier*, with the date and match strength only — nothing about Northwind, its claim or

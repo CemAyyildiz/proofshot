@@ -15,7 +15,7 @@ review findings behind the hardening work are in [docs/review/REVIEW-LOG.md](doc
 - **Try it** (FR-18): a no-sign-up sandbox that reaches a ready camera in ≤ 3 taps and guides visitors to try to fool
   the verifier.
 
-## Hardening from 58 review iterations (senior review → fix loop)
+## Hardening from 64 review iterations (senior review → fix loop)
 
 - **Correctness**: a Seal final onchain can never be lost (DB write and relay split, reconcile from the Registry);
   the Registry index resyncs after the app's own writes; crops are never shown as clean and never as Altered; the
@@ -23,7 +23,7 @@ review findings behind the hardening work are in [docs/review/REVIEW-LOG.md](doc
   and drops a record only when its block hash changes (a reorg); photos sealed before a link was revoked or expired can
   still reach the insurer.
 - **Security**: CSP with no third-party origins, clickjacking and referrer protection, rate limits on every
-  unauthenticated cost, no tokens in logs, tenant isolation tested on every Console route; decompression-bomb images
+  unauthenticated cost, no tokens in application logs, tenant isolation tested on every Console route; decompression-bomb images
   are refused from their header (50 MP budget) with at most two decodes at a time; demo access can never act as a real
   person added to a demo carrier.
 - **Contracts**: a single admin that moves only by a delayed two-step transfer, admin and relayer can never share an
@@ -63,6 +63,17 @@ review findings behind the hardening work are in [docs/review/REVIEW-LOG.md](doc
 - **Quality gates**: every Verdict threshold pinned by boundary tests (26/26 mutants killed), Slither and `forge fmt`
   in CI, an executable admin runbook, docs that may only reference committed files and existing tests, a server
   coverage floor, e2e on two workers.
+
+### Iterations 59–64 in brief
+
+- **Capture trust**: the capture page leads with who is asking ("Requested by" the carrier), shows the link's real
+  expiry instead of a "Secure link" padlock, and tells anyone who wasn't expecting the link not to continue.
+- **Claim Links**: a leaked or misdirected link can be replaced without losing the Claim File. The old token stops
+  taking photos but still delivers ones already sealed, and two replacements at once are safe.
+- **Independent verification**: the CLI reads Device Key revocations from the chain and prints the Signing Window, the
+  key and a later revocation, just as the receipt does.
+- **Data layer**: a test fails when the schema changes without a migration; CI runs the deploy-time migrate and seed
+  and every database test on a real Postgres server through the production driver.
 
 ## Pending (needs the owner)
 

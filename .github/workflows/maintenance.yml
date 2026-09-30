@@ -1,7 +1,7 @@
 name: Daily maintenance
 
 # Calls the app's cleanup endpoint once a day: expired sessions and sign-in tokens, old rate-limit windows, and demo
-# data older than 7 days. Host-agnostic (Vercel's own cron in vercel.json does the same there). Needs the repository
+# data older than 7 days. Host-agnostic: works for any host. Needs the repository
 # variable APP_URL and the secret CRON_SECRET; without them the job skips instead of failing.
 
 on:

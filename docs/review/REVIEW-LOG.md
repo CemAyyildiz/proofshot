@@ -2230,3 +2230,42 @@ Done: all three.
 `pnpm check` is green; on Postgres, 105/105 tests pass. e2e: 28/28 in dev mode and 28/28 in production mode.
 
 **Next: Iteration 64 — Docs/README, pass 13.**
+
+## Iteration 64 — Docs/README, pass 13: what changed since the last docs pass
+
+Method: read the judge's guide, traceability matrix, demo script, deploy guide and changelog against the product as
+it now is (iterations 59–63). Checked every on-screen label the docs quote against the source.
+
+Findings:
+
+- **M1** The judge's guide told judges to expect "a shortened device key" on the receipt. Since iteration 30, receipts
+  show every value in full, deliberately, because a receipt is audit evidence. A judge following the guide would see
+  something different from what they were told, on the step meant to build trust.
+- **M2** The traceability matrix did not cover iterations 61–63:
+  - replacing a Claim Link (FR-1);
+  - the CLI reporting revocations (FR-10);
+  - the schema-drift test and the real-Postgres CI job.
+- **L1** `apps/web/vercel.json`, a Vercel cron entry, was left over from before the move to a long-running Node host.
+  Two docs still offered "or by `vercel.json` on Vercel", although the deploy guide explains that Vercel can't take
+  ordinary phone photos. It signalled a host we tell people not to use.
+- **L2** The changelog stopped at iteration 58. It also claimed "no tokens in logs", while iteration 61 documented
+  that Claim Link paths appear in the host's HTTP access logs. What iteration 7 meant was application logs.
+- OK: every UI label quoted by the demo script and the judge's guide exists verbatim in the source. The owner
+  checklist already says not to use Vercel.
+
+Done: all.
+
+- The judge's guide describes the receipt as it is (full key and hashes, and why). It adds one sentence on **Replace
+  link**, and its evidence table cites the CLI revocation check.
+- Traceability: FR-1 and FR-10 list the new tests, and the cross-cutting section covers the data-layer checks.
+- `vercel.json` is removed. The deploy guide and the maintenance workflow describe the cron as host-agnostic, with the
+  exact header it needs (`Authorization: Bearer $CRON_SECRET`).
+- The changelog covers 64 iterations, adds a short "Iterations 59–64" section, and says "no tokens in application
+  logs".
+
+`pnpm check` is green, including the repo-docs test that every path the docs name is committed. e2e: 28/28 in dev
+mode. Production mode was not re-run, because only docs and an unused host config changed.
+
+**Next: Iteration 65 — Frontend UI/UX, pass 14**: the Console Claim File page after iterations 61 and 63 (Revoke and
+Replace side by side). Check button hierarchy, confirmation copy, what the adjuster sees right after a replacement
+(does the new link get focus or a copy prompt?), and 375 px and keyboard behaviour.
