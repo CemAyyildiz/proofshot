@@ -683,3 +683,36 @@ Done: both.
 **Next: Iteration 23 — Tests/CI, pass 5**: a final full-suite stability run in production mode ×2, check the CI YAML
 with `actionlint` if available (or a manual review of expressions and permissions), and set least-privilege
 `permissions:` on every workflow.
+
+---
+
+## Iteration 23 — Tests/CI, pass 5: workflow hardening and stability (2026-09-30)
+
+Findings:
+
+- **H1** The production-mode stability run failed twice out of two on the same check: axe reported `.btn-primary` at a
+  4.39:1 contrast on the capture screen. Root cause was the global 150 ms `opacity` transition on buttons. Axe measured
+  the Send button while it was fading from disabled (0.5) to enabled (1), at about 0.65 opacity. The settled button and
+  its hover state are fine (hover is about 8:1). A fast production build hits this window every time, so it was a
+  flaky gate, not a product defect.
+- **M1** Neither workflow declared `permissions:`, so the `GITHUB_TOKEN` scope depended on repository defaults, which
+  can be write-all.
+- **M2** Every action was pinned to a movable tag (`@v4`, `@v1`), a supply-chain risk.
+- **M3** The pnpm, Node, Foundry and install steps were copied into four jobs.
+- **L1** A failed axe assertion printed only the selector, so the contrast ratio and colours were missing from the CI
+  log.
+
+Done: all.
+
+- `audit()` now waits for every finite animation and transition before running axe. Infinite ones, such as spinners,
+  are skipped so they cannot hang the check. The failure message now includes axe's own summary.
+- Both workflows have top-level `permissions: contents: read`. All actions are pinned to full commit SHAs, with the tag
+  kept in a comment.
+- The shared setup is a composite action, `.github/actions/setup`, used by `check`, `contracts-deep`, `e2e` and the
+  Monad canary.
+- `actionlint` 1.7.12 reports no problems. `pnpm check` is green. The e2e suite passes 19/19 in production mode twice
+  and 19/19 in dev mode.
+
+**Next: Iteration 24 — Docs, pass 5**: check README, judge's guide and submission write-up against the code as it is
+now (the CI section, canary, batch cap and demo access), and fix any stale numbers or commands. Then run a fresh-clone
+quickstart dry run as described in the README.

@@ -7,8 +7,21 @@ test.setTimeout(120_000);
 
 /** WCAG 2.1 A/AA automated checks (axe). Manual checks — keyboard flow, focus visibility — live in other specs. */
 async function audit(page: Page, name: string) {
+  // Measure the settled UI: a button fading from disabled to enabled (150 ms) otherwise reads as low contrast mid-way.
+  // Infinite ones (spinners) never finish, so they are skipped.
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getComputedTiming().endTime !== Infinity)
+        .map((a) => a.finished.catch(() => undefined)),
+    ),
+  );
   const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
-  const summary = violations.map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(" ")).slice(0, 3).join(" | ")}`);
+  // Selector plus axe's own reason (e.g. the measured contrast ratio), so a CI failure is diagnosable from the log alone.
+  const summary = violations.map(
+    (v) => `${v.id} (${v.impact}): ${v.nodes.slice(0, 3).map((n) => `${n.target.join(" ")} — ${n.failureSummary?.replace(/\s+/g, " ").trim()}`).join(" | ")}`,
+  );
   expect(summary, `axe violations on ${name}`).toEqual([]);
 }
 

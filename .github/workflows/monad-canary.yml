@@ -9,21 +9,16 @@ on:
     - cron: "23 */6 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   probe:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: stable
-      - run: pnpm install --frozen-lockfile
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: ./.github/actions/setup
       - run: forge build
         working-directory: contracts
       - run: pnpm --filter @proofshot/contracts probe --no-write
