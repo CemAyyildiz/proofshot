@@ -16,7 +16,8 @@
     "gas:snapshot": "forge snapshot --match-contract \"^RegistryTest$\" --no-match-test testFuzz --snap .gas-snapshot",
     "gas:check": "forge snapshot --match-contract \"^RegistryTest$\" --no-match-test testFuzz --snap .gas-snapshot --check",
     "probe": "tsx tools/probe-monad.ts",
-    "lint": "forge fmt --check"
+    "lint": "forge fmt --check",
+    "slither": "uvx --from slither-analyzer==0.11.6 slither . --fail-pedantic"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "^5.5.0",

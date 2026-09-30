@@ -1042,3 +1042,33 @@ Done: M1, M2.
 **Next: Iteration 33 — Tests/CI, pass 7**: add the Slither run to CI as a contracts job (pinned version via `uvx`),
 and verify that the local `pnpm check` time stays reasonable (measure it). Also check that `pnpm test` has no
 order-dependent tests by running vitest with `--sequence.shuffle`.
+
+---
+
+## Iteration 33 — Tests/CI, pass 7: static analysis in CI, order independence, check time (2026-09-30)
+
+Findings:
+
+- **M1** Slither ran once, by hand, in iteration 32. Nothing stops a later change from introducing a finding.
+- OK, measured: order independence. Three shuffled runs of the web suite (`--sequence.shuffle`, random seeds) passed
+  86/86 each; `fingerprint` passed 29/29 and `shared` 13/13. No test relies on another's state, as expected from the
+  cloned per-test PGlite databases.
+- OK, measured: `pnpm check` time. Typecheck 3 s, lint 3 s, tests 14 s, build 6 s (warm), about 26 s in total. It
+  stays a reasonable before-every-commit gate.
+
+Done: M1.
+
+- `contracts/slither.config.json` holds the filters (dependencies, tests, scripts and spikes excluded).
+  `pnpm --filter @proofshot/contracts slither` pins `slither-analyzer==0.11.6` through `uvx` and uses
+  `--fail-pedantic`.
+- New CI job `slither` (pinned `uv==0.12.9` via pipx, the version verified locally; both versions confirmed on PyPI).
+  actionlint passes.
+- Mutation-checked: a planted `to.transfer(address(this).balance)` makes the gate report `arbitrary-send-eth` and exit
+  255. A non-authorising `tx.origin` comparison is correctly not flagged.
+- The README lists the command and the CI job.
+
+`pnpm check` is green. e2e: 19/19 in dev mode.
+
+**Next: Iteration 34 — Docs, pass 7**: a fresh-clone dry run following only the README (clone to a temp dir, `pnpm
+install`, `pnpm dev:chain`, `pnpm seed`, `pnpm dev`, open `/`, `/verify`, the demo Console), timing each step and
+fixing any gap a newcomer would hit.

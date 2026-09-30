@@ -106,6 +106,7 @@ pnpm e2e                           # Playwright: real passkey signatures sealed 
 E2E_PROD=1 pnpm e2e                # same suite against the production build
 pnpm screens                       # design screenshots of every surface → apps/web/test-results/screens
 pnpm --filter @proofshot/contracts coverage
+pnpm --filter @proofshot/contracts slither   # static analysis (needs uv)
 pnpm --filter @proofshot/benchmark bench   # SM-2 benchmark (needs benchmark/data)
 ```
 
@@ -115,8 +116,9 @@ dark mode. Registry branch coverage is 100%, with stateful invariants (no re-sea
 sealed photo, exactly one admin, and no account ever both admin and relayer) driven by Solidity-signed passkey
 assertions interleaved with random role changes.
 
-CI (`.github/workflows/ci.yml`) runs `pnpm check`, the Registry gas snapshot check and the e2e suite against the
-production build on every push and pull request, plus a deep fuzz/invariant campaign on `main`. A separate **Monad canary**
+CI (`.github/workflows/ci.yml`) runs `pnpm check`, the Registry gas snapshot check, Slither static analysis and the
+e2e suite against the production build on every push and pull request, plus a deep fuzz/invariant campaign on `main`.
+A separate **Monad canary**
 (`monad-canary.yml`) re-runs the keyless passkey-verification probe against Monad testnet and mainnet every six hours.
 
 ## Status and honest limits

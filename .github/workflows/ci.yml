@@ -41,6 +41,17 @@ jobs:
         env:
           FOUNDRY_PROFILE: deep
 
+  slither:
+    name: Contracts — static analysis (Slither)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: ./.github/actions/setup
+      # Slither's version is pinned once, in the contracts `slither` script; CI only needs uv to run it.
+      - run: pipx install uv==0.12.9
+      - run: pnpm --filter @proofshot/contracts slither
+
   e2e:
     name: End-to-end (production build, local chain)
     runs-on: ubuntu-latest
