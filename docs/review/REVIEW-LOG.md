@@ -2076,3 +2076,39 @@ Done: both.
 a policyholder sees from an SMS link. Check trust signals (who is asking, why, what happens to photos), copy length
 at 375px, and whether the carrier's name is prominent enough to spot a phishing-looking link. Use ui-ux-pro-max
 guidance on trust and onboarding.
+
+---
+
+## Iteration 60 — Frontend UI/UX, pass 13: the first screen a policyholder sees (2026-09-30)
+
+Context: the capture intro is reached from an SMS or an email, the same channel phishing uses. Before tapping Continue
+and confirming with Face ID, the policyholder has to decide whether this is really their insurer.
+
+Findings:
+
+- **M1** The strongest trust signal was the weakest element on the page. The carrier's name, which is who is asking,
+  appeared as a 12 px uppercase muted eyebrow above a large generic heading.
+- **M2** The header showed a padlock and "Secure link". Nothing on the page backs that claim, and a padlock is exactly
+  what a phishing page would show. There was nothing a policyholder could actually check.
+- **M3** There was no guidance for a link the policyholder didn't expect. For SMS-delivered links, the standard advice
+  is not to continue and to contact the insurer through the policy's details.
+- OK: the copy is short (three steps), the claim reference is shown (a policyholder can recognise their own claim
+  number), the primary action is above the fold, and there is no crypto vocabulary.
+
+Done: all.
+
+- The header now reads **"Requested by" / Northwind Mutual** (18 px, semibold), then the task, then "Claim <ref>"
+  and "Link valid until <date>" as separate lines. The date is formatted on the server from the link's real expiry.
+  The sandbox keeps its eyebrow.
+- "Secure link" is removed. The expiry date replaces it as something the user can check.
+- Below Continue: "Not expecting this link? Don't continue. Contact <carrier> using the details on your policy, not
+  the message that brought you here." It is not shown in the sandbox.
+- e2e checks the requester, the claim line, the validity line and the guidance. Screens at 375 px and 320 px (with
+  an 80-character reference) wrap cleanly.
+
+`pnpm check` is green. e2e: 27/27 in dev mode and 27/27 in production mode.
+
+**Next: Iteration 61 — Backend, pass 13**: Claim Link token lifecycle. Tokens sit in the URL (SMS), so check:
+entropy; whether they appear in logs (the Next request log prints paths like `GET /c/<token>`); whether they leak
+via the Referer (policy is same-origin) or analytics; and whether a Carrier can rotate a leaked link without losing
+the Claim File's photos.

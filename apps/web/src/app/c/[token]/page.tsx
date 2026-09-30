@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getDb } from "@/server/db";
 import { resolveClaimLink } from "@/server/dal/claim-files";
+import { formatDate } from "@/lib/format";
 import { CaptureApp } from "./capture-app";
 
 export const metadata: Metadata = { title: "Add photos · Proofshot", robots: { index: false } };
@@ -18,5 +19,13 @@ export default async function ClaimLinkPage({ params }: PageProps<"/c/[token]">)
     );
   }
 
-  return <CaptureApp token={token} carrierName={link.carrierName} reference={link.reference} sandbox={link.isSandbox} />;
+  return (
+    <CaptureApp
+      token={token}
+      carrierName={link.carrierName}
+      reference={link.reference}
+      validUntil={formatDate(link.expiresAt)}
+      sandbox={link.isSandbox}
+    />
+  );
 }

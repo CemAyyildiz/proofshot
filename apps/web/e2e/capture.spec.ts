@@ -22,8 +22,12 @@ test("a Capturer sets up a passkey, seals a burst of live photos onchain and sen
   const claimUrl = page.url();
 
   const phone = await openAsCapturer(browser, link);
+  // Who is asking, for which claim and until when — the things a policyholder can check before trusting a link.
+  await expect(phone.getByText("Requested by")).toBeVisible();
   await expect(phone.getByText("Northwind Mutual", { exact: true })).toBeVisible();
-  await expect(phone.getByText("Claim HAIL-E2E-1")).toBeVisible();
+  await expect(phone.getByText("Claim HAIL-E2E-1", { exact: true })).toBeVisible();
+  await expect(phone.getByText(/^Link valid until \d{1,2} \w+ \d{4}$/)).toBeVisible();
+  await expect(phone.getByText(/Not expecting this link\? Don.t continue\. Contact Northwind Mutual/)).toBeVisible();
   expect(await phone.locator("main").innerText()).not.toMatch(FORBIDDEN);
 
   await phone.getByRole("button", { name: "Continue" }).click();

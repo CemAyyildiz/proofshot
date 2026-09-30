@@ -18,11 +18,13 @@ export interface CaptureAppProps {
   token: string;
   carrierName: string;
   reference: string;
+  /** When the Claim Link expires, formatted on the server. */
+  validUntil?: string;
   /** Public demo (FR-18): no insurer to send to; guide the visitor to try to fool the verifier instead. */
   sandbox?: boolean;
 }
 
-export function CaptureApp({ token, carrierName, reference, sandbox = false }: CaptureAppProps) {
+export function CaptureApp({ token, carrierName, reference, validUntil, sandbox = false }: CaptureAppProps) {
   const [step, setStep] = useState<Step>({ name: "checking" });
 
   useEffect(() => {
@@ -66,14 +68,24 @@ export function CaptureApp({ token, carrierName, reference, sandbox = false }: C
         <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
           <LogoMark className="size-5" /> Proofshot
         </span>
-        <span className="inline-flex items-center gap-1">
-          <LockIcon className="size-3.5" /> Secure link
-        </span>
       </div>
+      {/* Who is asking comes first: it is the one thing a policyholder can check against what they expect. */}
       <header>
-        <p className="eyebrow [overflow-wrap:anywhere]">{carrierName}</p>
+        {sandbox ? (
+          <p className="eyebrow [overflow-wrap:anywhere]">{carrierName}</p>
+        ) : (
+          <>
+            <p className="text-sm text-muted">Requested by</p>
+            <p className="text-lg font-semibold [overflow-wrap:anywhere]">{carrierName}</p>
+          </>
+        )}
         <h1 className="mt-1 text-2xl font-semibold">{sandbox ? "Take a photo of anything nearby" : "Take photos of the damage"}</h1>
-        {!sandbox && <p className="text-muted [overflow-wrap:anywhere]">Claim {reference}</p>}
+        {!sandbox && (
+          <>
+            <p className="text-muted [overflow-wrap:anywhere]">Claim {reference}</p>
+            {validUntil && <p className="text-sm text-muted">Link valid until {validUntil}</p>}
+          </>
+        )}
       </header>
 
       {step.name === "checking" && <p className="text-muted">Getting ready…</p>}
@@ -110,6 +122,12 @@ export function CaptureApp({ token, carrierName, reference, sandbox = false }: C
           <button type="button" className="btn-primary min-h-12 text-base" onClick={enroll} disabled={step.name === "enrolling"}>
             {step.name === "enrolling" ? "Setting up…" : "Continue"}
           </button>
+          {!sandbox && (
+            <p className="text-sm text-muted">
+              Not expecting this link? Don&apos;t continue. Contact {carrierName} using the details on your policy, not
+              the message that brought you here.
+            </p>
+          )}
         </section>
       )}
 
