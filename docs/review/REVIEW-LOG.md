@@ -1678,3 +1678,50 @@ No code changed, so the last green `pnpm check` and e2e runs (iteration 48) stil
 affordance, progress for a 10-file batch, the mixed-outcome result list ("imported", "not a readable image", "over 50
 megapixels"), and what an adjuster learns about the transaction, with no crypto jargon beyond what a carrier
 back-office needs.
+
+---
+
+## Iteration 50 — Frontend UI/UX, pass 11: the imports page, and a hosting blocker it exposed (2026-09-30)
+
+Findings:
+
+- **Critical (deployment)** The recommended host could not have accepted the app's own uploads. Reviewing batch
+  sizes led me to check the limits: **Vercel Functions cap request bodies at 4.5 MB** (Vercel docs, updated
+  2026-08-24; `413 FUNCTION_PAYLOAD_TOO_LARGE`). Four flows upload photos to the app: sealed photos sent to the insurer
+  (12 MP JPEG, 3–6 MB), the Public Verifier and Console uploads (phone photos of 2–8 MB, 20 MB promised), and import
+  batches of 10. On the Vercel plan in the owner checklist most real uses would have failed on launch day. Nothing
+  local could catch it: every test ran on a Node server with no such cap, using small images. The app's own stack is
+  fine: all uploads go through route handlers, not server actions with their 1 MB default.
+- **H1** Imports could run twice at once. The pickers stayed enabled during an import, so a second selection
+  interleaved with the first: rows mixed and progress jumped. There was no "done" state, and closing the tab stopped
+  the import silently.
+- **M1** A file over 20 MB inside a batch was dropped by the server without a row. If a whole batch was oversized,
+  the server answered 400 ("Send 1–10 images per batch.") and the import stopped.
+
+Done: all.
+
+- Hosting:
+  - `railway.json` at the repo root (Railway has no platform body limit): build, `db:migrate` as the pre-deploy step,
+    start on `$PORT`, health check `/`, restart on failure.
+  - `deploy.md` opens its app section with *why a long-running Node host*: the Vercel limit with a link, plus a warm
+    in-memory Registry index and a meaningful per-process decode limit. It gives a Volume-based `STORAGE_DRIVER=fs`
+    setup, with R2 as the alternative, and the generic commands for any Node host.
+  - The daily cleanup no longer depends on Vercel cron. A new `Daily maintenance` GitHub workflow (`permissions: {}`,
+    actionlint clean) calls `/api/cron/maintenance` with `CRON_SECRET`, and skips while `APP_URL` is unset.
+  - The owner checklist's hosting step is rewritten for Railway: Postgres, a Volume at `/data`, Resend, `DEMO_ACCESS`,
+    `CRON_SECRET` in both places, and the domain decided before deploy. It says plainly not to use Vercel, and why.
+  - New e2e test: a 9.8 MB, 12 MP photo verifies through the **production** server (200, No Record), so the app keeps
+    the 20 MB it promises.
+- Importer:
+  - One run at a time: the pickers are disabled, and visibly dimmed, while busy.
+  - `beforeunload` asks before leaving mid-import.
+  - Files over 20 MB are listed as "over 20 MB" instead of being sent.
+  - The status line reads "Importing — keep this tab open." and then "Import complete: …".
+  - The import e2e asserts the completion text and that the pickers are re-enabled.
+
+`pnpm check` is green. e2e: 24/24 in dev mode and 24/24 in production mode.
+
+**Next: Iteration 51 — Backend, pass 11**: behaviour on a real long-running host. Are the process singletons, the
+registry index and the decode limiter safe across Railway restarts and zero-downtime deploys, with two instances
+briefly overlapping? That covers the DB unique constraints, idempotent Seal submission from two processes and the
+relayer nonce handling.

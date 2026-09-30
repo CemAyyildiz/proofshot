@@ -24,7 +24,19 @@ Mainnet: the same with `MONAD_MAINNET_RPC_URL` and `pnpm deploy:mainnet` (chain 
 
 ## 2. App
 
-Set these in the hosting provider (see `apps/web/.env.example`):
+**Host: a long-running Node server, not serverless functions.** Photos are uploaded to the app itself (sealed photos
+sent to the insurer, the Public Verifier, Console uploads, 10-image import batches), and ordinary phone photos are
+2–8 MB. Vercel Functions cap request bodies at **4.5 MB** ([Vercel limits](https://vercel.com/docs/functions/limitations#request-body-size)),
+which would reject most of them with `413 FUNCTION_PAYLOAD_TOO_LARGE`. A persistent server also keeps the in-memory
+Registry index warm and makes the per-process decode limit meaningful.
+
+The repository ships a [`railway.json`](../railway.json) (Railway: no platform body limit; build, `db:migrate` before
+each deploy, start, health check). Add a Postgres database and a Volume mounted at `/data`, then set the variables
+below with `STORAGE_DRIVER=fs` and `STORAGE_DIR=/data/storage`. Any comparable Node host works the same way:
+`pnpm install`, `pnpm --filter web build`, `pnpm --filter web db:migrate`, `pnpm --filter web start` (listens on
+`$PORT`).
+
+Set these on the host (see `apps/web/.env.example`):
 
 | Variable | Value |
 |---|---|
@@ -38,7 +50,7 @@ Set these in the hosting provider (see `apps/web/.env.example`):
 | `APP_URL` | public origin, e.g. `https://proofshot.app` |
 | `RESEND_API_KEY`, `MAIL_FROM` | sign-in email. Required in production: without it no link is sent (tokens are never logged), and `/api/health` returns 503 with `sign-in-email-not-configured` |
 | `DEMO_ACCESS` | `1` on the judging deployment: one-tap entry into the two seeded demo carriers (never real ones) |
-| `CRON_SECRET` | ≥ 16 random characters; `vercel.json` schedules the daily `/api/cron/maintenance` cleanup (expired sessions and tokens, old rate-limit windows, and demo/sandbox Claim Files older than 7 days with their images; real carriers are never touched) |
+| `CRON_SECRET` | ≥ 16 random characters; the daily `/api/cron/maintenance` cleanup is called by the `Daily maintenance` GitHub workflow (set repository variable `APP_URL` and secret `CRON_SECRET`), or by `vercel.json` on Vercel (expired sessions and tokens, old rate-limit windows, and demo/sandbox Claim Files older than 7 days with their images; real carriers are never touched) |
 
 Then migrate and seed once:
 
@@ -52,10 +64,11 @@ everything in them is visible to every visitor. Adding your email (as above) onl
 tenant by email; demo entry always acts as the seeded placeholder account, never as you. Never put real claim data
 in a demo tenant.
 
-Evidence images: on a host with a persistent disk use `STORAGE_DRIVER=fs` (+ `STORAGE_DIR`). On serverless hosts
-(Vercel) use `STORAGE_DRIVER=s3` with a **private** S3-compatible bucket — Cloudflare R2 works (`S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com`,
-`S3_REGION=auto`) — plus `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`. Never make the bucket public: images
-are served only through the tenant-checked Console routes.
+Evidence images: on a host with a persistent disk (a Railway Volume) use `STORAGE_DRIVER=fs` with `STORAGE_DIR` on
+that disk. Without one, use `STORAGE_DRIVER=s3` with a **private** S3-compatible bucket — Cloudflare R2 works
+(`S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com`, `S3_REGION=auto`) — plus `S3_BUCKET`, `S3_ACCESS_KEY_ID`,
+`S3_SECRET_ACCESS_KEY`. Never make the bucket public: images are served only through the tenant-checked Console
+routes.
 
 ## 3. Before judging
 

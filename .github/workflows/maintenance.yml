@@ -1,0 +1,26 @@
+name: Daily maintenance
+
+# Calls the app's cleanup endpoint once a day: expired sessions and sign-in tokens, old rate-limit windows, and demo
+# data older than 7 days. Host-agnostic (Vercel's own cron in vercel.json does the same there). Needs the repository
+# variable APP_URL and the secret CRON_SECRET; without them the job skips instead of failing.
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: vars.APP_URL != ''
+    steps:
+      - name: Run maintenance
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error --max-time 120 \
+            -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/cron/maintenance"

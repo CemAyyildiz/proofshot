@@ -46,6 +46,6 @@ review findings behind the hardening work are in [docs/review/REVIEW-LOG.md](doc
 
 ## Pending (needs the owner)
 
-Testnet/mainnet deploy and live gas/latency numbers, hosting accounts (Postgres, a private R2/S3 bucket, for which the
-adapter is built, and email), the real-photo benchmark, real users and practitioner interviews. See the write-up
-draft's ⏳ marks.
+Testnet/mainnet deploy and live gas/latency numbers, hosting accounts (a long-running Node host — `railway.json` is
+included — with Postgres and a disk or a private S3/R2 bucket, and email), the real-photo benchmark, real users and
+practitioner interviews. See the write-up draft's ⏳ marks.

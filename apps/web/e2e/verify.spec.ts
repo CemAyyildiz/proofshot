@@ -95,6 +95,20 @@ test("the Public Verifier returns one honest Verdict per copy and a public recei
   await expect(visitor.getByText(/This receipt online/)).toBeHidden();
 });
 
+test("an ordinary phone-size photo (well over 4.5 MB) goes through the production server", async ({ request }) => {
+  // Serverless platforms cap request bodies around 4.5 MB; this app must accept the 20 MB it promises (docs/deploy.md).
+  const photo = await sharp({ create: { width: 4000, height: 3000, channels: 3, background: "#808080", noise: { type: "gaussian", mean: 128, sigma: 60 } } })
+    .jpeg({ quality: 92 })
+    .toBuffer();
+  expect(photo.byteLength).toBeGreaterThan(8_000_000);
+  const res = await request.post("/api/verify", {
+    headers: { "x-forwarded-for": "198.51.100.77" },
+    multipart: { file: { name: "big.jpg", mimeType: "image/jpeg", buffer: photo } },
+  });
+  expect(res.status()).toBe(200);
+  expect(await res.json()).toMatchObject({ verdict: "no-record" });
+});
+
 test("the Public Verifier rate-limits a single client and unknown receipts are 404", async ({ request }) => {
   const client = { "x-forwarded-for": "203.0.113.77" }; // an isolated client so other tests keep their budget
   const statuses: number[] = [];
