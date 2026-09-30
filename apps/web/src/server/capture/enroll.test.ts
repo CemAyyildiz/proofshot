@@ -13,7 +13,8 @@ let scope: CarrierScope;
 let token: string;
 let fileId: string;
 const registerDeviceKey = vi.fn<Relayer["registerDeviceKey"]>();
-const relayer = () => ({ registerDeviceKey }) as unknown as Relayer;
+const deviceKey = vi.fn<Relayer["deviceKey"]>();
+const relayer = () => ({ registerDeviceKey, deviceKey }) as unknown as Relayer;
 
 function passkey() {
   const { publicKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
@@ -28,6 +29,7 @@ beforeEach(async () => {
   token = file.link.token;
   fileId = file.id;
   registerDeviceKey.mockReset().mockResolvedValue("0xabc");
+  deviceKey.mockReset();
 });
 
 describe("enrollDeviceKey", () => {
@@ -73,5 +75,20 @@ describe("enrollDeviceKey", () => {
     const r = await enrollDeviceKey(db, relayer, token, passkey());
     expect(r).toMatchObject({ ok: false, status: 503 });
     expect(await db.select().from(deviceKeys)).toHaveLength(0);
+  });
+
+  it("adopts a registration that already landed (lost response), and refuses a different key under the same id", async () => {
+    const pk = passkey();
+    const exists = new Error('The contract function "registerDeviceKey" reverted. Error: DeviceKeyExists(bytes32 keyId)');
+    registerDeviceKey.mockRejectedValueOnce(exists);
+    deviceKey.mockResolvedValueOnce({ qx: pk.qx, qy: pk.qy, revokedAtBlock: 0n });
+    expect(await enrollDeviceKey(db, relayer, token, pk)).toMatchObject({ ok: true, status: "registered" });
+    expect(await db.select().from(deviceKeys)).toHaveLength(1);
+
+    const other = passkey();
+    registerDeviceKey.mockRejectedValueOnce(exists);
+    deviceKey.mockResolvedValueOnce({ qx: pk.qx, qy: pk.qy, revokedAtBlock: 0n }); // someone else's point
+    expect(await enrollDeviceKey(db, relayer, token, other)).toMatchObject({ ok: false, status: 503 });
+    expect(await db.select().from(deviceKeys)).toHaveLength(1);
   });
 });

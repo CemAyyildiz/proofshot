@@ -17,6 +17,8 @@ export interface Relayer {
   latestBlock(): Promise<{ number: bigint; hash: Hex }>;
   /** Submits and returns without waiting: later relayer txs are nonce-ordered after it. */
   registerDeviceKey(keyId: Hex, qx: Hex, qy: Hex): Promise<Hex>;
+  /** The Device Key as the Registry holds it (all zero if unknown). */
+  deviceKey(keyId: Hex): Promise<{ qx: Hex; qy: Hex; revokedAtBlock: bigint }>;
   seal(keyId: Hex, record: CaptureRecord, auth: WebAuthnAuth): Promise<SealResult>;
   importRecords(carrierId: Hex, records: ImportRecord[]): Promise<SealResult>;
   /** Relayer balance (wei) and whether the Registry is paused, for health checks. */
@@ -53,8 +55,8 @@ function createViemRelayer(): Relayer {
   const wallet = createWalletClient({ chain, transport, account });
   const address = e.REGISTRY_ADDRESS as Hex;
 
-  // Serialise submissions from this process so nonces are handed out in order; retry if another
-  // instance raced us to a nonce.
+  // Serialise submissions from this process so nonces are handed out in order; retry, with a short backoff, if
+  // another instance (e.g. during a zero-downtime deploy) or a lagging fallback RPC raced us to a nonce.
   let queue: Promise<unknown> = Promise.resolve();
   const submit = <T>(fn: () => Promise<T>): Promise<T> => {
     const run = queue.then(async () => {
@@ -62,7 +64,10 @@ function createViemRelayer(): Relayer {
         try {
           return await fn();
         } catch (err) {
-          if (attempt < 3 && NONCE_ERRORS.test(String(err))) continue;
+          if (attempt < 3 && NONCE_ERRORS.test(String(err))) {
+            await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
+            continue;
+          }
           throw err;
         }
       }
@@ -82,6 +87,14 @@ function createViemRelayer(): Relayer {
     async latestBlock() {
       const b = await pub.getBlock({ blockTag: "latest" });
       return { number: b.number, hash: b.hash };
+    },
+    async deviceKey(keyId) {
+      const k = (await pub.readContract({ address, abi: registryAbi, functionName: "deviceKey", args: [keyId] })) as {
+        qx: Hex;
+        qy: Hex;
+        revokedAtBlock: bigint;
+      };
+      return { qx: k.qx, qy: k.qy, revokedAtBlock: k.revokedAtBlock };
     },
     registerDeviceKey(keyId, qx, qy) {
       return submit(() => wallet.writeContract({ address, abi: registryAbi, functionName: "registerDeviceKey", args: [keyId, qx, qy] }));

@@ -54,8 +54,12 @@ export async function enrollDeviceKey(db: Db, relayer: () => Relayer, token: str
   try {
     await relayer().registerDeviceKey(keyId, point.qx, point.qy);
   } catch (err) {
-    await db.delete(deviceKeys).where(eq(deviceKeys.keyId, keyId));
     const kind = relayerErrorKind(err);
+    // An earlier attempt landed but its response was lost (timeout, restart, a retried send). The same key is
+    // already registered: that is success. Without this, every retry would revert and the passkey could never
+    // be used.
+    if (kind === "key-exists" && (await sameKeyOnchain(relayer(), keyId, point))) return { ok: true, keyId, status: "registered" };
+    await db.delete(deviceKeys).where(eq(deviceKeys.keyId, keyId));
     console.error(`[enroll] registerDeviceKey failed (${kind})`, err);
     return {
       ok: false,
@@ -66,4 +70,9 @@ export async function enrollDeviceKey(db: Db, relayer: () => Relayer, token: str
     };
   }
   return { ok: true, keyId, status: "registered" };
+}
+
+async function sameKeyOnchain(relayer: Relayer, keyId: Hex, point: { qx: Hex; qy: Hex }): Promise<boolean> {
+  const onchain = await relayer.deviceKey(keyId).catch(() => null);
+  return !!onchain && onchain.revokedAtBlock === 0n && onchain.qx.toLowerCase() === point.qx.toLowerCase() && onchain.qy.toLowerCase() === point.qy.toLowerCase();
 }

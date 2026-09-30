@@ -1,11 +1,12 @@
 /** Why a relayer write failed, so callers can tell Capturers something true and actionable. */
-export type RelayerErrorKind = "unfunded" | "paused" | "already-sealed" | "window-expired" | "timeout" | "other";
+export type RelayerErrorKind = "unfunded" | "paused" | "already-sealed" | "key-exists" | "window-expired" | "timeout" | "other";
 
 export function relayerErrorKind(err: unknown): RelayerErrorKind {
   const msg = String(err instanceof Error ? `${err.message} ${(err as { details?: string }).details ?? ""}` : err);
   if (/insufficient funds|exceeds the balance|gas required exceeds allowance/i.test(msg)) return "unfunded";
   if (/EnforcedPause/.test(msg)) return "paused";
   if (/AlreadySealed/.test(msg)) return "already-sealed";
+  if (/DeviceKeyExists/.test(msg)) return "key-exists";
   if (/SigningWindowExpired/.test(msg)) return "window-expired";
   if (/WaitForTransactionReceiptTimeout|Timed out while waiting|timed out/i.test(msg)) return "timeout";
   return "other";

@@ -1725,3 +1725,44 @@ Done: all.
 registry index and the decode limiter safe across Railway restarts and zero-downtime deploys, with two instances
 briefly overlapping? That covers the DB unique constraints, idempotent Seal submission from two processes and the
 relayer nonce handling.
+
+---
+
+## Iteration 51 — Backend, pass 11: restarts, overlapping instances and lost responses (2026-09-30)
+
+Method: I went through each write path assuming a long-running host (iteration 50) that restarts and, during
+zero-downtime deploys, briefly runs two instances. For each path I asked what happens if a request dies after its
+transaction was sent, and what happens if two processes write at once.
+
+Findings:
+
+- **H1** Device-key enrollment could lock a passkey out permanently. If `registerDeviceKey` landed onchain but its
+  response was lost (a receipt timeout, a restart mid-request, or a fallback RPC answering "already known" and the
+  send being retried), `enroll` treated it as a failure and deleted the DB row. Every later attempt with the same
+  passkey then reverted in gas estimation with `DeviceKeyExists`, so enrollment returned 503 forever. Seals already
+  had this recovery (a 409 `AlreadySealed` adopts the onchain record); enrollment did not.
+- **L1** Nonce collisions were retried three times back to back. Against a lagging fallback node, or a second
+  instance still draining, all three retries could hit the same stale nonce within milliseconds.
+- OK: captures are unique on Exact Hash; the rate limits are atomic in the DB; magic-link redemption is a
+  single-row atomic claim; the Registry index is per-process and rebuilt from DB and chain; the decode limiter is
+  per-process by design; migrations run once as Railway's pre-deploy step; a Seal whose response is lost is
+  reconciled from the Registry (existing tests).
+
+Done: both.
+
+- `Relayer.deviceKey(keyId)` reads the Registry's view of a key, and the error classifier has a new kind,
+  `key-exists`. When registration reverts with `DeviceKeyExists`, `enroll` checks the key onchain. If the key is
+  there, has the **same public key** and is not revoked, it keeps the row and returns `registered`. Otherwise it
+  cleans up as before. A different key under the same id is never adopted.
+  - Unit test: the adopt case, and the refusal for a mismatching onchain key.
+  - I also ran a real check against a throwaway Anvil: a second `registerDeviceKey` through viem's `writeContract`
+    yields an error that `relayerErrorKind` classifies as `key-exists`. The string-based classifier therefore
+    matches what viem really throws, not just a test fake.
+- Nonce retries back off for 250, 500 and 750 ms.
+
+`pnpm check` is green. e2e: 24/24 in dev mode and 24/24 in production mode.
+
+**Next: Iteration 52 — Contracts, pass 11**: gas-price behaviour on Monad for the relayer. Check whether viem's fee
+estimation (EIP-1559 on Monad) could overpay or underpay during spikes, whether we should cap `maxFeePerGas` (config)
+so a fee spike can't drain the relayer, and whether `/api/health` should report the current base fee. Use the public
+RPC keylessly to read `eth_feeHistory`.
