@@ -5,8 +5,19 @@ import { addVirtualPasskeyAuthenticator, createClaimLink, sealAndSendPhoto, sign
 
 test.setTimeout(120_000);
 
-/** WCAG 2.1 A/AA automated checks (axe). Manual checks — keyboard flow, focus visibility — live in other specs. */
+/**
+ * WCAG 2.1 A/AA automated checks (axe) in both colour schemes. Manual checks — keyboard flow, focus visibility — live in
+ * other specs.
+ */
 async function audit(page: Page, name: string) {
+  for (const colorScheme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme });
+    await auditScheme(page, `${name} (${colorScheme})`);
+  }
+  await page.emulateMedia({ colorScheme: null });
+}
+
+async function auditScheme(page: Page, name: string) {
   // Measure the settled UI: a button fading from disabled to enabled (150 ms) otherwise reads as low contrast mid-way.
   // Infinite ones (spinners) never finish, so they are skipped.
   await page.evaluate(() =>
@@ -25,13 +36,10 @@ async function audit(page: Page, name: string) {
   expect(summary, `axe violations on ${name}`).toEqual([]);
 }
 
-test("public pages meet WCAG 2.1 AA (automated)", async ({ browser }) => {
-  for (const scheme of ["light", "dark"] as const) {
-    const page = await (await browser.newContext({ colorScheme: scheme })).newPage();
-    for (const path of ["/", "/verify", "/try", "/console/sign-in"]) {
-      await page.goto(path);
-      await audit(page, `${path} (${scheme})`);
-    }
+test("public pages meet WCAG 2.1 AA (automated)", async ({ page }) => {
+  for (const path of ["/", "/verify", "/try", "/console/sign-in"]) {
+    await page.goto(path);
+    await audit(page, path);
   }
 });
 
