@@ -1333,3 +1333,43 @@ Done: both.
 **Next: Iteration 41 — Backend, pass 9**: the magic-link and session lifecycle: session expiry and rotation, sign-out
 everywhere, cookie flags in production (`Secure`, `HttpOnly`, `SameSite`, `__Host-` prefix), CSRF on server actions,
 and what happens to open sessions when a user is removed from a carrier.
+
+---
+
+## Iteration 41 — Backend, pass 9: sign-in and sessions (2026-09-30)
+
+Findings:
+
+- **M1** Account enumeration by timing. `requestSignIn` returned identical text for known and unknown emails, but
+  awaited the email provider only for known ones. The Resend round trip (hundreds of ms) made real accounts measurably
+  slower to answer.
+- **M2** Account enumeration by error. In production without `RESEND_API_KEY`, the send threw `MailNotConfigured`, but
+  only for existing accounts, so they got an error page and strangers got "sent". The misconfiguration itself surfaced
+  nowhere an operator would look.
+- **L1** The session cookie had no `__Host-` prefix. A sibling subdomain (a preview deployment, for example) could
+  plant or shadow `ps_session`.
+- **L2** Signing in again left the browser's previous session valid in the database until it expired.
+- OK: magic links are hashed, single use, expire after 15 minutes, and are redeemed only by an explicit POST (link
+  scanners can't burn them). The cookie is `HttpOnly`, `SameSite=Lax` and `Secure` in production. Server actions carry
+  Next's Origin check, and cross-site requests carry no cookie under Lax. Demo sessions last 2 h and are rate-limited.
+  Expired sessions and tokens are purged daily. A session resolves only through a live user row, so removing a user
+  ends their sessions.
+
+Done: all.
+
+- The sign-in email is sent with `after()`, once the response is out; its failures are logged. Known and unknown
+  addresses now get the same response in the same time.
+- New `mailConfigured()`: `/api/health` reports `sign-in-email-not-configured` (503) in production without a provider,
+  so the uptime monitor catches it. Unit tests: a production build without a key is unconfigured and never logs the
+  link; a provider key, the test outbox or development count as configured.
+- The cookie is `__Host-ps_session` in production (`Secure`, `Path=/`, no `Domain`) and `ps_session` in development.
+  e2e asserts the flags in both modes, and the `__Host-` name and `Secure` in production mode.
+- `completeSignIn` ends this browser's previous session before setting the new one.
+- `deploy.md` updated.
+
+`pnpm check` is green. e2e: 22/22 in dev mode and 22/22 in production mode (plus the console spec re-run in both
+modes after the cookie assertion).
+
+**Next: Iteration 42 — Contracts, pass 9**: a final contract read-through as an external auditor would do it: an
+invariant list in NatSpec at the top of `Registry.sol`, and a `docs/security.md` summary (roles, trust assumptions,
+known limits, how to report). Check that everything claimed there is tested.

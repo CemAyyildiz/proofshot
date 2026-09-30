@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { z } from "zod";
 import { env } from "@/lib/env";
 import { DEMO_SESSION_TTL_MS, issueMagicLink, openDemoSession, redeemMagicLink } from "@/server/auth/core";
@@ -27,15 +28,24 @@ export async function requestSignIn(_: SignInState, form: FormData): Promise<Sig
   if (token) {
     const url = new URL("/auth/verify", env().APP_URL);
     url.searchParams.set("token", token);
-    await sendMagicLinkEmail(email.data, url.toString());
+    // Sent after the response: awaiting the email provider only for real accounts would make the reply measurably
+    // slower for them, and its errors would show only for them, both of which reveal who has an account.
+    after(async () => {
+      try {
+        await sendMagicLinkEmail(email.data, url.toString());
+      } catch (e) {
+        console.error("[auth] sign-in email failed", e);
+      }
+    });
   }
-  // Same response whether or not the account exists.
+  // Same response, in the same time, whether or not the account exists.
   return { status: "sent" };
 }
 
 export async function completeSignIn(form: FormData) {
   const session = await redeemMagicLink(await getDb(), String(form.get("token") ?? ""));
   if (!session) redirect("/auth/verify?error=expired");
+  await clearSession(); // a new sign-in replaces, not adds to, this browser's session
   await setSessionCookie(session);
   redirect("/console");
 }

@@ -5,7 +5,11 @@ import { cache } from "react";
 import { getDb } from "../db";
 import { SESSION_TTL_MS, endSession, sessionUser, type SessionUser } from "./core";
 
-export const SESSION_COOKIE = "ps_session";
+/**
+ * `__Host-` in production: the browser then only accepts the cookie from this exact host over HTTPS with `Path=/`, so
+ * a sibling subdomain (e.g. a preview deployment) can't plant or overwrite a session. Plain name in development.
+ */
+export const SESSION_COOKIE = process.env.NODE_ENV === "production" ? "__Host-ps_session" : "ps_session";
 
 export async function setSessionCookie(token: string, ttlMs = SESSION_TTL_MS) {
   (await cookies()).set(SESSION_COOKIE, token, {

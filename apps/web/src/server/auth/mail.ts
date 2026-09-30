@@ -14,6 +14,12 @@ export class MailNotConfigured extends Error {
  * MAIL_DEV_OUTBOX=1) print the link; a production build refuses, so a missing key can never put live sign-in tokens
  * into server logs.
  */
+/** False when a production build has no way to deliver sign-in links (health reports it). */
+export function mailConfigured(): boolean {
+  const { RESEND_API_KEY, MAIL_DEV_OUTBOX } = env();
+  return Boolean(RESEND_API_KEY) || process.env.NODE_ENV !== "production" || MAIL_DEV_OUTBOX === "1";
+}
+
 export async function sendMagicLinkEmail(to: string, url: string): Promise<void> {
   const { RESEND_API_KEY, MAIL_FROM, MAIL_DEV_OUTBOX } = env();
   if (!RESEND_API_KEY) {

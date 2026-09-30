@@ -1,10 +1,12 @@
 import { formatEther } from "viem";
 import { env } from "@/lib/env";
+import { mailConfigured } from "@/server/auth/mail";
 import { RelayerNotConfigured, getRelayer } from "@/server/chain/relayer";
 
 /**
- * Liveness plus the two conditions that silently break sealing: a relayer running out of MON and a paused Registry.
- * Returns 503 when either holds, so a plain uptime monitor on this URL alerts before Capturers hit errors.
+ * Liveness plus the conditions that silently break the product: a relayer running out of MON, a paused Registry, and
+ * (in production) no email provider for sign-in links. Returns 503 when any holds, so a plain uptime monitor on this
+ * URL alerts before people hit errors.
  */
 export async function GET() {
   const { network, RELAYER_MIN_BALANCE_MON } = env();
@@ -19,7 +21,11 @@ export async function GET() {
   try {
     const { balanceWei, paused } = await relayer.status();
     const balance = Number(formatEther(balanceWei));
-    const problems = [...(balance < RELAYER_MIN_BALANCE_MON ? ["relayer-low-balance"] : []), ...(paused ? ["registry-paused"] : [])];
+    const problems = [
+      ...(balance < RELAYER_MIN_BALANCE_MON ? ["relayer-low-balance"] : []),
+      ...(paused ? ["registry-paused"] : []),
+      ...(mailConfigured() ? [] : ["sign-in-email-not-configured"]),
+    ];
     return Response.json(
       { ok: problems.length === 0, ...base, relayerBalanceMon: balance, registryPaused: paused, problems },
       { status: problems.length ? 503 : 200, headers: { "Cache-Control": "no-store" } },
