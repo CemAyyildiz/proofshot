@@ -33,6 +33,20 @@ export class FingerprintError extends Error {
   override name = "FingerprintError";
 }
 
+/**
+ * Largest image the server will decode. 50 MP covers 48 MP phone cameras (8064×6048); past it a single highly
+ * compressible file (a 776 KB PNG of 16000×16000) takes ~1 GB of memory and aborts the PDQ module.
+ */
+export const MAX_PIXELS = 50_000_000;
+
+export class ImageTooLargeError extends FingerprintError {
+  override name = "ImageTooLargeError";
+  constructor(width?: number, height?: number) {
+    const size = width && height ? `${width}×${height} (${Math.round((width * height) / 1e6)} MP)` : "larger";
+    super(`image is ${size}, over the ${MAX_PIXELS / 1e6} MP limit`);
+  }
+}
+
 /** Pixel bounds of tile `i` (row-major). Edges are floor-split so tiles cover the image exactly. */
 export function tileBounds(i: number, width: number, height: number) {
   const row = Math.floor(i / GRID);

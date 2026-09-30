@@ -9,7 +9,7 @@ const IMAGE = /\.(jpe?g|png|webp|heic|heif)$/i;
 
 interface Row {
   name: string;
-  status: "imported" | "unreadable" | "failed";
+  status: "imported" | "unreadable" | "too-large" | "failed";
 }
 
 async function collect(files: FileList): Promise<File[]> {
@@ -90,7 +90,7 @@ export function Importer() {
               .filter((r) => r.status !== "imported")
               .map((r, i) => (
                 <li key={`${r.name}-${i}`}>
-                  {r.name} — {r.status === "unreadable" ? "not a readable image" : "not sent"}
+                  {r.name} — {r.status === "unreadable" ? "not a readable image" : r.status === "too-large" ? "over 50 megapixels" : "not sent"}
                 </li>
               ))}
           </ul>

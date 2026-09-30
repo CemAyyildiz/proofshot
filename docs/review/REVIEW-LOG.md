@@ -792,3 +792,42 @@ Done: all.
 **Next: Iteration 26 — Backend, pass 6**: review the upload and verify paths for decode bombs and CPU cost (a very
 large pixel count within 20 MB, e.g. a 30000×30000 PNG), `sharp` `limitInputPixels`, the time budget per request, and
 concurrent verification pressure on a small instance.
+
+---
+
+## Iteration 26 — Backend, pass 6: decode bombs and decode pressure (2026-09-30)
+
+Method: built a 16000×16000 flat-grey PNG (776 KB, well inside the 20 MB upload limit) and fed it to the server
+decode path.
+
+Findings:
+
+- **H1** Decompression bomb. The file was accepted and decoded: peak RSS was **963 MB**, then the PDQ WebAssembly
+  module **aborted** ("Aborted()"). The request returned a 500, and a few of these in parallel would OOM-kill an
+  instance. sharp's default limit is about 268 MP, far above anything a phone produces. PDQ did recover for later
+  requests, which I checked directly.
+- **H2** The HEIC fallback had no pixel limit at all. Worse, any ISO-BMFF file that sharp refused went on to
+  heic-decode, which would have bypassed a sharp-only limit.
+- **M1** Decoding had no concurrency bound. Each decode holds about 3× its pixel count in RGB copies (decoded image,
+  PDQ heap, tiles), so parallel requests multiply peak memory.
+- **L1** A Team upload decodes the image twice, once to verify and once for the preview JPEG. This is bounded by the
+  500/day per-carrier limit and needed for HEIC previews, so it stays for now.
+- OK: the fingerprint algorithm stays full-resolution on both browser and server. Downscaling first would change
+  hashes against existing Seals, so the fix is a budget, not a resize.
+
+Done: H1, H2, M1.
+
+- `MAX_PIXELS = 50 MP`, which covers 48 MP phone cameras (8064×6048). Oversized files are refused from their header
+  (sharp `metadata()`, and heic-decode's lazy `all()` for HEIC) before any pixel is decoded. `limitInputPixels` is a
+  backstop, and a pixel-limit error never falls through to HEIC.
+- `ImageTooLargeError` maps to **413** "This image is over 50 megapixels. Use a smaller copy." on the verifier and
+  uploads, and to "over 50 megapixels" per file in imports.
+- At most 2 decodes (with their PDQ passes) run at once per process; the rest queue.
+- Tests: the bomb is rejected in about 300 ms with under 200 MB of RSS growth; an image just inside the budget still
+  decodes; 7 concurrent fingerprints all complete and agree; the verifier returns 413 with the specific message.
+
+`pnpm check` is green. e2e: 19/19 in dev mode and 19/19 in production mode.
+
+**Next: Iteration 27 — Contracts, pass 6**: review the Registry's admin paths: `setRpIdHash` removal semantics,
+role-renounce footguns (an admin renouncing the last admin), event coverage for every admin action (so indexers and
+auditors can reconstruct config history), and whether `pause` should also block `revokeDeviceKey`.

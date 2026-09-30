@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { type Fingerprint, type RegistryEntry, type Thresholds, type Verdict, DEFAULT_THRESHOLDS, computeVerdict } from "@proofshot/fingerprint";
-import { FingerprintError, fingerprintFile } from "../fingerprint";
+import { FingerprintError, ImageTooLargeError, MAX_PIXELS, fingerprintFile } from "../fingerprint";
 import { eq } from "drizzle-orm";
 import type { Db } from "../db/client";
 import { verifications } from "../db/schema";
@@ -35,6 +35,9 @@ export async function verifyImage(
   try {
     fingerprint = await fingerprintFile(bytes);
   } catch (e) {
+    if (e instanceof ImageTooLargeError) {
+      return { ok: false, status: 413, error: `This image is over ${MAX_PIXELS / 1e6} megapixels. Use a smaller copy.` };
+    }
     if (e instanceof FingerprintError) {
       return { ok: false, status: 415, error: "This file isn't a supported image. Use JPEG, PNG, WebP or HEIC." };
     }

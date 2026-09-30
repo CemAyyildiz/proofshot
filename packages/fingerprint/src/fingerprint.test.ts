@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import sharp from "sharp";
 import { beforeAll, describe, expect, it } from "vitest";
-import { FingerprintError, TILE_COUNT, decode, fingerprintFile, hamming, initNode, perceptualFingerprint, tileBounds } from "./node";
+import { FingerprintError, ImageTooLargeError, MAX_PIXELS, TILE_COUNT, decode, fingerprintFile, hamming, initNode, perceptualFingerprint, tileBounds } from "./node";
 
 const W = 800;
 const H = 600;
@@ -151,3 +151,27 @@ describe("hamming", () => {
     expect(() => hamming("00", "0000")).toThrow();
   });
 });
+
+describe("decode budget", () => {
+  it("refuses a decompression bomb from its header, without decoding it", async () => {
+    // 256 MP of flat grey compresses to under 1 MB; decoded it would take ~1 GB.
+    const bomb = await sharp({ create: { width: 16000, height: 16000, channels: 3, background: "#808080" } }).png().toBuffer();
+    expect(bomb.byteLength).toBeLessThan(2_000_000);
+    const before = process.memoryUsage().rss;
+    await expect(fingerprintFile(bomb)).rejects.toBeInstanceOf(ImageTooLargeError);
+    await expect(decode(bomb)).rejects.toThrow(/16000×16000 .* over the 50 MP limit/);
+    expect(process.memoryUsage().rss - before).toBeLessThan(200_000_000);
+  });
+
+  it("still accepts an image just inside the budget", async () => {
+    const side = Math.floor(Math.sqrt(MAX_PIXELS));
+    const big = await sharp({ create: { width: side, height: side, channels: 3, background: "#6a7" } }).jpeg().toBuffer();
+    await expect(decode(big)).resolves.toMatchObject({ width: side, height: side });
+  });
+
+  it("serves many concurrent requests through the limited decode slots", async () => {
+    const fps = await Promise.all(Array.from({ length: 7 }, () => fingerprintFile(original)));
+    expect(new Set(fps.map((f) => f.pHash)).size).toBe(1);
+  });
+});
+

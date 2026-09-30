@@ -66,6 +66,9 @@ describe("verifyImage", () => {
       ok: false,
       status: 415,
     });
+    // A small file that decodes to 256 MP is refused before decoding, with its own message.
+    const bomb = await sharp({ create: { width: 16000, height: 16000, channels: 3, background: "#808080" } }).png().toBuffer();
+    expect(await verifyImage(db, 31337, source, bomb)).toMatchObject({ ok: false, status: 413, error: expect.stringMatching(/over 50 megapixels/) });
     expect(await db.select().from(verifications)).toHaveLength(3); // only the three successful verifications above
   });
 

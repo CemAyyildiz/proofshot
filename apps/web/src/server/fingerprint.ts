@@ -5,4 +5,4 @@ import { setPdqWasmPath } from "@proofshot/fingerprint/node";
 // The build copies the vendored binary to public/ (see `copy-wasm`); read it from there on the server too.
 setPdqWasmPath(join(process.cwd(), "public/pdq.wasm"));
 
-export { fingerprintFile, FingerprintError, decode as decodeForPreview } from "@proofshot/fingerprint/node";
+export { fingerprintFile, FingerprintError, ImageTooLargeError, MAX_PIXELS, decode as decodeForPreview } from "@proofshot/fingerprint/node";

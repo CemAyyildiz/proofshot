@@ -5,7 +5,7 @@ import { isServiceUnavailable, relayerErrorKind } from "../chain/errors";
 import type { ImportRecord, Relayer } from "../chain/relayer";
 import { carriers } from "../db/schema";
 import type { CarrierScope } from "../dal/claim-files";
-import { fingerprintFile } from "../fingerprint";
+import { ImageTooLargeError, fingerprintFile } from "../fingerprint";
 import { DAY_MS, consume } from "../rate-limit";
 
 /** Images per request; one Registry transaction per batch (bounded by the upload size, far below the contract cap). */
@@ -14,7 +14,7 @@ if (IMPORT_BATCH > MAX_IMPORT_BATCH) throw new Error("IMPORT_BATCH exceeds Regis
 /** FR-13: up to 500 images per import; daily ceiling on sponsored import fees per Carrier. */
 export const IMPORTS_PER_CARRIER_PER_DAY = 2_000;
 
-export type ImportItemResult = { name: string; status: "imported" | "unreadable"; exactHash?: string };
+export type ImportItemResult = { name: string; status: "imported" | "unreadable" | "too-large"; exactHash?: string };
 export type ImportBatchResult =
   | { ok: true; items: ImportItemResult[]; txHash: string | null }
   | { ok: false; status: 400 | 429 | 502 | 503; error: string };
@@ -41,8 +41,8 @@ export async function importBatch(
       const fp = await fingerprintFile(f.bytes);
       records.push({ exactHash: fp.exactHash, pHash: fp.pHash, tiles: fp.tiles, width: fp.width, height: fp.height });
       items.push({ name: f.name, status: "imported", exactHash: fp.exactHash });
-    } catch {
-      items.push({ name: f.name, status: "unreadable" });
+    } catch (e) {
+      items.push({ name: f.name, status: e instanceof ImageTooLargeError ? "too-large" : "unreadable" });
     }
   }
   if (!records.length) return { ok: true, items, txHash: null };
