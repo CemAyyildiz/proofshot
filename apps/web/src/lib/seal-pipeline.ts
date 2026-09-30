@@ -63,7 +63,7 @@ export async function fingerprintCapture(blob: Blob): Promise<Fingerprint> {
 }
 
 /** Why a Seal failed, so the capture screen can recover the right way. */
-export type SealFailure = "offline" | "link-closed" | "cancelled" | "other";
+export type SealFailure = "offline" | "link-closed" | "limit" | "cancelled" | "other";
 
 export const OFFLINE_MESSAGE = "No connection. This photo is kept on your phone and seals when you're back online.";
 export const GENERIC_SEAL_MESSAGE = "This photo couldn't be sealed. Tap retry.";
@@ -88,9 +88,13 @@ async function request(url: string, init?: RequestInit): Promise<Response> {
   }
 }
 
-async function failure(res: Response, fallback = GENERIC_SEAL_MESSAGE): Promise<SealError> {
-  const body = (await res.json().catch(() => ({}))) as { error?: string };
-  return new SealError(body.error ?? fallback, undefined, false, res.status === 410 ? "link-closed" : "other");
+function failureFrom(status: number, body: { error?: string; limit?: boolean }, fallback = GENERIC_SEAL_MESSAGE): SealError {
+  const reason: SealFailure = status === 410 ? "link-closed" : status === 429 && body.limit ? "limit" : "other";
+  return new SealError(body.error ?? fallback, undefined, false, reason);
+}
+
+async function failure(res: Response): Promise<SealError> {
+  return failureFrom(res.status, (await res.json().catch(() => ({}))) as { error?: string; limit?: boolean });
 }
 
 export interface SealOutcome {
@@ -154,9 +158,8 @@ export async function signAndSeal(opts: {
       locSalt: location?.salt,
     }),
   });
-  if (res.status === 410) throw await failure(res);
-  const body = (await res.json().catch(() => ({}))) as { receiptUrl?: string; error?: string };
+  const body = (await res.json().catch(() => ({}))) as { receiptUrl?: string; error?: string; limit?: boolean };
   if (res.status === 409 && body.receiptUrl) throw new SealError("Already sealed.", body.receiptUrl, true);
-  if (!res.ok || !body.receiptUrl) throw new SealError(body.error ?? GENERIC_SEAL_MESSAGE);
+  if (!res.ok || !body.receiptUrl) throw failureFrom(res.status, body);
   return { receiptUrl: body.receiptUrl, signedAt };
 }

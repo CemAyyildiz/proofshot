@@ -46,6 +46,9 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
   const [sendError, setSendError] = useState("");
   /** The Carrier revoked (or the link expired) mid-session: no new Seals, but everything sealed stays valid. */
   const [linkClosed, setLinkClosed] = useState(false);
+  /** A limit that won't lift within minutes (link full, today's limit): stop the shutter and say why, once. */
+  const [limitNotice, setLimitNotice] = useState<string | null>(null);
+  const stopped = linkClosed || limitNotice !== null;
   const fingerprints = useRef(new Map<string, Fingerprint>());
   const signQueue = useRef<Promise<void>>(Promise.resolve());
 
@@ -115,6 +118,7 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
           else if (e instanceof SealError) {
             update({ ...current, status: "failed", error: e.message, failure: e.reason });
             if (e.reason === "link-closed") setLinkClosed(true);
+            if (e.reason === "limit") setLimitNotice(e.message);
           } else {
             // Anything else (decoding, storage) is not the Capturer's to act on beyond a retry; keep details in the console.
             console.warn("[capture] seal failed", e);
@@ -238,6 +242,14 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
           </p>
         </div>
       )}
+      {!linkClosed && limitNotice && (
+        <div role="alert" className="rounded-md border border-danger bg-surface p-3 text-sm">
+          <p className="font-semibold">No more photos can be sealed right now</p>
+          <p className="text-muted">
+            {limitNotice} Photos already sealed stay valid and can still be sent.
+          </p>
+        </div>
+      )}
       {/* Width follows the height budget so the viewfinder, shutter and count fit one screen in any orientation. */}
       <div className="relative mx-auto w-full overflow-hidden rounded-xl bg-black" style={{ maxWidth: "min(100%, calc(58svh * 3 / 4))" }}>
         <video ref={videoRef} playsInline muted autoPlay className="aspect-[3/4] w-full object-cover" aria-label="Camera preview" />
@@ -260,7 +272,7 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
         <button
           type="button"
           onClick={shoot}
-          disabled={camera.state !== "on" || inFlightCount >= MAX_IN_FLIGHT || linkClosed}
+          disabled={camera.state !== "on" || inFlightCount >= MAX_IN_FLIGHT || stopped}
           aria-label="Take photo"
           className="grid size-20 place-items-center rounded-full border-4 border-foreground bg-transparent active:scale-95 disabled:opacity-40"
         >
@@ -297,13 +309,14 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
                   <span aria-hidden="true" className="absolute right-1 top-1 size-5 animate-spin rounded-full border-2 border-white/60 border-t-white" />
                 )}
               </div>
-              <CaptureStatusLine capture={c} />
-              {c.status === "failed" && c.error && c.error !== "Not sealed — retry" && (
+              <CaptureStatusLine capture={c} canRetry={!stopped} />
+              {/* A limit is explained once, in the banner above, not under every photo. */}
+              {c.status === "failed" && c.error && c.error !== "Not sealed — retry" && c.failure !== "limit" && (
                 <span className="text-xs text-muted">{c.error}</span>
               )}
               {c.status === "failed" && (
                 <span className="flex flex-wrap gap-x-3 text-sm">
-                  {!linkClosed && (
+                  {!stopped && (
                     <button type="button" className="min-h-9 underline underline-offset-4" onClick={() => seal(c, performance.now())}>
                       Retry
                     </button>
@@ -338,14 +351,16 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
   );
 }
 
-function CaptureStatusLine({ capture: c }: { capture: StoredCapture }) {
+function CaptureStatusLine({ capture: c, canRetry }: { capture: StoredCapture; canRetry: boolean }) {
   const text =
     c.status === "sealed"
       ? `Sealed ✓${c.sealMs !== undefined ? ` · ${(c.sealMs / 1000).toFixed(1)} s` : ""}`
       : c.status === "sent"
         ? "Sent ✓"
         : c.status === "failed"
-          ? "Not sealed — retry"
+          ? canRetry
+            ? "Not sealed — retry"
+            : "Not sealed"
           : "Sealing…";
   return (
     <span role="status" className="text-xs font-medium">

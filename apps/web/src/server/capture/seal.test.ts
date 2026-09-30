@@ -68,6 +68,17 @@ describe("sealContext", () => {
     await revokeClaimLink(scope, fileId);
     expect(await sealContext(db, relayer, token)).toBeNull();
   });
+
+  it("reports a full link or a spent carrier budget before the device asks for Face ID", async () => {
+    await db.update(claimLinks).set({ sealCount: SEALS_PER_LINK });
+    expect(await sealContext(db, relayer, token)).toEqual({ limit: expect.stringContaining("limit of 50 photos") });
+    await db.update(claimLinks).set({ sealCount: 0 });
+
+    const { consume } = await import("../rate-limit");
+    await consume(db, `sponsor:${scope.carrierId}`, SPONSORED_WRITES_PER_DAY.demo, 86_400_000, new Date(), SPONSORED_WRITES_PER_DAY.demo);
+    expect(await sealContext(db, relayer, token)).toEqual({ limit: expect.stringContaining("Try again tomorrow") });
+    expect(latestBlock).not.toHaveBeenCalled();
+  });
 });
 
 describe("sealCapture", () => {
@@ -168,7 +179,7 @@ describe("sealCapture", () => {
   it(`caps a Claim Link at ${SEALS_PER_LINK} Seals`, async () => {
     await db.update(claimLinks).set({ sealCount: SEALS_PER_LINK - 1 });
     expect((await sealCapture(db, relayer, token, body())).ok).toBe(true);
-    expect(await sealCapture(db, relayer, token, body())).toMatchObject({ ok: false, status: 429 });
+    expect(await sealCapture(db, relayer, token, body())).toMatchObject({ ok: false, status: 429, limit: true });
   });
 
   it(`caps a Device Key at ${SEALS_PER_KEY_PER_DAY} Seals a day`, async () => {
@@ -182,7 +193,7 @@ describe("sealCapture", () => {
     const now = new Date("2026-09-28T12:00:00Z");
     const { consume } = await import("../rate-limit");
     await consume(db, `sponsor:${scope.carrierId}`, SPONSORED_WRITES_PER_DAY.demo, 86_400_000, now, SPONSORED_WRITES_PER_DAY.demo); // Northwind is a demo carrier
-    expect(await sealCapture(db, relayer, token, body(), { now })).toMatchObject({ ok: false, status: 429, error: expect.stringContaining("Try again tomorrow") });
+    expect(await sealCapture(db, relayer, token, body(), { now })).toMatchObject({ ok: false, status: 429, limit: true, error: expect.stringContaining("Try again tomorrow") });
     expect(seal).not.toHaveBeenCalled();
     const [link] = await db.select({ sealCount: claimLinks.sealCount }).from(claimLinks);
     expect(link!.sealCount).toBe(0); // nothing reserved

@@ -2484,3 +2484,42 @@ changed.
 **Next: Iteration 70 — Frontend UI/UX, pass 15**: what a policyholder sees when the carrier's daily budget or a
 per-link limit is reached mid-burst (429s from `/seals`). Is the message clear, is the shutter still offered, does
 Retry make sense, and at 375 px?
+
+## Iteration 70 — Frontend UI/UX, pass 15: hitting a limit in the middle of a burst
+
+Method: followed a policyholder who reaches a hard limit while taking photos. The limits are a full link (50
+photos), the carrier's daily budget (added in 66) and the per-device daily limit. Traced every response back to the
+capture screen.
+
+Findings:
+
+- **H1** Every photo past a limit cost a **Face ID prompt** first. Limits were only enforced on `POST /seals`, after
+  the device had signed. The policyholder would authenticate, wait, and see the photo fail, again and again.
+- **M1** The shutter stayed active. Each new photo repeated that failed cycle, and the limit message was printed
+  under every thumbnail.
+- **M2** Failed photos said "Not sealed — retry" even when no Retry was offered, both after a link closed and at a
+  limit. The copy promised an action that wasn't there.
+- OK: a limit that clears within minutes (the context rate limit) still fails a single photo with its own message and
+  keeps Retry. Photos already sealed stay sendable.
+
+Done: all.
+
+- The server marks hard limits with `limit: true` (link full, carrier budget, per-device day).
+  - `seal-context` checks the link cap and the carrier budget, the latter with a new read-only `peek()`, **before**
+    the device signs. A limit now costs no Face ID prompt.
+  - It checks before touching the chain (no `latestBlock` call).
+- The capture screen treats `limit` like a closed link.
+  - One banner: "No more photos can be sealed right now", then the reason and "Photos already sealed stay valid and
+    can still be sent."
+  - The shutter is disabled and Retry hidden.
+  - Failed photos read "Not sealed", without the retry promise. The reason isn't repeated per photo.
+- Tests:
+  - Unit: `sealContext` reports a full link and a spent budget without calling the chain; the Seal-time limits carry
+    `limit: true`.
+  - New e2e: after one Seal the server reports the budget. The banner shows the reason, the shutter is disabled,
+    there is no Retry and no per-photo repeat, **zero `POST /seals`** is made (no signature requested), and the
+    sealed photo is still sent.
+
+`pnpm check` is green. e2e: 29/29 in dev mode and 29/29 in production mode.
+
+**Next: Iteration 71 — Backend, pass 15.**

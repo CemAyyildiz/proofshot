@@ -195,3 +195,31 @@ test("a link revoked mid-session stops new photos with a clear next step; sealed
   await expect(phone.getByRole("heading", { name: "Sent to your insurer" })).toBeVisible();
   await phone.context().close();
 });
+
+test("a limit reached mid-session stops the shutter once, before another Face ID prompt; sealed photos stay", async ({ page, browser }) => {
+  await signIn(page, "marcus@northwind.demo");
+  const phone = await openAsCapturer(browser, await createClaimLink(page, "HAIL-LIMIT-1"));
+  await phone.getByRole("button", { name: "Continue" }).click();
+  await phone.getByRole("button", { name: "Take photo" }).click();
+  const photos = phone.getByRole("list", { name: "Your photos" });
+  await expect(photos.getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
+
+  // The server now reports a hard limit (here: the carrier's daily budget) when asked for the seal context, which
+  // is before the device would ask for Face ID. Counted so the test proves no signature was requested.
+  const limit = "Your insurer has reached today's limit for new photos. Try again tomorrow.";
+  let sealPosts = 0;
+  await phone.route("**/seal-context", (route) => route.fulfill({ status: 429, json: { error: limit, limit: true } }));
+  await phone.route("**/seals", (route) => (sealPosts++, route.continue()));
+  await phone.getByRole("button", { name: "Take photo" }).click();
+
+  const banner = phone.getByRole("alert").filter({ hasText: "No more photos can be sealed right now" });
+  await expect(banner).toContainText(limit);
+  await expect(phone.getByRole("button", { name: "Take photo" })).toBeDisabled();
+  await expect(photos.getByText("Not sealed", { exact: true })).toBeVisible(); // no "retry" promised
+  await expect(phone.getByRole("button", { name: "Retry" })).toHaveCount(0);
+  await expect(photos.getByText(limit)).toHaveCount(0); // said once, in the banner
+  expect(sealPosts).toBe(0);
+  await phone.getByRole("button", { name: "Send 1 photo to insurer" }).click();
+  await expect(phone.getByRole("heading", { name: "Sent to your insurer" })).toBeVisible();
+  await phone.context().close();
+});

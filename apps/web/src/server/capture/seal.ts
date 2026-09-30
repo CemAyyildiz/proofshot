@@ -8,7 +8,7 @@ import type { Db } from "../db/client";
 import { captures, claimLinks, deviceKeys } from "../db/schema";
 import { resolveClaimLink } from "../dal/claim-files";
 import { DAY_MS, consume } from "../rate-limit";
-import { SPONSOR_BUDGET_MESSAGE, consumeSponsored } from "../sponsor-budget";
+import { SPONSOR_BUDGET_MESSAGE, consumeSponsored, sponsoredBudgetSpent } from "../sponsor-budget";
 
 export const SEALS_PER_LINK = 50;
 /** Seal-context lookups per Claim Link per hour: each costs an RPC call; a real session needs a few dozen at most. */
@@ -51,14 +51,22 @@ export const sealBody = z.object({
 
 export type SealResponse =
   | { ok: true; txHash: Hex; blockNumber: string; receiptUrl: string }
-  | { ok: false; status: 400 | 404 | 409 | 410 | 429 | 502 | 503 | 504; error: string; receiptUrl?: string };
+  | { ok: false; status: 400 | 404 | 409 | 410 | 429 | 502 | 503 | 504; error: string; receiptUrl?: string; limit?: true };
+
+/** A limit that won't lift within minutes: the capture screen stops the shutter instead of failing photo by photo. */
+export const linkFullMessage = () => `This link has reached its limit of ${SEALS_PER_LINK} photos. Ask your insurer for a new link.`;
 
 export const receiptUrlFor = (exactHash: string) => `/r/${exactHash}`;
 
-/** Values the Capturer's device must bind into the signed record for this Claim Link. */
+/**
+ * Values the Capturer's device must bind into the signed record for this Claim Link. Hard limits are checked here
+ * too, before the device asks for Face ID: a photo that can't be sealed shouldn't cost a biometric prompt.
+ */
 export async function sealContext(db: Db, relayer: () => Relayer, token: string) {
   const link = await resolveClaimLink(db, token);
   if (!link || link.state !== "active") return null;
+  if (link.sealCount >= SEALS_PER_LINK) return { limit: linkFullMessage() };
+  if (await sponsoredBudgetSpent(db, link)) return { limit: SPONSOR_BUDGET_MESSAGE };
   if (!(await consume(db, `context:${token}`, CONTEXTS_PER_LINK_PER_HOUR, 60 * 60 * 1000)).allowed) return "limited" as const;
   const block = await relayer().latestBlock();
   return {
@@ -120,16 +128,16 @@ export async function sealCapture(db: Db, relayer: () => Relayer, token: string,
   }
 
   if (!(await consume(db, `seal:key:${keyId}`, SEALS_PER_KEY_PER_DAY, DAY_MS, now)).allowed) {
-    return { ok: false, status: 429, error: "You've sealed the maximum number of photos for today on this device." };
+    return { ok: false, status: 429, error: "You've sealed the maximum number of photos for today on this device.", limit: true };
   }
-  if (!(await consumeSponsored(db, link, 1, now))) return { ok: false, status: 429, error: SPONSOR_BUDGET_MESSAGE };
+  if (!(await consumeSponsored(db, link, 1, now))) return { ok: false, status: 429, error: SPONSOR_BUDGET_MESSAGE, limit: true };
   // Reserve one of the link's Seals atomically; released again if the Seal fails.
   const [reserved] = await db
     .update(claimLinks)
     .set({ sealCount: sql`${claimLinks.sealCount} + 1` })
     .where(and(eq(claimLinks.token, token), lt(claimLinks.sealCount, SEALS_PER_LINK)))
     .returning({ sealCount: claimLinks.sealCount });
-  if (!reserved) return { ok: false, status: 429, error: `This link has reached its limit of ${SEALS_PER_LINK} photos. Ask your insurer for a new link.` };
+  if (!reserved) return { ok: false, status: 429, error: linkFullMessage(), limit: true };
 
   const release = () => db.update(claimLinks).set({ sealCount: sql`${claimLinks.sealCount} - 1` }).where(eq(claimLinks.token, token));
   const sealed = { claimFileId: link.claimFileId, claimRef: record.claimRef, carrierId: link.carrierPseudonymousId as Hex, record: record as CaptureRecord };

@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { Db } from "./db/client";
 import { rateLimits } from "./db/schema";
 
@@ -17,4 +17,14 @@ export async function consume(db: Db, bucket: string, limit: number, windowMs: n
     .returning({ count: rateLimits.count });
   const count = row!.count;
   return { allowed: count <= limit, count, remaining: Math.max(0, limit - count) };
+}
+
+/** The current window's count for `bucket`, without consuming anything (e.g. to warn before an expensive step). */
+export async function peek(db: Db, bucket: string, windowMs: number, now = new Date()): Promise<number> {
+  const windowStart = new Date(Math.floor(now.getTime() / windowMs) * windowMs);
+  const [row] = await db
+    .select({ count: rateLimits.count })
+    .from(rateLimits)
+    .where(and(eq(rateLimits.bucket, bucket), eq(rateLimits.windowStart, windowStart)));
+  return row?.count ?? 0;
 }

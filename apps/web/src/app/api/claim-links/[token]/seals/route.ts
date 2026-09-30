@@ -18,6 +18,6 @@ export async function POST(request: Request, ctx: RouteContext<"/api/claim-links
       }),
     findSealed: findSealedOnchain,
   });
-  if (!result.ok) return Response.json({ error: result.error, receiptUrl: result.receiptUrl }, { status: result.status });
+  if (!result.ok) return Response.json({ error: result.error, receiptUrl: result.receiptUrl, limit: result.limit }, { status: result.status });
   return Response.json({ txHash: result.txHash, blockNumber: result.blockNumber, receiptUrl: result.receiptUrl }, { status: 201 });
 }

@@ -1,5 +1,5 @@
 import type { Db } from "./db/client";
-import { DAY_MS, consume } from "./rate-limit";
+import { DAY_MS, consume, peek } from "./rate-limit";
 
 /**
  * Sponsored writes per Carrier per day: Device Key registrations, Seals and Imported Records, the things the relayer
@@ -21,6 +21,11 @@ export const sponsoredWriteLimit = (c: SponsoredCarrier) =>
 /** Records `amount` sponsored writes for the Carrier; false when that would exceed today's budget. */
 export async function consumeSponsored(db: Db, carrier: SponsoredCarrier, amount = 1, now = new Date()): Promise<boolean> {
   return (await consume(db, `sponsor:${carrier.carrierId}`, sponsoredWriteLimit(carrier), DAY_MS, now, amount)).allowed;
+}
+
+/** Whether today's budget is already used up, without consuming it. */
+export async function sponsoredBudgetSpent(db: Db, carrier: SponsoredCarrier, now = new Date()): Promise<boolean> {
+  return (await peek(db, `sponsor:${carrier.carrierId}`, DAY_MS, now)) >= sponsoredWriteLimit(carrier);
 }
 
 export const SPONSOR_BUDGET_MESSAGE = "Your insurer has reached today's limit for new photos. Try again tomorrow.";
