@@ -147,9 +147,10 @@ README and `docs/` mention must be committed.
 - **Relayer trust**: in v1 the relayer attests which carrier and claim a Seal belongs to; the admin (a separate cold
   key) can pause the Registry and rotate a compromised relayer. Signatures are not yet bound to the chain and
   Registry address — required before `seal()` is opened to anyone ([docs/security.md](docs/security.md)).
-- **Sponsored fees**: Proofshot pays every Seal. Rate limits (per Claim Link, Device Key, sandbox visitor and carrier)
-  and a gas-price ceiling bound the spend, but someone with many real IP addresses can still use up the relayer's
-  budget faster than intended; the health check alarms on a low balance.
+- **Sponsored fees**: Proofshot pays every Seal. Rate limits (per Claim Link, Device Key and visitor), a daily
+  sponsored-write budget per carrier (small for the public demo carriers) and a gas-price ceiling bound the spend. Someone
+  with many real IP addresses can still use up a demo carrier's daily budget, pausing that demo for everyone until the
+  next day, but not the relayer's balance; the health check alarms on a low balance.
 - **Hosting**: needs a long-running Node server behind a proxy — not serverless functions, whose 4.5 MB request cap
   rejects ordinary phone photos. Runbook and assumptions: [docs/deploy.md](docs/deploy.md),
   [docs/security.md](docs/security.md#deployment-assumptions).

@@ -7,11 +7,12 @@ import { carriers } from "../db/schema";
 import type { CarrierScope } from "../dal/claim-files";
 import { ImageTooLargeError, fingerprintFile } from "../fingerprint";
 import { DAY_MS, consume } from "../rate-limit";
+import { consumeSponsored } from "../sponsor-budget";
 
 /** Images per request; one Registry transaction per batch (bounded by the upload size, far below the contract cap). */
 export const IMPORT_BATCH = 10;
 if (IMPORT_BATCH > MAX_IMPORT_BATCH) throw new Error("IMPORT_BATCH exceeds Registry.MAX_IMPORT_BATCH");
-/** FR-13: up to 500 images per import; daily ceiling on sponsored import fees per Carrier. */
+/** FR-13: up to 500 images per import; daily ceiling on imported images (each one a sponsored write) per Carrier. */
 export const IMPORTS_PER_CARRIER_PER_DAY = 2_000;
 
 export type ImportItemResult = { name: string; status: "imported" | "unreadable" | "too-large"; exactHash?: string };
@@ -30,9 +31,14 @@ export async function importBatch(
   now = new Date(),
 ): Promise<ImportBatchResult> {
   if (files.length === 0 || files.length > IMPORT_BATCH) return { ok: false, status: 400, error: `Send 1–${IMPORT_BATCH} images per batch.` };
-  if (!(await consume(scope.db, `import:${scope.carrierId}`, IMPORTS_PER_CARRIER_PER_DAY, DAY_MS, now)).allowed) {
-    return { ok: false, status: 429, error: "Your carrier has reached today's import limit. Continue tomorrow." };
-  }
+  const [carrier] = await scope.db
+    .select({ pid: carriers.pseudonymousId, isDemo: carriers.isDemo, isSandbox: carriers.isSandbox })
+    .from(carriers)
+    .where(eq(carriers.id, scope.carrierId));
+  // Counted per image, not per batch: every image becomes an Imported Record the relayer pays for.
+  const limited = { ok: false, status: 429, error: "Your carrier has reached today's import limit. Continue tomorrow." } as const;
+  if (!(await consume(scope.db, `import:${scope.carrierId}`, IMPORTS_PER_CARRIER_PER_DAY, DAY_MS, now, files.length)).allowed) return limited;
+  if (!(await consumeSponsored(scope.db, { carrierId: scope.carrierId, ...carrier! }, files.length, now))) return limited;
 
   const items: ImportItemResult[] = [];
   const records: ImportRecord[] = [];
@@ -47,7 +53,6 @@ export async function importBatch(
   }
   if (!records.length) return { ok: true, items, txHash: null };
 
-  const [carrier] = await scope.db.select({ pid: carriers.pseudonymousId }).from(carriers).where(eq(carriers.id, scope.carrierId));
   try {
     const { txHash } = await relayer().importRecords(carrier!.pid as Hex32, records);
     return { ok: true, items, txHash };

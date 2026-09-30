@@ -8,6 +8,7 @@ import type { Db } from "../db/client";
 import { captures, claimLinks, deviceKeys } from "../db/schema";
 import { resolveClaimLink } from "../dal/claim-files";
 import { DAY_MS, consume } from "../rate-limit";
+import { SPONSOR_BUDGET_MESSAGE, consumeSponsored } from "../sponsor-budget";
 
 export const SEALS_PER_LINK = 50;
 /** Seal-context lookups per Claim Link per hour: each costs an RPC call; a real session needs a few dozen at most. */
@@ -121,6 +122,7 @@ export async function sealCapture(db: Db, relayer: () => Relayer, token: string,
   if (!(await consume(db, `seal:key:${keyId}`, SEALS_PER_KEY_PER_DAY, DAY_MS, now)).allowed) {
     return { ok: false, status: 429, error: "You've sealed the maximum number of photos for today on this device." };
   }
+  if (!(await consumeSponsored(db, link, 1, now))) return { ok: false, status: 429, error: SPONSOR_BUDGET_MESSAGE };
   // Reserve one of the link's Seals atomically; released again if the Seal fails.
   const [reserved] = await db
     .update(claimLinks)

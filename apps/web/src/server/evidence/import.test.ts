@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Relayer } from "../chain/relayer";
 import type { Db } from "../db/client";
 import type { CarrierScope } from "../dal/claim-files";
+import { SPONSORED_WRITES_PER_DAY } from "../sponsor-budget";
 import { carrierScope, testDb } from "../test-db";
 import { IMPORT_BATCH, IMPORTS_PER_CARRIER_PER_DAY, importBatch } from "./import";
 
@@ -46,6 +47,17 @@ describe("importBatch (FR-13)", () => {
     const now = new Date("2026-09-28T12:00:00Z");
     for (let i = 0; i < IMPORTS_PER_CARRIER_PER_DAY; i++) await consume(db, `import:${scope.carrierId}`, IMPORTS_PER_CARRIER_PER_DAY, 86_400_000, now);
     expect(await importBatch(scope, relayer, [{ name: "x.jpg", bytes: new Uint8Array(1) }], now)).toMatchObject({ ok: false, status: 429 });
+  });
+
+  it("counts every image, not every batch, against the daily limits", async () => {
+    const photo = new Uint8Array(await readFile(fixture));
+    const now = new Date("2026-09-28T12:00:00Z");
+    const { consume } = await import("../rate-limit");
+    // Harbor is a demo carrier: its sponsored-write budget is the tighter bound. Leave room for 5 images only.
+    await consume(db, `sponsor:${scope.carrierId}`, SPONSORED_WRITES_PER_DAY.demo, 86_400_000, now, SPONSORED_WRITES_PER_DAY.demo - 5);
+    const ten = Array.from({ length: IMPORT_BATCH }, (_, i) => ({ name: `${i}.jpg`, bytes: photo }));
+    expect(await importBatch(scope, relayer, ten, now)).toMatchObject({ ok: false, status: 429 });
+    expect(importRecords).not.toHaveBeenCalled();
   });
 
   it("surfaces a failed Registry write as retryable", async () => {

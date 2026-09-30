@@ -62,6 +62,7 @@ export default defineConfig({
         RESEND_API_KEY: "",
         SIGNIN_LIMIT_PER_EMAIL: "1000",
         SIGNIN_LIMIT_PER_CLIENT: "1000",
+        DEMO_CLAIM_FILES_PER_VISITOR: "1000",
         MAIL_DEV_OUTBOX: "1",
         DEMO_ACCESS: "1",
         PROOFSHOT_NETWORK: "local",

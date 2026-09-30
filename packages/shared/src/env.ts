@@ -54,6 +54,8 @@ export const serverEnvSchema = z.object({
   SIGNIN_LIMIT_PER_EMAIL: z.coerce.number().int().positive().default(5),
   /** Sign-in link requests per client address per hour (tests raise it: the whole suite shares one address). */
   SIGNIN_LIMIT_PER_CLIENT: z.coerce.number().int().positive().default(20),
+  /** New Claim Files per visitor (client address) per day in the one-tap demo Console (tests raise it, as above). */
+  DEMO_CLAIM_FILES_PER_VISITOR: z.coerce.number().int().positive().default(20),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema> & { network: NetworkConfig; rpcUrl: string };

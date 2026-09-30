@@ -2321,3 +2321,50 @@ Done: all.
 `pnpm check` is green. e2e: 28/28 in dev mode and 28/28 in production mode.
 
 **Next: Iteration 66 — Backend, pass 14.**
+
+## Iteration 66 — Backend, pass 14: what one anonymous visitor can make the relayer pay for
+
+Method: traced every path that ends in a sponsored transaction (Device Key registration, Seal, import) back to how
+someone reaches it and which limits apply on the way. The one-tap demo Console (`DEMO_ACCESS=1`) was treated as fully
+anonymous, and the signer as scriptable: a software P-256 key can produce valid WebAuthn assertions with any RP ID
+hash, as the e2e virtual authenticator shows.
+
+Findings:
+
+- **H1** No limit bounded a carrier as a whole. Each Claim Link allows 10 key registrations a day and 50 Seals, and
+  each key 200 Seals a day. But **creating Claim Files had no limit at all**, and the demo Console needs one tap and
+  no email. A script could open unlimited Claim Files in a demo carrier and drain the relayer with 60 sponsored writes
+  per link. The per-visitor sandbox limit (5 a day) was simply bypassed. Threat model T-4 even listed "per-carrier
+  fee budgets" as future work.
+- **M1** Imports counted **batches**, not images, against the "2,000 per carrier per day" ceiling. A batch holds up
+  to 10 images, so the real ceiling was 20,000 Imported Records a day, about 10× the intended spend (≈ 0.05 MON per
+  batch). The demo carriers can import too.
+- **L1** The import API silently drops files over 20 MB. The Console importer already flags them before upload
+  ("over 20 MB"), so only other API clients are affected. Left as is.
+- OK:
+  - the rate-limit primitive is an atomic upsert;
+  - the Seal path checks Claim File and Carrier against the link;
+  - a key registration whose response was lost is not charged twice.
+
+Done (H1, M1):
+
+- `sponsor-budget.ts` adds a daily sponsored-write budget per carrier, covering key registrations, Seals and imported
+  images: 5,000 for real carriers (a runaway guard), 2,000 for the sandbox and 500 for each demo carrier.
+  - It is checked after the cheaper per-link and per-key limits and before any reservation or relayer call.
+  - Capturers see "Your insurer has reached today's limit for new photos. Try again tomorrow."
+- `consume()` takes an amount. Imports now count every image against both the import ceiling and the budget.
+- A daily Claim File limit applies: 1,000 per real carrier, 100 per demo carrier, and 20 per demo visitor
+  (`DEMO_CLAIM_FILES_PER_VISITOR`, raised in e2e as the sign-in limit is). The Console form shows the reason.
+- Tests:
+  - the Seal budget refuses without reserving or relaying;
+  - enrolment refuses without writing onchain;
+  - an import that would pass the budget is refused whole;
+  - `consume` with an amount;
+  - the per-visitor and per-carrier Claim File limits, and no per-visitor limit for real carriers.
+- README, threat model (T-4), `security.md` and `deploy.md` state the budgets. The README says honestly what remains:
+  someone with many IP addresses can use up a demo carrier's day, pausing that demo, but no longer the relayer's
+  balance.
+
+`pnpm check` is green. e2e: 28/28 in dev mode and 28/28 in production mode.
+
+**Next: Iteration 67 — Contracts, pass 14.**

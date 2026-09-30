@@ -1,8 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { REFERENCE_MAX, createClaimFile, replaceClaimLink, revokeClaimLink } from "@/server/dal/claim-files";
+import { env } from "@/lib/env";
+import { requireSession } from "@/server/auth/session";
+import { clientKey } from "@/server/client-key";
+import { REFERENCE_MAX, createClaimFile, mayCreateClaimFile, replaceClaimLink, revokeClaimLink } from "@/server/dal/claim-files";
 import { carrierScope } from "@/server/dal/scope";
 
 export interface CreateClaimState {
@@ -13,7 +17,12 @@ export async function createClaim(_: CreateClaimState, form: FormData): Promise<
   const reference = String(form.get("reference") ?? "").trim();
   if (!reference) return { error: "Enter the claim reference." };
   if (reference.length > REFERENCE_MAX) return { error: `Use at most ${REFERENCE_MAX} characters.` };
-  const file = await createClaimFile(await carrierScope(), reference);
+  const [session, scope] = await Promise.all([requireSession(), carrierScope()]);
+  const visitor = { key: clientKey(await headers()), limit: env().DEMO_CLAIM_FILES_PER_VISITOR };
+  if (!(await mayCreateClaimFile(scope.db, session, visitor))) {
+    return { error: "You've reached today's limit for new Claim Files. Try again tomorrow." };
+  }
+  const file = await createClaimFile(scope, reference);
   revalidatePath("/console");
   redirect(`/console/claims/${file.id}`);
 }

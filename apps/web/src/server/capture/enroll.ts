@@ -8,6 +8,7 @@ import type { Db } from "../db/client";
 import { deviceKeys } from "../db/schema";
 import { resolveClaimLink } from "../dal/claim-files";
 import { DAY_MS, consume } from "../rate-limit";
+import { SPONSOR_BUDGET_MESSAGE, consumeSponsored } from "../sponsor-budget";
 
 /** Each registration costs sponsored gas; bound it per Claim Link. */
 export const ENROLLMENTS_PER_LINK_PER_DAY = 10;
@@ -49,6 +50,7 @@ export async function enrollDeviceKey(db: Db, relayer: () => Relayer, token: str
   if (!(await consume(db, `enroll:${token}`, ENROLLMENTS_PER_LINK_PER_DAY, DAY_MS)).allowed) {
     return { ok: false, status: 429, error: "Too many devices were set up with this link today. Try again tomorrow." };
   }
+  if (!(await consumeSponsored(db, link))) return { ok: false, status: 429, error: SPONSOR_BUDGET_MESSAGE };
 
   await db.insert(deviceKeys).values({ keyId, credentialId: body.data.credentialId, ...point });
   try {

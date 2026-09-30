@@ -13,6 +13,13 @@ describe("consume", () => {
     expect((await consume(db, "b", 3, DAY_MS, new Date(t.getTime() + DAY_MS))).allowed).toBe(true);
   });
 
+  it("can consume several units at once (e.g. a batch of images)", async () => {
+    const db = await testDb();
+    const t = new Date("2026-09-28T10:00:00Z");
+    expect(await consume(db, "w", 10, DAY_MS, t, 7)).toMatchObject({ allowed: true, count: 7, remaining: 3 });
+    expect(await consume(db, "w", 10, DAY_MS, t, 4)).toMatchObject({ allowed: false, count: 11 });
+  });
+
   it("is atomic under concurrency", async () => {
     const db = await testDb();
     const t = new Date();

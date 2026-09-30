@@ -4,6 +4,7 @@ import type { Relayer } from "../chain/relayer";
 import type { Db } from "../db/client";
 import { captures, claimLinks, deviceKeys } from "../db/schema";
 import { createClaimFile, revokeClaimLink, type CarrierScope } from "../dal/claim-files";
+import { SPONSORED_WRITES_PER_DAY } from "../sponsor-budget";
 import { carrierScope, testDb } from "../test-db";
 import { SEALS_PER_KEY_PER_DAY, SEALS_PER_LINK, claimRefFor, sealCapture, sealContext } from "./seal";
 
@@ -175,5 +176,15 @@ describe("sealCapture", () => {
     const { consume } = await import("../rate-limit");
     for (let i = 0; i < SEALS_PER_KEY_PER_DAY; i++) await consume(db, `seal:key:${KEY}`, SEALS_PER_KEY_PER_DAY, 86_400_000, now);
     expect(await sealCapture(db, relayer, token, body(), { now })).toMatchObject({ ok: false, status: 429 });
+  });
+
+  it("stops at the Carrier's daily sponsored-write budget, however many links and keys it uses", async () => {
+    const now = new Date("2026-09-28T12:00:00Z");
+    const { consume } = await import("../rate-limit");
+    await consume(db, `sponsor:${scope.carrierId}`, SPONSORED_WRITES_PER_DAY.demo, 86_400_000, now, SPONSORED_WRITES_PER_DAY.demo); // Northwind is a demo carrier
+    expect(await sealCapture(db, relayer, token, body(), { now })).toMatchObject({ ok: false, status: 429, error: expect.stringContaining("Try again tomorrow") });
+    expect(seal).not.toHaveBeenCalled();
+    const [link] = await db.select({ sealCount: claimLinks.sealCount }).from(claimLinks);
+    expect(link!.sealCount).toBe(0); // nothing reserved
   });
 });

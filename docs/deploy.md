@@ -63,7 +63,9 @@ DATABASE_URL=... pnpm --filter web db:seed northwind=you@example.com
 The seeded Northwind and Harbor carriers are **demo tenants**: with `DEMO_ACCESS=1` any visitor can enter them, and
 everything in them is visible to every visitor. Adding your email (as above) only lets you sign in to the demo
 tenant by email; demo entry always acts as the seeded placeholder account, never as you. Never put real claim data
-in a demo tenant.
+in a demo tenant. Because anyone can enter them, each demo carrier gets a small daily budget: 500 sponsored writes
+(key registrations, Seals, imported images), 100 new Claim Files, and 20 new Claim Files per visitor
+(`DEMO_CLAIM_FILES_PER_VISITOR`). If the demo stops accepting photos for the day, that budget ran out.
 
 Evidence images: on a host with a persistent disk (a Railway Volume) use `STORAGE_DRIVER=fs` with `STORAGE_DIR` on
 that disk. Without one, use `STORAGE_DRIVER=s3` with a **private** S3-compatible bucket — Cloudflare R2 works

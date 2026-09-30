@@ -5,6 +5,7 @@ import type { Relayer } from "../chain/relayer";
 import type { Db } from "../db/client";
 import { deviceKeys } from "../db/schema";
 import { createClaimFile, revokeClaimLink, type CarrierScope } from "../dal/claim-files";
+import { SPONSORED_WRITES_PER_DAY } from "../sponsor-budget";
 import { carrierScope, testDb } from "../test-db";
 import { ENROLLMENTS_PER_LINK_PER_DAY, enrollDeviceKey, keyIdFor } from "./enroll";
 
@@ -90,5 +91,13 @@ describe("enrollDeviceKey", () => {
     deviceKey.mockResolvedValueOnce({ qx: pk.qx, qy: pk.qy, revokedAtBlock: 0n }); // someone else's point
     expect(await enrollDeviceKey(db, relayer, token, other)).toMatchObject({ ok: false, status: 503 });
     expect(await db.select().from(deviceKeys)).toHaveLength(1);
+  });
+
+  it("stops at the Carrier's daily sponsored-write budget without writing onchain", async () => {
+    const { consume } = await import("../rate-limit");
+    await consume(db, `sponsor:${scope.carrierId}`, SPONSORED_WRITES_PER_DAY.demo, 86_400_000, new Date(), SPONSORED_WRITES_PER_DAY.demo);
+    expect(await enrollDeviceKey(db, relayer, token, passkey())).toMatchObject({ ok: false, status: 429 });
+    expect(registerDeviceKey).not.toHaveBeenCalled();
+    expect(await db.select().from(deviceKeys)).toHaveLength(0);
   });
 });

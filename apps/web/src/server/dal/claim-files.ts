@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { and, asc, desc, eq, ilike, sql } from "drizzle-orm";
 import type { Db } from "../db/client";
+import { DAY_MS, consume } from "../rate-limit";
 import { captures, carriers, claimFiles, claimLinks, duplicateAlerts, retiredClaimLinks, uploads } from "../db/schema";
 
 export const CLAIM_LINK_TTL_MS = 14 * 24 * 60 * 60 * 1000;
@@ -21,6 +22,24 @@ export type ClaimLinkState = "active" | "revoked" | "expired";
 export function claimLinkState(link: { revokedAt: Date | null; expiresAt: Date }, now = new Date()): ClaimLinkState {
   if (link.revokedAt) return "revoked";
   return link.expiresAt <= now ? "expired" : "active";
+}
+
+/**
+ * New Claim Files per day. Each one opens a Claim Link with its own sponsored-write limits, so creation is bounded
+ * too: per Carrier, and in the one-tap demo Console also per visitor (default 20, `DEMO_CLAIM_FILES_PER_VISITOR`), so
+ * one visitor can't use up the demo for everyone.
+ */
+export const CLAIM_FILES_PER_DAY = { carrier: 1_000, demo: 100 } as const;
+
+export async function mayCreateClaimFile(
+  db: Db,
+  carrier: { carrierId: string; isDemo: boolean },
+  visitor: { key: string; limit: number },
+  now = new Date(),
+) {
+  if (carrier.isDemo && !(await consume(db, `claim-files:visitor:${visitor.key}`, visitor.limit, DAY_MS, now)).allowed) return false;
+  const limit = carrier.isDemo ? CLAIM_FILES_PER_DAY.demo : CLAIM_FILES_PER_DAY.carrier;
+  return (await consume(db, `claim-files:${carrier.carrierId}`, limit, DAY_MS, now)).allowed;
 }
 
 /** ≥ 128 bits of entropy; URL-safe. */
@@ -123,7 +142,9 @@ export async function resolveClaimLink(db: Db, token: string, now = new Date()) 
       reference: claimFiles.reference,
       carrierName: carriers.name,
       carrierPseudonymousId: carriers.pseudonymousId,
+      carrierId: carriers.id,
       isSandbox: carriers.isSandbox,
+      isDemo: carriers.isDemo,
       expiresAt: claimLinks.expiresAt,
       revokedAt: claimLinks.revokedAt,
       sealCount: claimLinks.sealCount,
@@ -140,7 +161,9 @@ export async function resolveClaimLink(db: Db, token: string, now = new Date()) 
       reference: claimFiles.reference,
       carrierName: carriers.name,
       carrierPseudonymousId: carriers.pseudonymousId,
+      carrierId: carriers.id,
       isSandbox: carriers.isSandbox,
+      isDemo: carriers.isDemo,
       retiredAt: retiredClaimLinks.retiredAt,
     })
     .from(retiredClaimLinks)

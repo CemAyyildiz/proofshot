@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import type { Db } from "../db/client";
 import { carrierScope, testDb } from "../test-db";
-import { CLAIM_LINK_TTL_MS, type CarrierScope, createClaimFile, getClaimFile, listClaimFiles, replaceClaimLink, resolveClaimLink, revokeClaimLink } from "./claim-files";
+import { CLAIM_FILES_PER_DAY, CLAIM_LINK_TTL_MS, type CarrierScope, createClaimFile, mayCreateClaimFile, getClaimFile, listClaimFiles, replaceClaimLink, resolveClaimLink, revokeClaimLink } from "./claim-files";
 
 let db: Db;
 let northwind: CarrierScope;
@@ -133,3 +133,22 @@ describe("replaceClaimLink", () => {
   });
 });
 
+
+describe("mayCreateClaimFile", () => {
+  it("limits each demo visitor, then the demo carrier as a whole; real carriers only by their own ceiling", async () => {
+    const db = await testDb();
+    const now = new Date("2026-09-28T12:00:00Z");
+    const demo = { carrierId: "00000000-0000-4000-8000-000000000001", isDemo: true };
+    const visitor = (key: string) => ({ key, limit: 3 });
+    for (let i = 0; i < 3; i++) expect(await mayCreateClaimFile(db, demo, visitor("a"), now)).toBe(true);
+    expect(await mayCreateClaimFile(db, demo, visitor("a"), now)).toBe(false); // this visitor is done for today
+    expect(await mayCreateClaimFile(db, demo, visitor("b"), now)).toBe(true); // others are not
+
+    const { consume } = await import("../rate-limit");
+    await consume(db, `claim-files:${demo.carrierId}`, CLAIM_FILES_PER_DAY.demo, 86_400_000, now, CLAIM_FILES_PER_DAY.demo);
+    expect(await mayCreateClaimFile(db, demo, visitor("c"), now)).toBe(false);
+
+    const real = { carrierId: "00000000-0000-4000-8000-000000000002", isDemo: false };
+    for (let i = 0; i < 5; i++) expect(await mayCreateClaimFile(db, real, visitor("a"), now)).toBe(true); // no per-visitor limit
+  });
+});

@@ -53,7 +53,9 @@ nothing across all 102 detectors, and runs in CI on every push.
 
 Tenant isolation on every Console query and route (e2e), hashed single-use magic links sent after the response (no
 account enumeration by timing or error), `__Host-` session cookie in production, rate limits on every unauthenticated
-cost keyed on the edge-set client address (a client-written `X-Forwarded-For` can't mint new buckets), a relayer fee
+cost keyed on the edge-set client address (a client-written `X-Forwarded-For` can't mint new buckets), a daily
+sponsored-write budget per carrier (key registrations, Seals and imported images; 500 for each one-tap demo carrier)
+and a daily Claim File limit per carrier and per demo visitor, a relayer fee
 ceiling that pauses writes instead of overpaying, CSP without third-party origins, decompression-bomb refusal before
 decoding (50 MP), an indexer that tolerates lagging RPCs and reorgs, and a health endpoint that alerts on low relayer
 balance, a paused Registry, fees above the ceiling or missing email. Evidence images are sent `private, no-store`.

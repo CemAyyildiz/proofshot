@@ -11,7 +11,7 @@ it is, or who the Capturer is legally.
 | T-1 | Virtual camera or injected frames feed a fabricated image to the capture screen | Accepted, disclosed. Duplicate and alteration detection still apply. | Native capture with iOS App Attest / Android Play Integrity bound into the signed payload |
 | T-2 | Re-photographing a screen or print of a recycled image | Partly mitigated: the perceptual hash often matches the original, raising a Duplicate Alert | Recapture (moiré/screen) detection |
 | T-3 | Replaying a signed payload | Rejected: duplicate Exact Hash, Signing Window bounds | — |
-| T-4 | Draining sponsored fees with scripted Seals | Rate limits per Claim Link, per Device Key, per sandbox visitor, per carrier import | Per-carrier fee budgets |
+| T-4 | Draining sponsored fees with scripted Seals | Rate limits per Claim Link, per Device Key, per visitor (sandbox and demo Console), and a daily sponsored-write budget per carrier covering key registrations, Seals and imported images (500 for each public demo carrier) | Budgets in fee units rather than writes |
 | T-5 | Probing the Registry to learn about other carriers' claims | Alerts reveal only match strength, date and same/other carrier; carrier IDs are pseudonymous | Rotating pseudonymous IDs |
 | T-6 | Adversarial perturbation to evade perceptual matching of a recycled image | Accepted | Multiple fingerprint algorithms, region-level matching |
 | T-7 | Lost or compromised Device Key | Keys can be revoked from a block on; earlier Seals stay valid, and their receipts and the `proofshot-verify` CLI state that the key was later revoked | Key revocation UI |
