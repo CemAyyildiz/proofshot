@@ -12,17 +12,27 @@ export function lastLinkFor(email: string): string {
   return hit.url;
 }
 
-export async function signIn(page: Page, email: string) {
-  await page.goto("/console");
-  await expect(page).toHaveURL(/\/console\/sign-in$/);
-  const sent = outbox().length;
-  await page.getByLabel("Work email").fill(email);
-  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
-  await expect(page.getByRole("status")).toContainText("sign-in link is on its way");
-  await expect.poll(() => outbox().slice(sent).some((m) => m.to === email)).toBe(true);
-  await page.goto(lastLinkFor(email));
-  await page.getByRole("button", { name: "Sign in" }).click();
+/** Signs in through the emailed link; returns the link it used (single-use, so tests can prove it's spent). */
+export async function signIn(page: Page, email: string): Promise<string> {
+  let used = "";
+  // Two workers can sign in as the same demo user at once and read each other's link from the shared outbox;
+  // single-use links then fail for one of them. That is a test-harness race, so retry the whole flow once.
+  for (let attempt = 1; ; attempt++) {
+    await page.goto("/console");
+    await expect(page).toHaveURL(/\/console\/sign-in$/);
+    const sent = outbox().length;
+    await page.getByLabel("Work email").fill(email);
+    await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+    await expect(page.getByRole("status")).toContainText("sign-in link is on its way");
+    await expect.poll(() => outbox().slice(sent).some((m) => m.to === email)).toBe(true);
+    used = outbox().slice(sent).find((m) => m.to === email)!.url;
+    await page.goto(used);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await page.waitForURL(/\/console$|error=/);
+    if (/\/console$/.test(page.url()) || attempt === 2) break;
+  }
   await expect(page).toHaveURL(/\/console$/);
+  return used;
 }
 
 export async function createClaimLink(page: Page, reference: string): Promise<string> {

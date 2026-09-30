@@ -2009,3 +2009,41 @@ Done: both.
 **Next: Iteration 58 — Tests/CI, pass 12**: the e2e suite has grown to 26 tests (~50–70 s) on one worker because of
 shared state. See whether isolating state per test (distinct client addresses via `extraHTTPHeaders`, per-test
 carriers) would allow two workers safely, measure it, and keep it only if flake-free across 3 runs.
+
+---
+
+## Iteration 58 — Tests/CI, pass 12: two workers, and the real bug the load exposed (2026-09-30)
+
+Method: ran the e2e suite on two workers, which puts two test files at a time against the one dev server, database,
+chain and outbox. I measured the result, and then chased the failure instead of lowering the parallelism.
+
+Findings:
+
+- **H1 (product)** A photo chosen before the page had finished loading was silently ignored. The first two-worker run
+  failed in the a11y spec: the Verifier page sat idle, with no "checking" state and no error, after a file had been
+  set. Under load the dev build hydrated late. The file was picked while only the server-rendered input existed, so
+  React's `onChange` never fired, and the file stayed in the input with nothing happening. On a slow phone a real user
+  sees exactly that: they pick a photo and nothing happens. The Console "Upload and verify" form had the same gap.
+- **M1 (test harness)** Two shared-state races appear once workers overlap:
+  - two workers signing in as the same demo user can read each other's single-use link from the shared outbox;
+  - "a used sign-in link cannot be reused" re-read `lastLinkFor(email)`, which could be another worker's fresh link,
+    so the test would pass a valid link and fail.
+
+Done: all.
+
+- The Verifier and the Console upload form check the input on mount and process a file that was picked before
+  hydration.
+  - New e2e: every JS chunk is held back by a route gate, a file is picked on the server-rendered page, then the JS is
+    released. A Verdict still appears.
+  - Verified that this test **fails without the fix** and passes with it.
+- `signIn` reads the link from the outbox entries written *after* its own request, retries the flow once if the link
+  was taken, and returns the link it spent. The reuse test uses exactly that link.
+- Playwright runs **2 workers**. Measured: dev ~66 s → ~52–57 s, production ~50 s → ~38–40 s. Stability: 3/3 dev runs
+  and 4/4 production runs clean, which meets the bar set in iteration 57 (flake-free across at least 3 runs). CI keeps
+  `failOnFlakyTests`, so a regression shows up as a red build rather than a silent retry.
+
+`pnpm check` is green. e2e: 27/27 on every run above.
+
+**Next: Iteration 59 — Docs, pass 12**: a CHANGELOG and judge's-guide refresh for iterations 39–58 (host change,
+security fixes, revocation receipts). Re-read the judge's guide steps against the current UI (numbered evidence,
+receipts with revocation, Try-it guidance).

@@ -48,14 +48,14 @@ test("unknown emails get the same response and no link", async ({ page }) => {
 });
 
 test("a used sign-in link cannot be reused", async ({ page, browser }) => {
-  await signIn(page, "marcus@northwind.demo");
+  const used = await signIn(page, "marcus@northwind.demo");
   // The session cookie is invisible to scripts and cross-site requests; in production it is host-locked (__Host-).
   const [cookie] = (await page.context().cookies()).filter((c) => c.name.endsWith("ps_session"));
   expect(cookie).toMatchObject({ httpOnly: true, sameSite: "Lax", path: "/" });
   expect(cookie!.domain).not.toMatch(/^\./);
   if (process.env.E2E_PROD) expect(cookie).toMatchObject({ name: "__Host-ps_session", secure: true });
   const other = await (await browser.newContext()).newPage();
-  await other.goto(lastLinkFor("marcus@northwind.demo"));
+  await other.goto(used); // exactly the link just spent (another worker may have sent a newer one meanwhile)
   await other.getByRole("button", { name: "Sign in" }).click();
   await expect(other.getByRole("heading", { name: "This sign-in link is no longer valid" })).toBeVisible();
 });

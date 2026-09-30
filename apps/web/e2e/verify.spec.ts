@@ -124,6 +124,22 @@ test("a Seal whose Device Key was later revoked says so on its receipt", async (
   await expect(page.getByRole("heading", { name: "Sealed photo" })).toBeVisible();
 });
 
+test("a file picked before the page finished loading is still checked", async ({ page }) => {
+  // Hold the JavaScript back, pick the file while the server-rendered input is all there is, then let it load.
+  let release!: () => void;
+  const gate = new Promise<void>((r) => (release = r));
+  await page.route("**/_next/static/**/*.js", async (route) => {
+    await gate;
+    await route.continue();
+  });
+  await page.goto("/verify", { waitUntil: "commit" });
+  await page.locator("#verify-file").waitFor({ state: "attached" });
+  const png = await sharp({ create: { width: 640, height: 480, channels: 3, background: "#2a6" } }).png().toBuffer();
+  await page.locator("#verify-file").setInputFiles({ name: "early.png", mimeType: "image/png", buffer: png });
+  release();
+  await expect(page.getByRole("heading", { name: /^Verdict:/ })).toBeAttached({ timeout: 20_000 });
+});
+
 test("a temporary failure keeps the chosen file and offers to try it again", async ({ page }) => {
   let first = true;
   await page.route("**/api/verify", async (route) => {

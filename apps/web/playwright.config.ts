@@ -12,8 +12,10 @@ export default defineConfig({
   testDir: "./e2e",
   globalSetup: "./e2e/global-setup.ts",
   fullyParallel: false,
-  // One dev server, one database and one mail outbox are shared by every test.
-  workers: 1,
+  // Test files run on two workers against one dev server, database, chain and mail outbox. Every test uses its own
+  // Claim Files and references; the only shared-account race (two workers signing in as one demo user) is retried in
+  // helpers.signIn. Measured 2026-09-30: 3/3 clean runs, ~50 s instead of ~66 s.
+  workers: 2,
   // CI retries once to collect a trace of the first failure, but a test that only passes on retry still fails the
   // run: a hidden flake is how a real timing bug (a button measured mid-fade by axe) once went unnoticed.
   retries: process.env.CI ? 1 : 0,
