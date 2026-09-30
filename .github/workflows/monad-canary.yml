@@ -16,9 +16,29 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Only this job may write, and only issues: a failure has to reach the owner, not just a red run nobody watches.
+    permissions:
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: ./.github/actions/setup
       - run: forge build
         working-directory: contracts
       - run: pnpm --filter @proofshot/contracts probe --no-write
+      - name: Open or update the canary issue
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Monad canary failing: passkey verification probe"
+          number=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "Still failing: $RUN_URL"
+          else
+            gh issue create --title "$title" --body "The scheduled keyless probe failed: $RUN_URL
+
+          Monad testnet or mainnet stopped accepting a valid passkey assertion, started accepting a tampered one, or was unreachable. Check the run log, then re-run \`pnpm --filter @proofshot/contracts probe\` locally. Close this issue once the canary passes again."
+          fi

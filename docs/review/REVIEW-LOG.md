@@ -1229,3 +1229,37 @@ Done: all.
 step in `check`, that fails when a file referenced by the README or tests is git-ignored, e.g. by running
 `git ls-files --others --ignored --exclude-standard` against an allow-list. Also make sure the canary would alert:
 decide how a failed scheduled run notifies the owner.
+
+---
+
+## Iteration 38 — Tests/CI, pass 8: docs that point at missing files, and a canary nobody would hear (2026-09-30)
+
+Findings:
+
+- **M1** Nothing kept the docs' file references honest. The `.env.example` miss (iteration 34) belonged to a class of
+  bugs: a path named in the README or `docs/` that is git-ignored, renamed or never committed looks fine locally and
+  is missing from every clone. CI runs on a fresh checkout, so it would catch *test* breakage there, but the repo has
+  no remote yet and no test covered doc references at all.
+- **M2** The canary could fail silently. A failed scheduled run only emails the account that last edited the cron,
+  and only if its notification settings allow it; the run itself is a red dot nobody opens. A Monad change that breaks
+  passkey verification could go unnoticed until the demo.
+- OK: CI itself is a fresh clone, so ignored-but-required files fail CI once a remote exists. The new test catches
+  them locally, before a push.
+
+Done: both.
+
+- `packages/shared/src/repo-docs.test.ts` runs as part of `pnpm test`. For the README and every tracked `docs/*.md`
+  (except this log), every backticked repo path and every relative Markdown link must resolve to a committed file or
+  directory. Outputs that are produced later (`docs/latency.md`, `spike-b-testnet.json`, `benchmark/README.md`, the dev
+  outbox) are allow-listed with a reason, and a second test fails if an allow-listed entry goes stale.
+  Mutation-checked: an invented path and a broken relative link both fail.
+- The canary's `probe` job gets `issues: write` (job-scoped; the workflow default stays `contents: read`). On a failed
+  scheduled run it opens "Monad canary failing: passkey verification probe", or comments on the open issue.
+  Both branches were simulated with a stub `gh`; actionlint and shellcheck are clean.
+- README describes both. The owner checklist says to watch the repo's issues after the first push.
+
+`pnpm check` is green. e2e: 22/22 in dev mode.
+
+**Next: Iteration 39 — Docs, pass 8**: the judge's guide and README top section, read in 60 seconds. Is the core claim
+("verified onchain by Monad's P-256 precompile") the first thing a judge sees, with its evidence one click away? Also
+check that `CHANGELOG.md` covers iterations 23–38.

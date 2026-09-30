@@ -119,7 +119,9 @@ assertions interleaved with random role changes.
 CI (`.github/workflows/ci.yml`) runs `pnpm check`, the Registry gas snapshot check, Slither static analysis and the
 e2e suite against the production build on every push and pull request, plus a deep fuzz/invariant campaign on `main`.
 A separate **Monad canary**
-(`monad-canary.yml`) re-runs the keyless passkey-verification probe against Monad testnet and mainnet every six hours.
+(`monad-canary.yml`) re-runs the keyless passkey-verification probe against Monad testnet and mainnet every six hours,
+and opens (or updates) a GitHub issue when it fails. A test also keeps the docs honest: every repository path the
+README and `docs/` mention must be committed.
 
 ## Status and honest limits
 
