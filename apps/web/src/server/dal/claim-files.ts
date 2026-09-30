@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { and, asc, desc, eq, ilike, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, sql } from "drizzle-orm";
 import type { Db } from "../db/client";
 import { DAY_MS, consume } from "../rate-limit";
 import { captures, carriers, claimFiles, claimLinks, duplicateAlerts, retiredClaimLinks, uploads } from "../db/schema";
@@ -210,9 +210,10 @@ export async function listUploads(scope: CarrierScope, claimFileId: string) {
 
 /** Duplicate Alerts of one of this Carrier's Claim Files, newest first. */
 export async function listDuplicateAlerts(scope: CarrierScope, claimFileId: string) {
-  return scope.db
+  const alerts = await scope.db
     .select({
       id: duplicateAlerts.id,
+      matchedExactHash: duplicateAlerts.matchedExactHash,
       sourceExactHash: duplicateAlerts.sourceExactHash,
       matchedKind: duplicateAlerts.matchedKind,
       matchedAt: duplicateAlerts.matchedAt,
@@ -226,6 +227,23 @@ export async function listDuplicateAlerts(scope: CarrierScope, claimFileId: stri
     .innerJoin(claimFiles, eq(claimFiles.id, duplicateAlerts.claimFileId))
     .where(and(eq(duplicateAlerts.claimFileId, claimFileId), eq(claimFiles.carrierId, scope.carrierId)))
     .orderBy(desc(duplicateAlerts.createdAt));
+
+  // A same-carrier match is this Carrier's own photo, so it can say which Claim File it is in. Only this Carrier's
+  // files are searched; another carrier's match stays anonymous (FR-12).
+  const own = alerts.filter((a) => a.sameCarrier).map((a) => a.matchedExactHash);
+  const where = new Map<string, { id: string; reference: string }>();
+  if (own.length) {
+    const inFiles = (table: typeof captures | typeof uploads) =>
+      scope.db
+        .select({ exactHash: table.exactHash, id: claimFiles.id, reference: claimFiles.reference })
+        .from(table)
+        .innerJoin(claimFiles, eq(claimFiles.id, table.claimFileId))
+        .where(and(eq(claimFiles.carrierId, scope.carrierId), inArray(table.exactHash, own)));
+    for (const r of [...(await inFiles(captures)), ...(await inFiles(uploads))]) {
+      if (r.id !== claimFileId && !where.has(r.exactHash)) where.set(r.exactHash, { id: r.id, reference: r.reference });
+    }
+  }
+  return alerts.map(({ matchedExactHash, ...a }) => ({ ...a, matchedClaimFile: a.sameCarrier ? (where.get(matchedExactHash) ?? null) : null }));
 }
 
 /** Storage key of an image in one of this Carrier's Claim Files, or null. */

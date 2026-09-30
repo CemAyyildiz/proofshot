@@ -10,6 +10,8 @@ import type { Db } from "../db/client";
 import { type CarrierScope, createClaimFile, evidenceImageKey, listDuplicateAlerts, listUploads } from "../dal/claim-files";
 import { FsStorage } from "../storage";
 import { carrierScope, testDb } from "../test-db";
+import { recordCapture } from "../capture/seal";
+import { deviceKeys } from "../db/schema";
 import { matchStrength, raiseDuplicateAlerts } from "./duplicates";
 import { uploadIntoClaimFile } from "./upload";
 
@@ -72,6 +74,13 @@ describe("raiseDuplicateAlerts (FR-12)", () => {
     // Only the owning Carrier can list them.
     expect(await listDuplicateAlerts(northwind, mine.id)).toHaveLength(2);
     expect(await listDuplicateAlerts(harbor, mine.id)).toEqual([]);
+
+    // A same-carrier match names the Claim File it is in (the Carrier's own data); another carrier's never does.
+    await db.insert(deviceKeys).values({ keyId: `0x${"11".repeat(32)}`, credentialId: "cred-evidence-test-1", qx: `0x${"01".repeat(32)}`, qy: `0x${"02".repeat(32)}` });
+    await recordCapture(db, { claimFileId: earlierNw.id, keyId: `0x${"11".repeat(32)}`, exactHash: `0x${"44".repeat(32)}`, txHash: `0x${"22".repeat(32)}`, now: new Date() });
+    const listed = await listDuplicateAlerts(northwind, mine.id);
+    expect(listed.find((a) => a.sameCarrier)!.matchedClaimFile).toEqual({ id: earlierNw.id, reference: "NW-0" });
+    expect(listed.find((a) => !a.sameCarrier)!.matchedClaimFile).toBeNull();
   });
 
   it("describes match strength from Registry data only", () => {

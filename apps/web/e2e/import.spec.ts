@@ -21,7 +21,7 @@ test("FR-13: imported history makes duplicate detection work before any policyho
   const history = await oldClaimPhoto(4242);
   const dana = await signedInPage(browser, "dana@harbor.demo");
 
-  await dana.getByRole("link", { name: "Import history" }).click();
+  await dana.getByRole("link", { name: "Import past photos" }).click();
   await dana.getByLabel("Choose images or a zip file").setInputFiles({
     name: "2024-claims.zip",
     mimeType: "application/zip",

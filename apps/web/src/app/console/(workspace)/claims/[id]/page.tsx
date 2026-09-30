@@ -114,13 +114,31 @@ export default async function ClaimFilePage({ params, searchParams }: PageProps<
                       {item.label}
                     </a>{" "}
                     matches {matches.length === 1 ? "a record in another Claim File" : `${matches.length} records in other Claim Files`}
+                    {matches.some((a) => !a.sameCarrier) && matches.some((a) => a.sameCarrier) && (
+                      <>, {matches.filter((a) => !a.sameCarrier).length} at another carrier</>
+                    )}
                   </p>
+                  {/* Another carrier first: a photo reused across insurers is the fraud signal. A same-carrier match is
+                      usually the same damage filed twice here, so it links to that Claim File. */}
                   <ul className="flex flex-col divide-y divide-line">
-                    {matches.map((a) => (
-                      <li key={a.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-1.5 first:pt-0 last:pb-0">
-                        <span>
+                    {[...matches.filter((a) => !a.sameCarrier), ...matches.filter((a) => a.sameCarrier)].map((a) => (
+                      <li key={a.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2 first:pt-0 last:pb-0">
+                        <span className={a.sameCarrier ? undefined : "font-semibold"}>
                           {a.matchedKind === "imported" ? "Imported record (unsigned)" : "Sealed photo"} ·{" "}
                           {a.sameCarrier ? "same carrier" : "another carrier"} · {formatDateTime(a.matchedAt)}
+                          {a.matchedClaimFile && (
+                            <>
+                              {" "}
+                              · in{" "}
+                              <Link
+                                href={`/console/claims/${a.matchedClaimFile.id}`}
+                                title={a.matchedClaimFile.reference}
+                                className="inline-block max-w-[16rem] truncate align-bottom font-medium underline underline-offset-4"
+                              >
+                                {a.matchedClaimFile.reference}
+                              </Link>
+                            </>
+                          )}
                         </span>
                         <span className="text-muted">Match strength: {matchStrength(a)}</span>
                       </li>

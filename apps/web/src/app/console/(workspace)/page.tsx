@@ -82,7 +82,15 @@ export default async function ConsoleHome({ searchParams }: PageProps<"/console"
                         {f.reference}
                       </Link>
                     </th>
-                    <td className="px-4 py-3">{STATUS_LABEL[f.status]}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${
+                          f.status === "evidence_received" ? "border-foreground/30 text-foreground" : "border-line text-muted"
+                        }`}
+                      >
+                        {STATUS_LABEL[f.status]}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-right tabular-nums">{f.items}</td>
                     <td className="px-4 py-3">
                       {f.alerts > 0 ? (
@@ -93,7 +101,12 @@ export default async function ConsoleHome({ searchParams }: PageProps<"/console"
                         <span className="text-muted">None</span>
                       )}
                     </td>
-                    <td className={`px-4 py-3 ${link === "active" ? "" : "text-muted"}`}>{LINK_LABEL[link]}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1.5 text-sm ${link === "active" ? "" : "text-muted"}`}>
+                        <span aria-hidden="true" className={`size-1.5 rounded-full ${link === "active" ? "bg-foreground" : "bg-line"}`} />
+                        {LINK_LABEL[link]}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-muted tabular-nums">{formatDate(f.createdAt)}</td>
                   </tr>
                 );
