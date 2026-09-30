@@ -14,6 +14,9 @@ export type SendResult = { ok: true; status: "received" | "already-received" } |
 /**
  * Accepts the original image bytes of a sealed Capture into Carrier-scoped storage. The bytes must hash to
  * the sealed Exact Hash, so what the Carrier receives verifies as Original.
+ *
+ * A revoked or expired link accepts no new Captures, but a photo already sealed through it while it was active can
+ * still be delivered. Its Seal is already part of the Claim File, and only its exact original bytes are accepted.
  */
 export async function receiveCaptureFile(
   db: Db,
@@ -28,7 +31,7 @@ export async function receiveCaptureFile(
 
   const link = await resolveClaimLink(db, token);
   if (!link) return { ok: false, status: 404, error: "This link is not valid." };
-  if (link.state !== "active") return { ok: false, status: 410, error: "This link is no longer active." };
+  const closed = { ok: false, status: 410, error: "This link is no longer active." } as const;
 
   const findCapture = () =>
     db
@@ -37,6 +40,7 @@ export async function receiveCaptureFile(
       .where(and(eq(captures.exactHash, exactHash), eq(captures.claimFileId, link.claimFileId)))
       .then((r) => r[0]);
   let capture = await findCapture();
+  if (!capture && link.state !== "active") return closed;
   if (!capture && findSealed) {
     // Sealed onchain for this Claim File but the captures row was lost: restore it from the Registry.
     const onchain = await findSealed(exactHash as Hex).catch(() => null);

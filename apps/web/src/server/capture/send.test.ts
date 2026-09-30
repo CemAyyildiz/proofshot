@@ -60,7 +60,19 @@ describe("receiveCaptureFile", () => {
     expect(await receiveCaptureFile(db, storage, token, "0x1234", photo)).toMatchObject({ status: 400 });
     expect(await receiveCaptureFile(db, storage, token, exactHash, new Uint8Array(MAX_IMAGE_BYTES + 1))).toMatchObject({ status: 413 });
     await revokeClaimLink(scope, fileId);
-    expect(await receiveCaptureFile(db, storage, token, exactHash, photo)).toMatchObject({ status: 410 });
+    const unsealed = new Uint8Array(randomBytes(100));
+    const h = `0x${createHash("sha256").update(unsealed).digest("hex")}`;
+    const findSealed = async () => ({ txHash: "0xabc" as const, blockNumber: 9n, claimRef: claimRefFor(fileId), keyId: "0x01" as const });
+    expect(await receiveCaptureFile(db, storage, token, h, unsealed, findSealed)).toMatchObject({ status: 410 });
+  });
+
+  it("still delivers a photo sealed before the link was revoked, and only its exact bytes", async () => {
+    await revokeClaimLink(scope, fileId);
+    const tampered = photo.slice();
+    tampered[0]! ^= 1;
+    expect(await receiveCaptureFile(db, storage, token, exactHash, tampered)).toMatchObject({ ok: false, status: 400 });
+    expect(await receiveCaptureFile(db, storage, token, exactHash, photo)).toEqual({ ok: true, status: "received" });
+    expect(await storage.get(captureKey(scope.carrierId, fileId, exactHash))).toEqual(photo);
   });
 });
 

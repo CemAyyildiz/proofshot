@@ -169,6 +169,7 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
     setSendError("");
     const ready = captures.filter((c) => c.status === "sealed" && c.exactHash);
     let failed = 0;
+    let reason = "Check your connection and try again.";
     for (const c of ready) {
       const res = await fetch(`/api/claim-links/${token}/captures/${c.exactHash}/file`, {
         method: "PUT",
@@ -176,11 +177,15 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
         body: c.blob,
       }).catch(() => null);
       if (res?.ok) update({ ...c, status: "sent" });
-      else failed++;
+      else {
+        failed++;
+        // A reply from the server says what's wrong; only a missing reply means the connection.
+        if (res) reason = ((await res.json().catch(() => ({}))) as { error?: string }).error ?? "Try again in a moment.";
+      }
     }
     setSending(false);
     if (failed > 0) {
-      setSendError(`${failed} photo${failed === 1 ? "" : "s"} couldn't be sent. Check your connection and try again.`);
+      setSendError(`${failed} photo${failed === 1 ? "" : "s"} couldn't be sent. ${reason}`);
       return;
     }
     setSentView({ skipped: captures.filter((c) => c.status !== "sealed" && c.status !== "sent").length });
@@ -228,7 +233,8 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
         <div role="alert" className="rounded-md border border-danger bg-surface p-3 text-sm">
           <p className="font-semibold">This link is no longer active</p>
           <p className="text-muted">
-            New photos can&apos;t be sealed with it. Photos already sealed stay valid. Ask your insurer for a new link.
+            New photos can&apos;t be sealed with it. Photos already sealed stay valid and can still be sent. Ask your
+            insurer for a new link to take more.
           </p>
         </div>
       )}

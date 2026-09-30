@@ -1156,3 +1156,39 @@ Done: all.
 **Next: Iteration 36 — Backend, pass 8**: the send-to-insurer path (`PUT …/captures/:hash/file`). Check that the
 bytes must hash to the sealed Exact Hash, the per-link size and count limits, the behaviour on a revoked link after
 sealing (should the Capturer still be able to deliver already-sealed photos?), and idempotent re-sends.
+
+---
+
+## Iteration 36 — Backend, pass 8: delivering sealed photos to the insurer (2026-09-30)
+
+Findings:
+
+- **H1** Sealed evidence could be stranded. `receiveCaptureFile` refused any upload once the link was revoked or had
+  expired (14 days), including the original bytes of photos sealed **through that link while it was active**. A
+  policyholder who sealed photos and sent them a day later, or whose adjuster revoked the link in between, could never
+  deliver them. The Console showed "Not sent yet" indefinitely. The PRD says an inactive link "accepts no Captures",
+  meaning new photos; it does not say sealed ones can't be delivered.
+- **M1** The capture screen reported every failed send as "Check your connection and try again.", including a
+  server refusal that no retry could fix. Iteration 35's banner also said sealed photos "stay valid" while Send was
+  certain to fail.
+- OK: the bytes must SHA-256 to the sealed Exact Hash, so a Carrier only ever receives files that verify as Original.
+  Re-sends are idempotent (`already-received`). Files are capped at 20 MB, with `bodyTooLarge` checked before reading.
+  The number of files per link is bounded by the Seal rate limits. A lost `captures` row is restored from the Registry
+  only when the Seal's `claimRef` matches this Claim File.
+
+Done: all.
+
+- On an inactive link, a photo that is already sealed in this Claim File can still be delivered, and only its exact
+  bytes are accepted. Anything else still gets 410, including restoring a row from the Registry, which stays
+  active-link only.
+- The client shows the server's reason when the server answered, and the connection hint only when nothing came
+  back. The banner says sealed photos "stay valid and can still be sent".
+- Tests: a unit test shows that after a revoke the exact bytes are delivered, tampered bytes are refused and unknown
+  hashes get 410. The revoked-mid-session e2e now sends the earlier photo and reaches "Sent to your insurer".
+
+`pnpm check` is green. e2e: 22/22 in dev mode and 22/22 in production mode.
+
+**Next: Iteration 37 — Contracts, pass 8**: review the deploy script and deployments JSON against the new
+DefaultAdminRules (does the deploy record the admin transfer delay, and does `DeployRegistry.t.sol` assert it?), and
+check the keyless probe still matches the Registry's verification path after the fmt changes (re-run
+`pnpm --filter @proofshot/contracts probe --no-write`).

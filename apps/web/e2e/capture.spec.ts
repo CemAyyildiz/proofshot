@@ -177,5 +177,8 @@ test("a link revoked mid-session stops new photos with a clear next step; sealed
   await expect(phone.getByRole("button", { name: "Take photo" })).toBeDisabled();
   await expect(phone.getByRole("button", { name: "Retry" })).toHaveCount(0);
   await expect(phone.getByRole("list", { name: "Your photos" }).getByText(/Sealed ✓/)).toHaveCount(1);
+  // The photo sealed while the link was active can still reach the insurer.
+  await phone.getByRole("button", { name: "Send 1 photo to insurer" }).click();
+  await expect(phone.getByRole("heading", { name: "Sent to your insurer" })).toBeVisible();
   await phone.context().close();
 });
