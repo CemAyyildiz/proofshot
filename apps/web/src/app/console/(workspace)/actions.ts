@@ -23,6 +23,7 @@ export async function revokeLink(form: FormData) {
   await revokeClaimLink(await carrierScope(), id);
   revalidatePath(`/console/claims/${id}`);
   revalidatePath("/console");
+  redirect(`/console/claims/${id}?link=revoked`); // the page confirms it and offers the next step
 }
 
 export async function replaceLink(form: FormData) {
@@ -30,4 +31,5 @@ export async function replaceLink(form: FormData) {
   await replaceClaimLink(await carrierScope(), id);
   revalidatePath(`/console/claims/${id}`);
   revalidatePath("/console");
+  redirect(`/console/claims/${id}?link=new`); // the page says the link changed and focuses "Copy link"
 }

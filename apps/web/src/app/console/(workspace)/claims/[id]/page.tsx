@@ -17,8 +17,10 @@ import { carrierScope } from "@/server/dal/scope";
 
 export const metadata: Metadata = { title: "Claim File · Proofshot Console" };
 
-export default async function ClaimFilePage({ params }: PageProps<"/console/claims/[id]">) {
+export default async function ClaimFilePage({ params, searchParams }: PageProps<"/console/claims/[id]">) {
   const { id } = await params;
+  // Set by the link actions' redirect, so the page can say what just happened and focus the next step.
+  const { link: justDone } = await searchParams;
   const scope = await carrierScope();
   const file = await getClaimFile(scope, id);
   if (!file) notFound();
@@ -43,6 +45,8 @@ export default async function ClaimFilePage({ params }: PageProps<"/console/clai
 
   const url = new URL(`/c/${file.link.token}`, env().APP_URL).toString();
   const state = claimLinkState(file.link);
+  const replaced = justDone === "new" && state === "active";
+  const revoked = justDone === "revoked" && state !== "active";
 
   return (
     <div className="flex flex-col gap-6">
@@ -60,26 +64,33 @@ export default async function ClaimFilePage({ params }: PageProps<"/console/clai
         </h2>
         {state === "active" ? (
           <>
+            {replaced && (
+              <p id="link-status" role="status" className="rounded-md border border-line bg-background px-3 py-2 text-sm font-medium">
+                New link issued. Copy it and send it to the policyholder; earlier links no longer accept photos.
+              </p>
+            )}
             <p className="text-sm text-muted">
               Send this link to the policyholder by SMS or email. It lets them add photos to this Claim File only, and
               expires {formatDateTime(file.link.expiresAt)}.
             </p>
             <div className="flex flex-col gap-2 sm:flex-row">
               <input readOnly value={url} aria-label="Claim Link" className="flex-1 rounded-md border border-line bg-background px-3 py-2 font-mono text-sm" />
-              <CopyButton value={url} label="Copy link" />
+              {/* Keyed by token: a new link remounts the button, so a "Copied" state never carries over to it. */}
+              <CopyButton key={file.link.token} value={url} label="Copy link" autoFocus={replaced} describedBy={replaced ? "link-status" : undefined} />
             </div>
-            <div className="flex flex-wrap gap-x-6 gap-y-2">
+            {/* Keyed by token too, so a finished confirmation doesn't stay open over the new link. */}
+            <div key={file.link.token} className="flex flex-wrap gap-x-6 gap-y-2">
               <ReplaceLink claimFileId={file.id} active />
               <RevokeLink claimFileId={file.id} />
             </div>
           </>
         ) : (
           <>
-            <p className="text-sm">
+            <p className="text-sm" role={revoked ? "status" : undefined}>
               This link is {state === "revoked" ? `revoked (${formatDateTime(file.link.revokedAt!)})` : `expired (${formatDateTime(file.link.expiresAt)})`}. It no
               longer accepts photos.
             </p>
-            <ReplaceLink claimFileId={file.id} active={false} />
+            <ReplaceLink claimFileId={file.id} active={false} autoFocus={revoked} />
           </>
         )}
       </section>

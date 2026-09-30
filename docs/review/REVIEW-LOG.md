@@ -2269,3 +2269,55 @@ mode. Production mode was not re-run, because only docs and an unused host confi
 **Next: Iteration 65 — Frontend UI/UX, pass 14**: the Console Claim File page after iterations 61 and 63 (Revoke and
 Replace side by side). Check button hierarchy, confirmation copy, what the adjuster sees right after a replacement
 (does the new link get focus or a copy prompt?), and 375 px and keyboard behaviour.
+
+## Iteration 65 — Frontend UI/UX, pass 14: the Claim Link actions
+
+Method: screenshots of the Claim Link section at 375 px and 1280 px in every state (active, confirming a
+replacement, after a replacement, revoked, confirming a new link). After each action, logged where focus went and
+measured the controls.
+
+Findings:
+
+- **H1** After **Replace link**, the only visible change was a different random string in the URL field; there was
+  no message, and focus fell to `<body>`. An adjuster replaces a link because the old one went to the wrong place.
+  The likely next mistake is pasting the old link, still in the clipboard, into the next message. Nothing on the page
+  prevented that, and a screen-reader user learned nothing at all.
+- **M1** After **Revoke**, focus was also lost. The next step (**Issue a new link**) had to be found again.
+- **M2** **Issue new link** used the red, destructive confirmation button. After a revoke or an expiry it takes
+  nothing away, and red on a constructive action teaches people to ignore red.
+- **M3** A failed action (network drop, server error) closed the confirmation and showed nothing. The action
+  silently didn't happen.
+- **L1** The Replace, Revoke and Issue controls were 20 px tall, under the 24 px minimum target size of WCAG 2.2
+  (2.5.8).
+- OK:
+  - hierarchy: Copy is the one bordered button, and the other actions are quiet text links, with Revoke in the danger
+    colour;
+  - the confirmation copy states the consequence;
+  - Cancel takes focus when a confirmation opens;
+  - the layout wraps cleanly at 375 px.
+
+Done: all.
+
+- The link actions redirect with their outcome (`?link=new` or `?link=revoked`). The actions are then keyed by token,
+  so nothing stale stays open.
+- After a replacement:
+  - the section opens with "New link issued. Copy it and send it to the policyholder; earlier links no longer accept
+    photos.";
+  - **Copy link** takes focus and is described by that sentence;
+  - the Copy button is keyed by token, so a "Copied" state never carries over to the new link.
+- After a revoke, **Issue a new link** takes focus and the state sentence is a status.
+- `ConfirmAction`:
+  - takes a neutral tone for Issue new link, while Replace keeps danger;
+  - stays open on failure with "That didn't work. Try again." (`role=alert`);
+  - treats a server-action redirect as success;
+  - can autofocus its trigger.
+- The link actions are 28 px tall.
+- e2e:
+  - the replace test first aborts the request and expects the alert with the link unchanged, then succeeds and
+    expects the status, focus on Copy link and a closed confirmation;
+  - the revoke test expects focus on Issue a new link.
+  - axe passes in light and dark mode.
+
+`pnpm check` is green. e2e: 28/28 in dev mode and 28/28 in production mode.
+
+**Next: Iteration 66 — Backend, pass 14.**

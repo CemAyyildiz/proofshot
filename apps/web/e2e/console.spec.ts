@@ -35,6 +35,8 @@ test("Carrier User creates a Claim File, shares and revokes its link; other Carr
   await expect(confirm.getByRole("button", { name: "Cancel" })).toBeFocused();
   await confirm.getByRole("button", { name: "Revoke link" }).click();
   await expect(page.getByText(/This link is revoked/)).toBeVisible();
+  // The next step is focused, and it is not styled as another destructive action.
+  await expect(page.getByRole("button", { name: "Issue a new link" })).toBeFocused();
   await capturer.reload();
   await expect(capturer.getByRole("heading", { name: "This link is no longer active" })).toBeVisible();
 });
@@ -91,11 +93,24 @@ test("an adjuster finds a Claim File by reference among many", async ({ page }) 
 test("a link sent to the wrong person can be replaced without losing the Claim File", async ({ page, browser }) => {
   await signIn(page, "dana@harbor.demo");
   const oldLink = await createClaimLink(page, `WRONG-RECIPIENT-${Date.now()}`);
+  const confirmReplace = () => page.getByRole("group", { name: /Replace this link\?/ }).getByRole("button", { name: "Replace link" });
   await page.getByRole("button", { name: "Replace link" }).click();
-  await page.getByRole("group", { name: /Replace this link\?/ }).getByRole("button", { name: "Replace link" }).click();
+
+  // A failed request says so and keeps the confirmation open to retry, instead of silently doing nothing.
+  await page.route("**/console/claims/**", (route) => (route.request().method() === "POST" ? route.abort() : route.continue()));
+  await confirmReplace().click();
+  await expect(page.getByRole("alert").filter({ hasText: "That didn't work" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Claim Link" })).toHaveValue(oldLink);
+  await page.unroute("**/console/claims/**");
+
+  await confirmReplace().click();
   await expect(page.getByRole("textbox", { name: "Claim Link" })).not.toHaveValue(oldLink);
   const newLink = await page.getByRole("textbox", { name: "Claim Link" }).inputValue();
   expect(newLink).toMatch(/\/c\/[A-Za-z0-9_-]{32}$/);
+  // The page says the link changed and puts focus on the next step, so the old link isn't sent by mistake.
+  await expect(page.getByRole("status").filter({ hasText: "New link issued" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy link" })).toBeFocused();
+  await expect(page.getByRole("group", { name: /Replace this link\?/ })).toHaveCount(0);
 
   const phone = await (await browser.newContext()).newPage();
   await phone.goto(oldLink);
