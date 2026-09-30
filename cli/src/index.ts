@@ -9,7 +9,7 @@
  */
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { DEFAULT_THRESHOLDS, type Verdict, computeVerdict } from "@proofshot/fingerprint";
@@ -51,7 +51,9 @@ export async function run(argv: string[]): Promise<CliResult> {
   if (!image || !values.rpc || !values.registry || !/^0x[0-9a-fA-F]{40}$/.test(values.registry)) throw new Error(USAGE);
 
   const client = createPublicClient({ transport: http(values.rpc, { retryCount: 3 }) });
-  const [fp, chainId] = await Promise.all([fingerprintFile(await readFile(image)), client.getChainId()]);
+  // `pnpm --filter proofshot-verify start photo.jpg` runs inside cli/; resolve the path from where the user typed it.
+  const imagePath = resolve(process.env.INIT_CWD ?? process.cwd(), image);
+  const [fp, chainId] = await Promise.all([fingerprintFile(await readFile(imagePath)), client.getChainId()]);
   const entries = await readRegistry(client, values.registry as Hex, BigInt(values["from-block"]), BigInt(values.range));
   const v = computeVerdict(fp, entries, DEFAULT_THRESHOLDS);
 
