@@ -36,7 +36,8 @@ whether the image changed since and where, and whether the same picture already 
 
 It does **not** prove that the pixels came from the camera sensor (a virtual camera can feed the capture screen —
 hardware attestation is the next milestone), that the scene is what the sender says it is, or who the person is
-legally. See [docs/threat-model.md](docs/threat-model.md).
+legally. See [docs/threat-model.md](docs/threat-model.md), and [docs/security.md](docs/security.md) for roles, trust
+assumptions and the test behind every contract guarantee.
 
 ## Why Monad
 
@@ -151,4 +152,4 @@ README and `docs/` mention must be committed.
 | `contracts` | Registry (Solidity, Foundry), deploy script, local dev chain |
 | `cli` | `proofshot-verify`: reproduce a Verdict from public data only |
 | `benchmark` | SM-2 accuracy benchmark |
-| `docs` | Architecture, threat model, deploy runbook, requirement traceability, demo script, write-up draft, spikes, review log |
+| `docs` | Architecture, threat model, security model, deploy runbook, requirement traceability, demo script, write-up draft, spikes, review log |

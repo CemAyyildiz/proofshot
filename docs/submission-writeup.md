@@ -78,7 +78,8 @@ Cold start: carriers import their historical fingerprints (FR-13) and get Duplic
 ## 10. Roadmap
 
 Hardware attestation (App Attest / Play Integrity) bound into the signed payload → claims-system connectors →
-consortium governance of the Registry and carrier-signed Claim Links (permissionless `seal()`).
+consortium governance of the Registry and carrier-signed Claim Links (permissionless `seal()`, which first needs the
+chain ID and Registry address inside the signed payload; see `docs/security.md`).
 
 ## 11. Links
 

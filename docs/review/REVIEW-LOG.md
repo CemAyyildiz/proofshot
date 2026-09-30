@@ -1373,3 +1373,47 @@ modes after the cookie assertion).
 **Next: Iteration 42 — Contracts, pass 9**: a final contract read-through as an external auditor would do it: an
 invariant list in NatSpec at the top of `Registry.sol`, and a `docs/security.md` summary (roles, trust assumptions,
 known limits, how to report). Check that everything claimed there is tested.
+
+---
+
+## Iteration 42 — Contracts, pass 9: an auditor's read-through (2026-09-30)
+
+Method: read `Registry.sol` as an external auditor would, listing roles, guarantees and trust assumptions, and checked
+that every guarantee has a test that would break if it stopped holding.
+
+Findings:
+
+- **M1 (design, documented)** Signatures are not domain-separated. The challenge is `sha256(abi.encode(record))`,
+  with no `block.chainid` or `address(this)`. In v1 only the relayer can submit, and `refBlock` pins a record to one
+  chain's recent ~30 s, so moving a signature to another network is impossible in practice. It could still be sealed
+  on a second Registry on the same chain inside its window, by the relayer only. This becomes a real replay vector the
+  moment `seal()` goes permissionless (the stated roadmap). I did not change the encoding days before submission:
+  that would touch the contract, client, server, fixtures and every quoted gas figure. It is now recorded as a hard
+  prerequisite of the permissionless milestone in `docs/security.md` and the write-up's roadmap.
+- **L1 (design, documented)** `clientDataJSON.origin` is not checked onchain; the binding comes from the
+  authenticator-set RP ID hash plus the allowlist. That is standard, but it was written down nowhere.
+- **L2** No single document stated the security model: roles, what each can and cannot do, guarantees, trust
+  assumptions, and how to report a vulnerability.
+- OK: `requireUV` is on; OpenZeppelin enforces low-s signatures, the type and challenge checks and the UP flag;
+  events cover every state change; the revocation path is deliberately live while paused; no external calls besides
+  the P-256 precompile, so there is no reentrancy surface.
+
+Done: all.
+
+- New `docs/security.md`, linked from the README. It covers:
+  - a roles table;
+  - 12 guarantees, each naming its enforcing mechanism and tests (27 distinct unit, fuzz and invariant tests);
+  - the four trust assumptions above;
+  - the application safeguards;
+  - private vulnerability reporting through the repository's security tab.
+- `security-doc.test.ts` fails if a test cited there no longer exists (mutation-checked with a renamed test). The
+  existing `repo-docs.test.ts` caught the new doc being linked before it was committed, which is exactly its job.
+- `Registry.sol` carries `@custom:invariant` and `@custom:security` NatSpec pointing to the model. Runtime bytecode
+  is unchanged and the gas snapshot passes.
+- The write-up's roadmap names domain separation as the first step towards a permissionless `seal()`.
+
+`pnpm check` is green. e2e: 22/22 in dev mode.
+
+**Next: Iteration 43 — Tests/CI, pass 9**: a mutation-testing pass on the Verdict engine (`packages/fingerprint`
+`verdict.ts`). Flip each threshold comparison and boundary (≥12 tiles, >8 shifted, T_match 31, T_tile 40) and confirm
+a test fails for each. Add boundary tests where none does.

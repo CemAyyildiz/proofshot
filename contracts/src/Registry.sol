@@ -22,6 +22,11 @@ import {WebAuthn} from "@openzeppelin/contracts/utils/cryptography/WebAuthn.sol"
 ///      Roles: exactly one admin (OpenZeppelin DefaultAdminRules), moved only by a two-step transfer that the new
 ///      admin must accept after `ADMIN_TRANSFER_DELAY`, so the Registry can't be orphaned by a stray `renounceRole` or
 ///      handed to a mistyped address. No account may ever hold both the admin and the relayer role.
+/// @custom:invariant An Exact Hash is sealed at most once, and a Seal is never undone.
+/// @custom:invariant A sealed Exact Hash is never written as an Imported Record afterwards.
+/// @custom:invariant There is exactly one admin, and no account holds both the admin and the relayer role.
+/// @custom:security Roles, trust assumptions (relayer-attested context, no domain separation yet) and the test behind
+///                  each guarantee: docs/security.md. Report vulnerabilities privately via the repository's security tab.
 contract Registry is AccessControlDefaultAdminRules, Pausable {
     struct CaptureRecord {
         bytes32 exactHash; // SHA-256 of the original image bytes
