@@ -44,6 +44,14 @@ export function Verifier() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<{ url: string; width: number; height: number } | null>(null);
 
+  // A file picked before the page finished hydrating fires no React onChange: pick it up once we're interactive.
+  // (Seen under load; on a slow phone it would otherwise look like nothing happened.)
+  useEffect(() => {
+    const early = inputRef.current?.files?.[0];
+    if (early) void check(early);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on mount
+  }, []);
+
   const file = state.name === "checking" || state.name === "done" ? state.file : null;
   useEffect(() => {
     if (!file) return;

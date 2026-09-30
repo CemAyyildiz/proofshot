@@ -1,12 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function UploadForm({ claimFileId }: { claimFileId: string }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<{ busy: boolean; error?: string }>({ busy: false });
+
+  // A file picked before hydration fires no onChange; process it once the form is interactive.
+  useEffect(() => {
+    const early = input.current?.files?.[0];
+    if (early) void upload(early);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on mount
+  }, []);
 
   async function upload(file: File) {
     setState({ busy: true });
