@@ -326,9 +326,17 @@ function Thumb({ blob, className }: { blob: Blob; className: string }) {
 function TryToFoolIt({ capture }: { capture?: StoredCapture }) {
   const url = useMemo(() => (capture ? URL.createObjectURL(capture.blob) : null), [capture]);
   useEffect(() => () => (url ? URL.revokeObjectURL(url) : undefined), [url]);
+  // On a phone the guide lands below the viewfinder, out of sight: bring it into view once, when the first Seal lands.
+  const ref = useRef<HTMLElement>(null);
+  const shown = Boolean(capture && url);
+  useEffect(() => {
+    if (!shown) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    ref.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
+  }, [shown]);
   if (!capture || !url) return <p className="text-sm text-muted">Take a photo. It&apos;s sealed as soon as you confirm.</p>;
   return (
-    <section aria-labelledby="fool-heading" className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4">
+    <section ref={ref} aria-labelledby="fool-heading" className="flex scroll-mb-4 flex-col gap-3 rounded-md border border-line bg-surface p-4">
       <h2 id="fool-heading" className="text-lg font-semibold">
         Now try to fool it
       </h2>

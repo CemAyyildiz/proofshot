@@ -39,8 +39,8 @@ test("FR-13: imported history makes duplicate detection work before any policyho
     buffer: await sharp(history).resize(900).jpeg({ quality: 65 }).toBuffer(),
   });
   const alerts = dana.getByRole("region", { name: /Duplicate Alerts/ });
-  await expect(alerts).toContainText("same carrier · imported (unsigned)");
-  await expect(alerts).toContainText("matches a record imported");
+  await expect(alerts).toContainText("Team upload 1 matches");
+  await expect(alerts).toContainText("Imported record (unsigned) · same carrier");
   const evidence = dana.getByRole("region", { name: "Evidence" });
   await expect(evidence).toContainText("Derived Copy");
   await expect(evidence).toContainText("imported (unsigned)");

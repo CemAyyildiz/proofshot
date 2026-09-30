@@ -758,3 +758,37 @@ Done: all.
 **Next: Iteration 25 — Frontend UI/UX, pass 6**: review the Try-it flow end to end at 375px (landing QR → capture →
 fool-it → verifier → receipt) for copy density, tap targets and loading states. Also review the Console claim page on
 desktop for information hierarchy now that Duplicate Alerts and uploads share it.
+
+---
+
+## Iteration 25 — Frontend UI/UX, pass 6: Try-it on a phone, Console claim page (2026-09-30)
+
+Method: regenerated `pnpm screens` and walked through the Try-it flow at 375px and the claim page at 1280px. Added the
+missing screenshot of the sandbox state after a Seal (`m-try-sealed`).
+
+Findings:
+
+- **H1** Try-it at 375px: after the first Seal, the **Now try to fool it** guide, which is the whole point of the
+  demo, sat about 130px below the fold under the viewfinder. Nothing on screen said to scroll.
+- **H2** Console claim page: Duplicate Alerts did not say *which* item they were about. With two uploads, "An image
+  uploaded to this file" was ambiguous. Four near-identical cards also pushed the Evidence off the first screen, and
+  nothing linked an alert to its photo or a photo to its alerts.
+- **M1** The evidence cards were laid out differently: a policyholder photo had its title and Verdict below the image,
+  while an upload had its title and Verdict above the Tile Map caption.
+- **L1** The Tile Map's alt text said "Your image…" inside the Console, where the image is not the viewer's own.
+
+Done: all.
+
+- H1: the guide scrolls into view once, when the first Seal lands (instant under reduced motion). The sandbox e2e now
+  asserts `toBeInViewport()`, and I confirmed that assertion fails without the fix.
+- H2: items are numbered ("Policyholder photo 1", "Team upload 1") and carry anchors. Alerts are grouped by the item
+  they are about: one card per item, one line per match (kind · same/another carrier · time · strength). Each group
+  links to its item, and each card shows "N Duplicate Alerts" linking back. The e2e checks both links.
+- M1: both card types now put the title and Verdict first.
+- L1: `TileMap` takes an `alt` prop, so the Console passes "Team upload N with changed regions highlighted".
+
+`pnpm check` is green. e2e: 19/19 in dev mode and 19/19 in production mode.
+
+**Next: Iteration 26 — Backend, pass 6**: review the upload and verify paths for decode bombs and CPU cost (a very
+large pixel count within 20 MB, e.g. a 30000×30000 PNG), `sharp` `limitInputPixels`, the time budget per request, and
+concurrent verification pressure on a small instance.

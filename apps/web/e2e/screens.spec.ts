@@ -32,6 +32,17 @@ test("capture all surfaces", async ({ browser }) => {
     await ctx.close();
   }
 
+  // Try-it on a phone, after the first Seal: the "Now try to fool it" guide.
+  const visitor = await (await browser.newContext({ viewport: { width: 375, height: 812 }, permissions: ["camera"] })).newPage();
+  await addVirtualPasskeyAuthenticator(visitor);
+  await simulateSensorNoise(visitor);
+  await visitor.goto("/try");
+  await visitor.getByRole("button", { name: "Start the demo" }).click();
+  await visitor.getByRole("button", { name: "Continue" }).click();
+  await visitor.getByRole("button", { name: "Take photo" }).click();
+  await expect(visitor.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
+  await shot(visitor, "m-try-sealed");
+
   const marcus = await signedInPage(browser, "marcus@northwind.demo");
   await marcus.setViewportSize({ width: 1280, height: 800 });
   const { file, claimUrl, exactHash } = await sealAndSendPhoto(marcus, browser, "AUTO-2026-0042");

@@ -53,6 +53,11 @@ test("a new Seal of a scene already sealed at another carrier raises an alert in
   const dana = await signedInPage(browser, "dana@harbor.demo");
   const { claimUrl } = await sealAndSendPhoto(dana, browser, "HB-REFILE");
   await dana.goto(claimUrl);
-  await expect(dana.getByRole("region", { name: /Duplicate Alerts/ })).toContainText("A policyholder photo in this file matches a photo sealed");
-  await expect(dana.getByRole("region", { name: /Duplicate Alerts/ })).toContainText("another carrier");
+  const alerts = dana.getByRole("region", { name: /Duplicate Alerts/ });
+  await expect(alerts).toContainText("Policyholder photo 1 matches");
+  await expect(alerts).toContainText("Sealed photo · another carrier");
+  // The alert and the photo it is about link to each other.
+  await alerts.getByRole("link", { name: "Policyholder photo 1" }).click();
+  await expect(dana).toHaveURL(/#photo-1$/);
+  await expect(dana.locator("#photo-1").getByRole("link", { name: /Duplicate Alert/ })).toHaveAttribute("href", "#alerts-photo-1");
 });
