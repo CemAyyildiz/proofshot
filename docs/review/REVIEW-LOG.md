@@ -1263,3 +1263,38 @@ Done: both.
 **Next: Iteration 39 — Docs, pass 8**: the judge's guide and README top section, read in 60 seconds. Is the core claim
 ("verified onchain by Monad's P-256 precompile") the first thing a judge sees, with its evidence one click away? Also
 check that `CHANGELOG.md` covers iterations 23–38.
+
+---
+
+## Iteration 39 — Docs, pass 8: the first 60 seconds, and evidence that reproduces (2026-09-30)
+
+Method: read the README top and the judge's guide the way a judge skims them, then ran every "evidence" pointer.
+
+Findings:
+
+- **M1** The gas figure's evidence did not show the figure. Both the README and the judge's guide cited
+  `contracts/.gas-snapshot` for "100,340 gas per Seal", but that file holds whole-test totals (e.g. 830,937). The
+  100,340 comes from a gas report under the Osaka EVM, and no command in the repo produced it.
+- **M2** The core claim ("Monad verifies the passkey onchain") and its proof were several screens apart in the README,
+  under "Why Monad".
+- **M3** `CHANGELOG.md` stopped at "15 review iterations" and still claimed "fresh-clone build verified", which was
+  not true until iteration 34 found the ignored `.env.example`.
+- **L1** The probe claim had drifted to "the Registry's exact check". The probe runs the same OpenZeppelin
+  `WebAuthn.verify` the Registry calls, not all of `seal()` (RP ID allowlist, Signing Window and so on), so the wording
+  had to be narrowed.
+
+Done: all.
+
+- `pnpm --filter @proofshot/contracts gas:seal` prints the `seal` gas report under Osaka (100,340) and then under the
+  default Prague profile (326,571). Both numbers were checked against the docs. The README and judge's guide now point
+  at the command.
+- The README opens with a four-row claim-and-evidence table: the probe on both networks, gas and how to reproduce it,
+  the Verdict CLI, and what is still ⏳. All links are kept honest by `repo-docs.test.ts`.
+- The changelog covers the hardening from iterations 16–38, and the fresh-clone claim now carries its caveat.
+
+`pnpm check` is green. e2e: 22/22 in dev mode.
+
+**Next: Iteration 40 — Frontend UI/UX, pass 9**: the landing page at 375px and 1440px. Check hierarchy, whether the
+primary CTA ("Try it on this phone") is above the fold, the QR hand-off on desktop, and whether it states the one
+proof point (verified onchain on Monad) without crypto jargon for non-technical visitors. Use ui-ux-pro-max landing
+guidance.

@@ -24,7 +24,7 @@ Five minutes, a phone, no sign-up.
 | Claim | Where the evidence is |
 |---|---|
 | Passkey signatures verify natively on Monad testnet **and mainnet** | `docs/spikes/spike-b-probe.json` (keyless probe of the Registry's exact verification; re-run with `pnpm --filter @proofshot/contracts probe`) |
-| Seal costs 100,340 gas with the precompile (326,571 without) | `contracts/.gas-snapshot`, `docs/spikes/spike-b.md` |
+| Seal costs 100,340 gas with the precompile (326,571 without) | `pnpm --filter @proofshot/contracts gas:seal` (Osaka, then Prague gas report), `docs/spikes/spike-b.md` |
 | Every Verdict can be reproduced without our servers | `cli/` — e2e asserts the CLI and the website agree on every copy |
 | Real WebAuthn signatures are sealed onchain in every test run | `apps/web/e2e/capture.spec.ts` (Chrome virtual authenticator + a local chain) |
 | The Registry can't be re-sealed, un-sealed, or have a sealed photo re-imported; it always has exactly one admin, never also the relayer | `contracts/test/invariant/` (65k-call campaign on `main`), 100% branch coverage |

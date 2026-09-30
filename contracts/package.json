@@ -17,7 +17,8 @@
     "gas:check": "forge snapshot --match-contract \"^RegistryTest$\" --no-match-test testFuzz --snap .gas-snapshot --check",
     "probe": "tsx tools/probe-monad.ts",
     "lint": "forge fmt --check",
-    "slither": "uvx --from slither-analyzer==0.11.6 slither . --fail-pedantic"
+    "slither": "uvx --from slither-analyzer==0.11.6 slither . --fail-pedantic",
+    "gas:seal": "FOUNDRY_EVM_VERSION=osaka forge test --match-test test_SealEmitsFullRecord --gas-report && forge test --match-test test_SealEmitsFullRecord --gas-report"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "^5.5.0",
