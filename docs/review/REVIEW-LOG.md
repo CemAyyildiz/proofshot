@@ -2368,3 +2368,41 @@ Done (H1, M1):
 `pnpm check` is green. e2e: 28/28 in dev mode and 28/28 in production mode.
 
 **Next: Iteration 67 — Contracts, pass 14.**
+
+## Iteration 67 — Contracts, pass 14: can anyone read the code that verifies a Seal?
+
+Method: followed the deploy runbook to its last step, the one a judge sees first: the Registry's page on the
+explorer. Checked it against Monad's own verification guide (docs.monad.xyz, "Verify a contract with Foundry") and
+against Monad's Sourcify instance.
+
+Findings:
+
+- **M1** The runbook's verify command left out `--verifier-url`. Monad's explorers (MonadVision) read verified
+  sources from Monad's own Sourcify (`sourcify-api-monad.blockvision.org`), which Monad's guide names for both
+  networks. Without that URL, verification goes to the public Sourcify, and the explorer page a judge opens could
+  still say "unverified". For a product whose claim is "don't trust us, read the chain", unreadable contract source is
+  the weakest possible first impression.
+- **L1** Mainnet had no verify step at all ("the same with `pnpm deploy:mainnet`").
+- **L2** The command needed the address pasted by hand, although the deploy script already writes it to
+  `deployments/<chainId>.json`.
+- Checked, OK:
+  - Monad's Sourcify lists chains 143 and 10143 as supported (`GET /chains`, 2026-09-30);
+  - Sourcify needs no API key or constructor arguments;
+  - the standard JSON input forge produces matches the deploy build (solc 0.8.30, `prague`, optimizer 10,000 runs,
+    20 sources).
+- **Found on the way (Tests/CI)**: `a11y.spec.ts` failed once with "document-title: Document does not have a
+  non-empty <title>" on the verification receipt. The metadata is static; the audit simply ran right after a
+  client-side navigation, when the URL had changed but the router hadn't written the new `<title>` yet. It is a
+  test-timing flake, not a product bug.
+
+Done: all.
+
+- `tools/verify-registry.sh <chainId>` and `pnpm verify:testnet` / `pnpm verify:mainnet` read the address from the
+  deployment record and verify through Monad's Sourcify. Offline dry run (`--show-standard-json-input`) OK.
+- The runbook verifies right after each deploy, testnet and mainnet, and says why.
+- The a11y audit waits for a non-empty document title before scanning. A page that really lacks a title still fails,
+  now with the message "has a document title". It ran 3/3 green in a row, then in both full suites.
+
+`pnpm check` is green and the runbook check passes. e2e: 28/28 in dev mode and 28/28 in production mode.
+
+**Next: Iteration 68 — Tests/CI, pass 14.**

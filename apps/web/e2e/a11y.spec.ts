@@ -18,6 +18,9 @@ async function audit(page: Page, name: string) {
 }
 
 async function auditScheme(page: Page, name: string) {
+  // After a client-side navigation the URL changes before the router writes the new <title>; audit the settled page.
+  // A page with no title at all still fails here, with that message.
+  await expect(page, `${name} has a document title`).toHaveTitle(/\S/);
   // Measure the settled UI: a button fading from disabled to enabled (150 ms) otherwise reads as low contrast mid-way.
   // Infinite ones (spinners) never finish, so they are skipped.
   await page.evaluate(() =>
