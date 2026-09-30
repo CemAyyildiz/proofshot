@@ -36,7 +36,8 @@ nothing across all 102 detectors, and runs in CI on every push.
 - **The relayer attests context.** It puts `carrierId` and `claimRef` into the record from a valid Claim Link; the
   Capturer's signature covers them, but nothing onchain proves the link was valid. A compromised relayer could seal
   records into the wrong claim (only with a real Capturer signature) or register its own Device Keys. Response:
-  runbook T-8 in [threat-model.md](threat-model.md) — pause, revoke, rotate — tested end to end.
+  runbook T-8 in [threat-model.md](threat-model.md) — pause, revoke, rotate — tested end to end in Solidity, and as
+  the operator's actual `cast` commands in [runbook.md](runbook.md) (run in CI).
 - **The browser origin is not checked onchain.** Binding to the site is by the RP ID hash inside `authenticatorData`,
   which the authenticator itself sets; `clientDataJSON.origin` is not compared. This is the usual WebAuthn trade-off
   and is safe as long as only the app's own hostnames are allowlisted.

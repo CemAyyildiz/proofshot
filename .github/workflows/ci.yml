@@ -26,6 +26,8 @@ jobs:
       - run: pnpm test
       # Fails when a change moves the gas of any Registry test; refresh with `pnpm --filter @proofshot/contracts gas:snapshot`.
       - run: pnpm --filter @proofshot/contracts gas:check
+      # Executes every admin command in docs/runbook.md against a throwaway chain.
+      - run: pnpm --filter @proofshot/contracts runbook:check
       - run: pnpm build
 
   contracts-deep:

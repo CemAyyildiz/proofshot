@@ -64,4 +64,6 @@ are served only through the tenant-checked Console routes.
   uptime monitor is also the low-balance alarm. Each Seal costs ~100k gas.
 - Seal latency (SM-5): once real Seals exist, `DATABASE_URL=… PROOFSHOT_NETWORK=mainnet pnpm --filter web
   report:latency --since <launch date>` writes `docs/latency.md` (p50/p95/max, Claim Links vs Try-it).
-- Keep the admin key offline; the incident runbook is in the Registry's NatSpec and `docs/threat-model.md` (T-8).
+- Keep the admin key offline (hardware wallet or encrypted keystore). Pausing, rotating the relayer, allowing a new
+  hostname and handing over the admin role are copy-paste `cast` commands in [runbook.md](runbook.md), each one
+  executed in CI against a throwaway chain.

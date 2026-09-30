@@ -18,7 +18,8 @@
     "probe": "tsx tools/probe-monad.ts",
     "lint": "forge fmt --check",
     "slither": "uvx --from slither-analyzer==0.11.6 slither . --fail-pedantic",
-    "gas:seal": "FOUNDRY_EVM_VERSION=osaka forge test --match-test test_SealEmitsFullRecord --gas-report && forge test --match-test test_SealEmitsFullRecord --gas-report"
+    "gas:seal": "FOUNDRY_EVM_VERSION=osaka forge test --match-test test_SealEmitsFullRecord --gas-report && forge test --match-test test_SealEmitsFullRecord --gas-report",
+    "runbook:check": "bash tools/runbook-check.sh"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "^5.5.0",

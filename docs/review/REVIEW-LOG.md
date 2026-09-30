@@ -1566,3 +1566,40 @@ Done: both.
 side. Write a short admin runbook script, or `cast` one-liners in `deploy.md`, for pausing, rotating the relayer,
 allowing a preview RP ID and the two-step admin transfer. Test each command against a local Anvil deploy so the docs
 are executable, not aspirational.
+
+---
+
+## Iteration 47 — Contracts, pass 10: an admin runbook that is executed, not just written (2026-09-30)
+
+Findings:
+
+- **M1** The operations that matter in an incident (pause, cutting off a compromised relayer and its Device Keys,
+  installing a new relayer, allowing a preview hostname, the two-step admin handover) were described in prose,
+  NatSpec and the threat model, and exercised only in Solidity tests. The owner had no commands to run, so the first
+  real run would have been during an incident. Hand-written `cast` lines also go stale without anyone noticing.
+- **L1** Nothing told the operator how the cold admin key should reach `cast`. The natural reflex, pasting a private
+  key into the shell, is exactly what must not happen.
+
+Done: both.
+
+- New `docs/runbook.md`: status checks, the full T-8 incident sequence, adding and removing an RP ID (with the
+  `sha256(hostname)` one-liner), and the admin handover including cancel. The admin signs through `$ADMIN_SIGNER`
+  (`--ledger` or an encrypted `--account` keystore), never a pasted key.
+- `pnpm --filter @proofshot/contracts runbook:check` (`tools/runbook-check.sh`):
+  - starts a throwaway Anvil and deploys through the real `DeployRegistry` script (and removes its deployment
+    record);
+  - registers a "suspect" Device Key, then **extracts each `<!-- step:… -->` block from the Markdown and runs it
+    verbatim**;
+  - checks the chain state after each step: paused, relayer revoked and the suspect key revoked, new relayer
+    granted, unpaused, RP ID allowed, and the new admin in place after the delay (time advanced with `evm_increaseTime`);
+  - derives dev keys from Anvil's well-known mnemonic. A hand-typed key had one wrong digit and pointed at an
+    unfunded account, which the first run caught.
+- Mutation-checked: renaming `unpause()` in the doc makes the check fail. It now runs in CI's `check` job (actionlint
+  clean).
+- `deploy.md` and `security.md` link the runbook.
+
+`pnpm check` is green. e2e: 23/23 in dev mode.
+
+**Next: Iteration 48 — Tests/CI, pass 10**: total CI wall time and caching. The e2e job builds Next in production
+each run, so check whether `.next/cache` can be cached safely. Check Foundry's compilation cache across jobs. Look
+for any step that could be parallelised.
