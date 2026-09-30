@@ -23,7 +23,8 @@ export async function requestSignIn(_: SignInState, form: FormData): Promise<Sig
   if (!email.success) return { status: "invalid" };
   const db = await getDb();
   // Stops email bombing a Carrier User; applied whether or not the account exists, so it reveals nothing.
-  if (!(await signInAllowed(db, email.data, clientKey(await headers()), env().SIGNIN_LIMIT_PER_EMAIL))) return { status: "limited" };
+  const { SIGNIN_LIMIT_PER_EMAIL, SIGNIN_LIMIT_PER_CLIENT } = env();
+  if (!(await signInAllowed(db, email.data, clientKey(await headers()), SIGNIN_LIMIT_PER_EMAIL, new Date(), SIGNIN_LIMIT_PER_CLIENT))) return { status: "limited" };
   const token = await issueMagicLink(db, email.data);
   if (token) {
     const url = new URL("/auth/verify", env().APP_URL);

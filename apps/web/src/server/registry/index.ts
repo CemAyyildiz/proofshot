@@ -1,9 +1,9 @@
 import "server-only";
 import type { RegistryEntry } from "@proofshot/fingerprint";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { env } from "@/lib/env";
 import { getDb } from "../db";
-import { registryRecords } from "../db/schema";
+import { deviceKeyRevocations, registryRecords } from "../db/schema";
 import { processSingleton } from "../singleton";
 import { chainEventSource } from "./chain-source";
 import { syncRegistry, toEntry } from "./indexer";
@@ -77,4 +77,14 @@ export async function registryEntries(): Promise<RegistryEntry[]> {
 export async function findSealedOnchain(exactHash: string) {
   const e = (await registryEntries()).find((r) => r.kind === "sealed" && r.exactHash === exactHash.toLowerCase());
   return e && e.claimRef && e.keyId ? { txHash: e.txHash, blockNumber: e.blockNumber, claimRef: e.claimRef, keyId: e.keyId } : null;
+}
+
+/** When a Device Key was revoked, if it was (reads what the last sync indexed). */
+export async function keyRevocation(keyId: string) {
+  const db = await getDb();
+  const [row] = await db
+    .select()
+    .from(deviceKeyRevocations)
+    .where(and(eq(deviceKeyRevocations.chainId, env().network.chainId), eq(deviceKeyRevocations.keyId, keyId.toLowerCase())));
+  return row ? { atBlock: row.atBlock, at: new Date(row.blockTimestamp * 1000) } : null;
 }

@@ -1965,3 +1965,47 @@ Done: both.
 third-party indexer reconstruct everything the Verdict needs from events alone, including revocations? Are `indexed`
 fields the right ones for common queries (by carrier, by key, by claimRef)? Changing an event now means a redeploy
 before launch, so decide carefully and document the outcome either way.
+
+---
+
+## Iteration 57 — Contracts, pass 12: events for other indexers, and our own use of revocations (2026-09-30)
+
+Method: read the Registry's events as a third-party indexer would, asking whether everything a Verdict or receipt
+needs can be rebuilt from logs alone, then checked which of those events our own indexer actually consumes.
+
+Findings:
+
+- OK (no redeploy needed): the event design holds up.
+  - `CaptureSealed` spends its three topics on `exactHash`, `keyId` and `carrierId`. `claimRef` is documented as
+    indexed offchain.
+  - `RecordImported` indexes `exactHash` and `carrierId`.
+  - Revocations and RP ID changes each have their own event.
+  - Role and pause changes come from OpenZeppelin events.
+  - A third party can rebuild every Verdict from logs. It can also recover the WebAuthn assertion from the Seal
+    transaction's calldata and re-check the signature itself.
+- **H1 (honesty gap)** The threat model says a revoked key's "`keyId` and block let verifiers discount" its Seals.
+  Our own verifier never read `DeviceKeyRevoked`. A Seal made with a key the admin later revoked (a lost phone, or a
+  key registered by a compromised relayer, T-8) still showed a plain Seal receipt with nothing to tell the reader.
+- **L1 (test infra)** Adding one more signed-in e2e test tripped the hard-coded 20-per-hour per-client sign-in
+  limit, because the whole suite shares one address. Unlike the per-email limit, this one had no configuration.
+
+Done: both.
+
+- The indexer now also reads `DeviceKeyRevoked` (same chunked, reconciled sync) into `device_key_revocations`
+  (migration 0007): keyId, `atBlock`, timestamp, tx, idempotent.
+- On a Seal receipt whose key was revoked, a **"Key revoked"** row reads: "This Device Key was revoked in block N
+  (date), after this photo was sealed. Revoking stops a key from sealing anything new; ask the carrier why it was
+  revoked before relying on this Seal." The Seal itself still stands, per T-7.
+  - A unit test covers indexing, including idempotence.
+  - A new e2e test seals a photo, has the Registry admin **really revoke the key on the local chain**, and checks that
+    the receipt shows the revocation while the Seal stays.
+- `SIGNIN_LIMIT_PER_CLIENT` (default 20) mirrors the per-email setting and is raised only in the e2e server.
+- The threat model (T-7) and `security.md` now state the receipt behaviour and list the new tests.
+- Not yet: Console evidence cards and the CLI don't show revocation. Receipts are the public artefact, and the cards
+  link to them.
+
+`pnpm check` is green. e2e: 26/26 in dev mode and 26/26 in production mode.
+
+**Next: Iteration 58 — Tests/CI, pass 12**: the e2e suite has grown to 26 tests (~50–70 s) on one worker because of
+shared state. See whether isolating state per test (distinct client addresses via `extraHTTPHeaders`, per-test
+carriers) would allow two workers safely, measure it, and keep it only if flake-free across 3 runs.

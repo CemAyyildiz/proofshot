@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import type { Hex32 } from "@proofshot/fingerprint";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "../db/client";
-import { registryRecords } from "../db/schema";
+import { deviceKeyRevocations, registryRecords } from "../db/schema";
 import { testDb } from "../test-db";
 import { type EventSource, type RegistryEvent, syncRegistry, toEntry } from "./indexer";
 
@@ -12,7 +12,7 @@ const h = (): Hex32 => `0x${randomBytes(32).toString("hex")}`;
 const forks = new Map<bigint, number>();
 const blockHashOf = (n: bigint): Hex32 => `0x${n.toString(16).padStart(60, "0")}${(forks.get(n) ?? 0).toString(16).padStart(4, "0")}`;
 
-function sealed(blockNumber: bigint, logIndex = 0): RegistryEvent {
+function sealed(blockNumber: bigint, logIndex = 0): Extract<RegistryEvent, { eventName: "CaptureSealed" }> {
   return {
     eventName: "CaptureSealed",
     blockNumber,
@@ -35,7 +35,7 @@ function sealed(blockNumber: bigint, logIndex = 0): RegistryEvent {
   };
 }
 
-function imported(blockNumber: bigint): RegistryEvent {
+function imported(blockNumber: bigint): Extract<RegistryEvent, { eventName: "RecordImported" }> {
   return {
     eventName: "RecordImported",
     blockNumber,
@@ -137,6 +137,19 @@ describe("syncRegistry", () => {
     expect(e.exactHash).toMatch(/^0x[0-9a-f]{64}$/);
   });
 
+  it("indexes Device Key revocations alongside records, once", async () => {
+    const keyId = h();
+    const revoked: RegistryEvent = { eventName: "DeviceKeyRevoked", blockNumber: 12n, blockHash: blockHashOf(12n), txHash: h(), logIndex: 1, args: { keyId, atBlock: 12n } };
+    chain.log = [sealed(11n), revoked];
+    chain.head = 12n;
+    const { added } = await syncRegistry(db, chain);
+    expect(added).toHaveLength(1); // the revocation is not a record
+    const rows = await db.select().from(deviceKeyRevocations);
+    expect(rows).toEqual([expect.objectContaining({ keyId: keyId.toLowerCase(), atBlock: 12n, blockTimestamp: 1_790_000_012 })]);
+    await syncRegistry(db, chain); // idempotent
+    expect(await db.select().from(deviceKeyRevocations)).toHaveLength(1);
+  });
+
   describe("with a re-scan window (testnet/mainnet)", () => {
     beforeEach(() => {
       chain.rescanBlocks = 4n;
@@ -156,10 +169,11 @@ describe("syncRegistry", () => {
     });
 
     it("keeps an indexed record the RPC omits when its block is unchanged", async () => {
-      chain.log = [sealed(11n)];
+      const kept = sealed(11n);
+      chain.log = [kept];
       chain.head = 12n;
       await syncRegistry(db, chain);
-      const kept = chain.log.pop()!;
+      chain.log = [];
       const { removed } = await syncRegistry(db, chain);
       expect(removed).toEqual([]);
       expect((await db.select().from(registryRecords)).map((r) => r.exactHash)).toEqual([kept.args.exactHash.toLowerCase()]);

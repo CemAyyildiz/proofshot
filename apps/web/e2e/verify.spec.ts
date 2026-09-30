@@ -5,6 +5,10 @@ import { join, resolve } from "node:path";
 import { E2E_REGISTRY, E2E_RPC } from "../playwright.config";
 import { expect, test } from "@playwright/test";
 import sharp from "sharp";
+import { registryAbi } from "@proofshot/shared";
+import { createPublicClient, createWalletClient, http } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { foundry } from "viem/chains";
 import { sealAndSendPhoto, signIn } from "./helpers";
 
 const TITLES = { original: "Original", "derived-copy": "Derived Copy", altered: "Altered", "no-record": "No Record" } as const;
@@ -93,6 +97,31 @@ test("the Public Verifier returns one honest Verdict per copy and a public recei
   expect(await visitor.evaluate(() => getComputedStyle(document.documentElement).printColorAdjust)).toBe("exact");
   await visitor.emulateMedia({ media: "screen", colorScheme: null });
   await expect(visitor.getByText(/This receipt online/)).toBeHidden();
+});
+
+test("a Seal whose Device Key was later revoked says so on its receipt", async ({ page, browser }) => {
+  await signIn(page, "marcus@northwind.demo");
+  const { exactHash } = await sealAndSendPhoto(page, browser, `REVOKE-${Date.now()}`);
+  const chain = createPublicClient({ chain: foundry, transport: http(E2E_RPC) });
+  const [log] = await chain.getContractEvents({
+    address: E2E_REGISTRY,
+    abi: registryAbi,
+    eventName: "CaptureSealed",
+    args: { exactHash: exactHash as `0x${string}` },
+    fromBlock: 0n,
+  });
+  const keyId = log!.args.keyId!;
+
+  // The Registry admin (Anvil account #0 in the dev chain) revokes the key, e.g. after a lost phone.
+  const admin = createWalletClient({ chain: foundry, transport: http(E2E_RPC), account: privateKeyToAccount("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80") });
+  await chain.waitForTransactionReceipt({ hash: await admin.writeContract({ address: E2E_REGISTRY, abi: registryAbi, functionName: "revokeDeviceKey", args: [keyId] }) });
+
+  await expect(async () => {
+    await page.goto(`/r/${exactHash}`);
+    await expect(page.getByText(/This Device Key was revoked in block \d+/)).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
+  // The Seal itself still stands.
+  await expect(page.getByRole("heading", { name: "Sealed photo" })).toBeVisible();
 });
 
 test("a temporary failure keeps the chosen file and offers to try it again", async ({ page }) => {

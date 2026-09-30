@@ -22,7 +22,7 @@ export function chainEventSource(): EventSource | null {
     async events(fromBlock, toBlock) {
       const logs = await client.getContractEvents({ address, abi: registryAbi, fromBlock, toBlock, strict: true });
       return logs
-        .filter((l) => l.eventName === "CaptureSealed" || l.eventName === "RecordImported")
+        .filter((l) => l.eventName === "CaptureSealed" || l.eventName === "RecordImported" || l.eventName === "DeviceKeyRevoked")
         .map((l) => ({ ...l, txHash: l.transactionHash as Hex32, blockHash: l.blockHash as Hex32, logIndex: l.logIndex }) as unknown as RegistryEvent);
     },
     async blockTimestamp(blockNumber) {

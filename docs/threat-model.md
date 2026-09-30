@@ -14,7 +14,7 @@ it is, or who the Capturer is legally.
 | T-4 | Draining sponsored fees with scripted Seals | Rate limits per Claim Link, per Device Key, per sandbox visitor, per carrier import | Per-carrier fee budgets |
 | T-5 | Probing the Registry to learn about other carriers' claims | Alerts reveal only match strength, date and same/other carrier; carrier IDs are pseudonymous | Rotating pseudonymous IDs |
 | T-6 | Adversarial perturbation to evade perceptual matching of a recycled image | Accepted | Multiple fingerprint algorithms, region-level matching |
-| T-7 | Lost or compromised Device Key | Keys can be revoked from a block on; earlier Seals stay valid | Key revocation UI |
+| T-7 | Lost or compromised Device Key | Keys can be revoked from a block on; earlier Seals stay valid, and their receipts state that the key was later revoked (block and date) | Key revocation UI |
 | T-8 | Compromised relayer key (it attests carrier and claim) | Admin is a separate cold key, and no account can ever hold both roles: pause all writes, revoke the relayer role and its Device Keys, rotate, unpause (tested). The single admin moves only by a delayed two-step transfer, so it can't be orphaned or mistyped away | Carrier-signed Claim Links onchain, permissionless `seal()` |
 | T-9 | Crop + edit to hide an alteration | A crop disables the Alteration Check and the Verdict says so at full weight — never a clean result | Crop-robust centre hash |
 

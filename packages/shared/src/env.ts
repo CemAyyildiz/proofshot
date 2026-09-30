@@ -52,6 +52,8 @@ export const serverEnvSchema = z.object({
   /** "1" allows the dev outbox (links in logs and .data/outbox.jsonl) in production builds — automated tests only. */
   MAIL_DEV_OUTBOX: z.enum(["0", "1"]).default("0"),
   SIGNIN_LIMIT_PER_EMAIL: z.coerce.number().int().positive().default(5),
+  /** Sign-in link requests per client address per hour (tests raise it: the whole suite shares one address). */
+  SIGNIN_LIMIT_PER_CLIENT: z.coerce.number().int().positive().default(20),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema> & { network: NetworkConfig; rpcUrl: string };

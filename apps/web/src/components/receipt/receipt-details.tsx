@@ -2,6 +2,7 @@ import type { RegistryEntry } from "@proofshot/fingerprint";
 import { CopyButton } from "@/components/copy-button";
 import { env } from "@/lib/env";
 import { formatDateTime } from "@/lib/format";
+import { keyRevocation } from "@/server/registry";
 import { blockTime } from "@/server/registry/chain-source";
 
 /** Full values, never shortened: a receipt is audit evidence, and a printed "0x82ab…ddf4a6" can't be checked. */
@@ -42,6 +43,19 @@ export async function ReceiptDetails({ record }: { record: RegistryEntry }) {
       </>,
     ]);
     rows.push(["Device Key", <Hash key="k" value={record.keyId!} />]);
+    // A revoked key is a signal (e.g. a lost phone or a compromised relayer): Seals made before still stand, but a
+    // reader must be told.
+    const revoked = await keyRevocation(record.keyId!);
+    if (revoked) {
+      rows.push([
+        "Key revoked",
+        <strong key="r" className="font-semibold text-foreground">
+          This Device Key was revoked in block {revoked.atBlock.toString()} ({formatDateTime(revoked.at)}), after this
+          photo was sealed. Revoking stops a key from sealing anything new; ask the carrier why it was revoked before
+          relying on this Seal.
+        </strong>,
+      ]);
+    }
   } else {
     rows.push(["Signature", "None — imported records are not device-signed"]);
   }

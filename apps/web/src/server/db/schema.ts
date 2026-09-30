@@ -197,6 +197,19 @@ export const registryRecords = pgTable(
   ],
 );
 
+/** `DeviceKeyRevoked` events: the key can't seal from `atBlock` on. Seals made before stay valid but carry this fact. */
+export const deviceKeyRevocations = pgTable(
+  "device_key_revocations",
+  {
+    chainId: integer("chain_id").notNull(),
+    keyId: text("key_id").notNull(),
+    atBlock: bigint("at_block", { mode: "bigint" }).notNull(),
+    blockTimestamp: bigint("block_timestamp", { mode: "number" }).notNull(),
+    txHash: text("tx_hash").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.chainId, t.keyId] })],
+);
+
 export const indexerState = pgTable("indexer_state", {
   /** `${chainId}:${registryAddress}` */
   id: text("id").primaryKey(),

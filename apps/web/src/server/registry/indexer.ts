@@ -1,7 +1,7 @@
 import type { Hex32, RegistryEntry } from "@proofshot/fingerprint";
 import { and, between, eq, sql } from "drizzle-orm";
 import type { Db } from "../db/client";
-import { indexerState, registryRecords } from "../db/schema";
+import { deviceKeyRevocations, indexerState, registryRecords } from "../db/schema";
 
 /** A Registry event, already decoded. */
 export type RegistryEvent =
@@ -32,7 +32,17 @@ export type RegistryEvent =
       txHash: Hex32;
       logIndex: number;
       args: { exactHash: Hex32; carrierId: Hex32; pHash: Hex32; tiles: readonly Hex32[]; width: number; height: number };
+    }
+  | {
+      eventName: "DeviceKeyRevoked";
+      blockNumber: bigint;
+      blockHash: Hex32;
+      txHash: Hex32;
+      logIndex: number;
+      args: { keyId: Hex32; atBlock: bigint };
     };
+
+type RecordEvent = Exclude<RegistryEvent, { eventName: "DeviceKeyRevoked" }>;
 
 /** Where events come from: the chain in production, fixtures in tests. */
 export interface EventSource {
@@ -51,7 +61,7 @@ export interface EventSource {
 
 type Row = typeof registryRecords.$inferInsert;
 
-function toRow(e: RegistryEvent, chainId: number, blockTimestamp: number): Row {
+function toRow(e: RecordEvent, chainId: number, blockTimestamp: number): Row {
   const common = {
     chainId,
     exactHash: e.args.exactHash.toLowerCase(),
@@ -142,7 +152,8 @@ export async function syncRegistry(db: Db, source: EventSource): Promise<SyncRes
     }
     const timestamps = new Map<bigint, number>();
     for (const e of events) if (!timestamps.has(e.blockNumber)) timestamps.set(e.blockNumber, await source.blockTimestamp(e.blockNumber));
-    const fresh = events.map((e) => toRow(e, source.chainId, timestamps.get(e.blockNumber)!));
+    const revocations = events.filter((e) => e.eventName === "DeviceKeyRevoked");
+    const fresh = events.filter((e): e is RecordEvent => e.eventName !== "DeviceKeyRevoked").map((e) => toRow(e, source.chainId, timestamps.get(e.blockNumber)!));
     const inRange = and(eq(registryRecords.chainId, source.chainId), between(registryRecords.blockNumber, from, to));
     const indexed = state && from <= state.lastBlock ? await db.select().from(registryRecords).where(inRange) : [];
 
@@ -165,6 +176,18 @@ export async function syncRegistry(db: Db, source: EventSource): Promise<SyncRes
         await tx
           .delete(registryRecords)
           .where(and(eq(registryRecords.chainId, source.chainId), eq(registryRecords.exactHash, r.exactHash), eq(registryRecords.kind, r.kind)));
+      }
+      for (const r of revocations) {
+        await tx
+          .insert(deviceKeyRevocations)
+          .values({
+            chainId: source.chainId,
+            keyId: r.args.keyId.toLowerCase(),
+            atBlock: r.args.atBlock,
+            blockTimestamp: timestamps.get(r.blockNumber)!,
+            txHash: r.txHash.toLowerCase(),
+          })
+          .onConflictDoNothing();
       }
       if (changed.length) {
         await tx
