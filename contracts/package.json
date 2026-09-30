@@ -11,6 +11,8 @@
     "abi": "tsx tools/export-abi.ts",
     "deploy:testnet": "EXPECTED_CHAIN_ID=10143 forge script script/DeployRegistry.s.sol --rpc-url monad_testnet --broadcast",
     "deploy:mainnet": "EXPECTED_CHAIN_ID=143 forge script script/DeployRegistry.s.sol --rpc-url monad_mainnet --broadcast",
+    "verify:testnet": "tools/verify-registry.sh 10143",
+    "verify:mainnet": "tools/verify-registry.sh 143",
     "dev:chain": "forge build && tsx tools/dev-chain.ts",
     "coverage": "forge coverage --ir-minimum --no-match-coverage \"(test|script)/\" --report summary",
     "gas:snapshot": "forge snapshot --match-contract \"^RegistryTest$\" --no-match-test testFuzz --snap .gas-snapshot",

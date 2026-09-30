@@ -12,15 +12,18 @@ cd contracts
 export MONAD_TESTNET_RPC_URL=https://testnet-rpc.monad.xyz
 REGISTRY_ADMIN=0x<admin> REGISTRY_RELAYER=0x<relayer> REGISTRY_RP_IDS=<your-domain> \
   pnpm deploy:testnet --private-key $DEPLOYER_PRIVATE_KEY
-forge verify-contract <address> src/Registry.sol:Registry --chain 10143 --verifier sourcify
+pnpm verify:testnet   # publish the source on MonadVision (Monad's Sourcify); reads the address from deployments/10143.json
 ```
+
+Verify right after deploying: a Registry whose source can't be read on the explorer asks people to trust exactly
+what Proofshot says they don't have to. No API key is needed.
 
 The script refuses the wrong chain, an empty RP ID list (the Registry would accept no passkey at all) and `localhost`
 on mainnet. It writes `contracts/deployments/<chainId>.json` with the address, the deploy block (a lower bound for
 `REGISTRY_DEPLOY_BLOCK`), the admin, relayer and deployer addresses, the admin-transfer delay and the RP IDs. `REGISTRY_RP_IDS` must list the exact hostname passkeys are created on (e.g. `proofshot.app`); preview
 hostnames need their own entry (`setRpIdHash` from the admin key).
 
-Mainnet: the same with `MONAD_MAINNET_RPC_URL` and `pnpm deploy:mainnet` (chain 143).
+Mainnet: the same with `MONAD_MAINNET_RPC_URL`, `pnpm deploy:mainnet` and `pnpm verify:mainnet` (chain 143).
 
 ## 2. App
 
