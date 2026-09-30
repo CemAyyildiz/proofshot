@@ -113,6 +113,7 @@ pnpm dev           # terminal 2: http://localhost:3000
 pnpm check                         # typecheck, lint, unit + contract tests, build
 pnpm e2e                           # Playwright: real passkey signatures sealed on a local chain
 E2E_PROD=1 pnpm e2e                # same suite against the production build
+TEST_DATABASE_URL=postgres://… pnpm --filter web exec vitest run   # database tests on a real Postgres server
 pnpm screens                       # design screenshots of every surface → apps/web/test-results/screens
 pnpm --filter @proofshot/contracts coverage
 pnpm --filter @proofshot/contracts slither   # static analysis (needs uv)
@@ -128,6 +129,9 @@ assertions interleaved with random role changes.
 
 CI (`.github/workflows/ci.yml`) runs `pnpm check`, the Registry gas snapshot check, Slither static analysis and the
 e2e suite against the production build on every push and pull request, plus a deep fuzz/invariant campaign on `main`.
+Unit tests use an embedded Postgres (PGlite); a separate job runs the deploy-time migrate and seed scripts and every
+database test again on a real Postgres 17 server through the production driver and connection pool, and a unit test
+fails when `schema.ts` changes without a migration.
 A separate **Monad canary**
 (`monad-canary.yml`) re-runs the keyless passkey-verification probe against Monad testnet and mainnet every six hours,
 and opens (or updates) a GitHub issue when it fails. A test also keeps the docs honest: every repository path the

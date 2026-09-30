@@ -16,6 +16,8 @@ export default defineConfig({
     hookTimeout: 60_000,
     maxWorkers: 4,
     include: ["src/**/*.test.ts?(x)"],
+    // Drops the databases of a real-Postgres run (TEST_DATABASE_URL); does nothing on the default PGlite run.
+    globalSetup: ["src/test/test-db-setup.ts"],
     exclude: ["e2e/**", "node_modules/**"],
     // Server code only: pages and client components are covered by the Playwright suite. The floor sits a little
     // under the measured values (2026-09-30: lines 80%, branches 89%) so a regression fails CI, not a rounding blip.

@@ -2183,3 +2183,50 @@ Done: all.
 `pnpm check` is green. e2e: 28/28 in dev mode and 28/28 in production mode.
 
 **Next: Iteration 63 — Tests/CI, pass 13.**
+
+## Iteration 63 — Tests/CI, pass 13: the database the tests never touched
+
+Method: compared what the unit suite runs on with what production runs on. The tests use PGlite, an embedded,
+single-connection Postgres, fed by the committed migrations. Production uses a Postgres server through postgres-js
+with a pool of 5, migrated by `pnpm db:migrate`.
+
+Findings:
+
+- **M1** Nothing checked that `schema.ts` and the migrations agree. The tests apply the migrations, so an index,
+  unique constraint or default added to `schema.ts` without `pnpm db:generate` would pass every test and never reach
+  a real database. The type system would even believe it was there.
+- **M2** No test ever ran on a Postgres server or through the production driver. PGlite serialises every query on
+  its one connection, so real concurrency (two requests at once) was never exercised. The deploy-time `db:migrate` /
+  `db:seed` path was never run anywhere.
+- **M3 (real bug, found by the new concurrency test)** `replaceClaimLink` (iteration 61) read the current token
+  before its transaction. Two replacements at once (a double click, two adjusters) both tried to retire the same
+  token, and the second failed with a duplicate-key error (a 500).
+- OK: the other writers are safe under concurrency. The rate limiter is a single atomic upsert, already tested
+  concurrently. Sending the same photo twice is idempotent. Indexer writes are upserts, and an overlapping sync can
+  only re-scan.
+- Noted, not changed: postgres-js prints `NOTICE` objects (e.g. "schema drizzle already exists") on a repeat
+  migrate. It is harmless, but noisy in deploy logs.
+
+Done: all three.
+
+- `replaceClaimLink` now locks the link row (`SELECT … FOR UPDATE`) and retires whatever token is current at that
+  moment. Concurrent replacements then run one after the other; both succeed and every old token is retired.
+  - The new test failed on PGlite with the duplicate key before the fix.
+  - After the fix it passed 5/5 on PGlite and 5/5 on Postgres.
+- `migrations.test.ts` runs `drizzle-kit generate` against a copy of the committed migrations and fails if anything
+  new comes out, with the message "run `pnpm db:generate`". It was checked with a probe column added to the schema,
+  which made the test fail as intended.
+- `TEST_DATABASE_URL` switches `testDb()` to a real server. The suite migrates and seeds a template database once
+  per worker, and each test gets `CREATE DATABASE … TEMPLATE` through postgres-js (pool of 5, short idle timeout). A
+  Vitest global setup drops every `ps_test_*` database before and after the run.
+  - Locally, on a throwaway Postgres 17 cluster, all 105 tests pass, in about 6 s against 11 s on PGlite.
+  - Server DDL logging confirmed that the databases were created and dropped.
+- New CI job **postgres** with a `postgres:17` service:
+  - runs `db:migrate` and `db:seed` twice, to prove they are idempotent;
+  - then runs the whole Vitest suite against the server.
+  - This sequence was rehearsed locally.
+- The README's Quality section describes both checks.
+
+`pnpm check` is green; on Postgres, 105/105 tests pass. e2e: 28/28 in dev mode and 28/28 in production mode.
+
+**Next: Iteration 64 — Docs/README, pass 13.**
