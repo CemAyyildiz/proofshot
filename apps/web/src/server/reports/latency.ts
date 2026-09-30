@@ -2,7 +2,7 @@ import { and, eq, gte, isNotNull } from "drizzle-orm";
 import type { Db } from "../db/client";
 import { captures, carriers, claimFiles } from "../db/schema";
 
-/** SM-5 / NFR-1: shutter → "Sealed ✓" as measured on the Capturer's device and posted with each Seal. */
+/** SM-5 / NFR-1: shutter → "Sealed" as measured on the Capturer's device and posted with each Seal. */
 export interface LatencyStats {
   n: number;
   p50: number;
@@ -11,7 +11,7 @@ export interface LatencyStats {
 }
 
 export interface LatencyReport {
-  /** Shutter → onchain Seal confirmed ("Sealed ✓"). */
+  /** Shutter → onchain Seal confirmed ("Sealed"). */
   sealed: { all: LatencyStats | null; claimLinks: LatencyStats | null; tryIt: LatencyStats | null };
   /** Shutter → passkey signature done (the part the Capturer's own device controls). */
   signed: LatencyStats | null;
@@ -59,7 +59,7 @@ export function latencyMarkdown(r: LatencyReport, meta: { network: string; gener
       (r.since ? `, Seals since ${r.since.toISOString()}.` : ", all Seals."),
     "Each Seal's timings are measured on the Capturer's device and posted with the Seal. Percentiles are nearest-rank.",
     "",
-    "| Shutter → \"Sealed ✓\" | Seals | p50 | p95 | max |",
+    "| Shutter → \"Sealed\" | Seals | p50 | p95 | max |",
     "|---|---|---|---|---|",
     row("All", r.sealed.all),
     row("Claim Links", r.sealed.claimLinks),

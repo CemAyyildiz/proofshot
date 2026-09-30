@@ -40,7 +40,7 @@ test("capture all surfaces", async ({ browser }) => {
   await visitor.getByRole("button", { name: "Start the demo" }).click();
   await visitor.getByRole("button", { name: "Continue" }).click();
   await visitor.getByRole("button", { name: "Take photo" }).click();
-  await expect(visitor.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
+  await expect(visitor.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/^Sealed/, { timeout: 30_000 });
   await shot(visitor, "m-try-sealed");
 
   const marcus = await signedInPage(browser, "marcus@northwind.demo");
@@ -72,7 +72,7 @@ test("capture all surfaces", async ({ browser }) => {
   await shot(phone, "m-capture-ready");
   await phone.getByRole("button", { name: "Take photo" }).click();
   await phone.getByRole("button", { name: "Take photo" }).click();
-  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status").first()).toHaveText(/Sealed ✓/, { timeout: 30_000 });
+  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status").first()).toHaveText(/^Sealed/, { timeout: 30_000 });
   await shot(phone, "m-capture-sealed");
   await phone.getByRole("button", { name: /Send .* to insurer/ }).click();
   await shot(phone, "m-capture-sent");

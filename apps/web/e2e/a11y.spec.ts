@@ -70,7 +70,7 @@ test("Console, capture, verdicts and receipts meet WCAG 2.1 AA (automated)", asy
   await audit(phone, "capture intro");
   await phone.getByRole("button", { name: "Continue" }).click();
   await phone.getByRole("button", { name: "Take photo" }).click();
-  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
+  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/^Sealed/, { timeout: 30_000 });
   await audit(phone, "capture with photos");
 
   for (const [name, buf] of [

@@ -7,7 +7,7 @@ Five minutes, a phone, no sign-up.
 1. Open the demo site on your phone (or scan the QR code on the landing page from a laptop) and tap **Try it on this
    phone**.
 2. Tap **Continue** and confirm with Face ID / fingerprint. That single prompt creates a passkey; no wallet, no app.
-3. Tap the shutter. Within the burst, each photo turns **Sealed ✓** with the time it took.
+3. Tap the shutter. Within the burst, each photo turns **Sealed** with the time it took.
 4. Under **Now try to fool it**: save the photo, then change it — paint over a detail, or send it to yourself on
    WhatsApp and save that copy.
 5. Drop the copy into **Verify a photo**:

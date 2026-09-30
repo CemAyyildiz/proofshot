@@ -131,7 +131,7 @@ export function CaptureApp({ token, carrierName, reference, validUntil, sandbox 
         </section>
       )}
 
-      {step.name === "ready" && <CaptureScreen token={token} deviceKey={step.key} sandbox={sandbox} />}
+      {step.name === "ready" && <CaptureScreen token={token} deviceKey={step.key} carrierName={carrierName} sandbox={sandbox} />}
     </main>
   );
 }

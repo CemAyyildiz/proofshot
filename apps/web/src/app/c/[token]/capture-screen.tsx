@@ -3,6 +3,7 @@
 import type { Fingerprint } from "@proofshot/fingerprint/browser";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ConfirmAction } from "@/components/confirm-action";
+import { CheckIcon, SendIcon, WarningIcon } from "@/components/icons";
 import { type StoredCapture, deleteCapture, listCaptures, putCapture } from "@/lib/capture-store";
 import type { StoredDeviceKey } from "@/lib/passkey";
 import { GENERIC_SEAL_MESSAGE, SealError, currentLocationIfAllowed, fingerprintCapture, grabFrame, signAndSeal, warmUpFingerprinting } from "@/lib/seal-pipeline";
@@ -37,7 +38,17 @@ async function openCamera(video: HTMLVideoElement): Promise<Camera> {
 
 const inFlight = (c: StoredCapture) => c.status === "processing" || c.status === "sealing";
 
-export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: string; deviceKey: StoredDeviceKey; sandbox?: boolean }) {
+export function CaptureScreen({
+  token,
+  deviceKey,
+  carrierName,
+  sandbox = false,
+}: {
+  token: string;
+  deviceKey: StoredDeviceKey;
+  carrierName: string;
+  sandbox?: boolean;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [camera, setCamera] = useState<Camera>({ state: "starting" });
   const [captures, setCaptures] = useState<StoredCapture[]>([]);
@@ -197,6 +208,7 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
 
   const inFlightCount = captures.filter(inFlight).length;
   const sealedCount = captures.filter((c) => c.status === "sealed").length;
+  const doneCount = sealedCount + captures.filter((c) => c.status === "sent").length;
   const sent = captures.filter((c) => c.status === "sent");
 
   if (sentView) {
@@ -210,14 +222,20 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
             {sentView.skipped} photo{sentView.skipped === 1 ? " wasn't" : "s weren't"} sealed and {sentView.skipped === 1 ? "was" : "were"} not sent.
           </p>
         )}
+        <p>
+          {carrierName} received {sent.length} sealed photo{sent.length === 1 ? "" : "s"}. You can close this page.
+        </p>
         <p className="text-sm text-muted">Keep these receipt links. Anyone can use them to check your photos are genuine.</p>
         <ul className="grid grid-cols-2 gap-3">
           {sent.map((c) => (
             <li key={c.id} className="flex flex-col gap-1 rounded-md border border-line bg-surface p-2">
               <Thumb blob={c.blob} className="aspect-[4/3] w-full rounded object-cover" />
-              <span className="text-sm font-medium">✓ Sealed {new Date(c.createdAt).toLocaleTimeString("en-GB")}</span>
+              <span className="inline-flex items-center gap-1 text-sm font-semibold">
+                <CheckIcon className="size-4 shrink-0" />
+                Sealed {new Date(c.createdAt).toLocaleTimeString("en-GB")}
+              </span>
               {c.receiptUrl && (
-                <a href={c.receiptUrl} className="text-sm underline underline-offset-4">
+                <a href={c.receiptUrl} className="inline-flex min-h-11 items-center text-sm underline underline-offset-4">
                   Receipt
                 </a>
               )}
@@ -268,7 +286,18 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
         )}
       </div>
 
-      <div className="flex flex-col items-center gap-2 py-1">
+      {/* A camera app's control row: progress, shutter, and the next step side by side, so the shutter is never covered
+          and Send stays within thumb reach however many photos are taken. */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-1">
+        <p className="text-sm text-muted" aria-live="polite">
+          {inFlightCount >= MAX_IN_FLIGHT
+            ? "Waiting for earlier photos to seal…"
+            : captures.length === 0
+              ? "Tap to take a sealed photo"
+              : doneCount === captures.length
+                ? `${doneCount} sealed`
+                : `${doneCount} of ${captures.length} sealed`}
+        </p>
         <button
           type="button"
           onClick={shoot}
@@ -278,13 +307,21 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
         >
           <span className="size-15 rounded-full bg-foreground" />
         </button>
-        <p className="text-sm text-muted" aria-live="polite">
-          {inFlightCount >= MAX_IN_FLIGHT
-            ? "Waiting for earlier photos to seal…"
-            : captures.length === 0
-              ? "Tap to take a sealed photo"
-              : `${captures.length} photo${captures.length === 1 ? "" : "s"} · ${sealedCount + captures.filter((c) => c.status === "sent").length} sealed`}
-        </p>
+        <div className="flex justify-end">
+          {/* Hidden until there is something to send. */}
+          {!sandbox && sealedCount > 0 && (
+            <button
+              type="button"
+              className="btn-primary px-3 text-sm"
+              disabled={sending}
+              onClick={sendToInsurer}
+              aria-label={sending ? "Sending…" : `Send ${sealedCount} sealed photo${sealedCount === 1 ? "" : "s"} to insurer`}
+            >
+              {sending ? "Sending…" : `Send ${sealedCount}`}
+              {!sending && <SendIcon className="size-4" />}
+            </button>
+          )}
+        </div>
       </div>
 
       {captures.length > 0 && (
@@ -295,11 +332,12 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
                 <Thumb
                   blob={c.blob}
                   className={`aspect-[3/4] w-full rounded object-cover ring-2 transition-[box-shadow] ${
-                    c.status === "sealed" || c.status === "sent" ? "ring-verdict-original" : c.status === "failed" ? "ring-danger" : "ring-transparent"
+                    // Sealed is a status, not a Verdict: the accent colour, never the Verdict greens (PRD §12).
+                    c.status === "sealed" || c.status === "sent" ? "ring-accent" : c.status === "failed" ? "ring-danger" : "ring-transparent"
                   }`}
                 />
                 {(c.status === "sealed" || c.status === "sent") && (
-                  <span aria-hidden="true" className="seal-pop absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-verdict-original text-verdict-fg shadow">
+                  <span aria-hidden="true" className="seal-pop absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-accent text-accent-fg shadow">
                     <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12.5l4.5 4.5L19 7" />
                     </svg>
@@ -340,30 +378,27 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
           {sendError}
         </p>
       )}
-      {sandbox ? (
-        <TryToFoolIt capture={[...captures].reverse().find((c) => c.status === "sealed")} />
-      ) : (
-        <button type="button" className="btn-primary py-3" disabled={sealedCount === 0 || sending} onClick={sendToInsurer}>
-          {sending ? "Sending…" : sealedCount > 0 ? `Send ${sealedCount} photo${sealedCount === 1 ? "" : "s"} to insurer` : "Send to insurer"}
-        </button>
-      )}
+      {sandbox && <TryToFoolIt capture={[...captures].reverse().find((c) => c.status === "sealed")} />}
     </section>
   );
 }
 
+/** The moment the product exists for, so it reads at arm's length outdoors: 14 px, an icon and a word, not colour. */
 function CaptureStatusLine({ capture: c, canRetry }: { capture: StoredCapture; canRetry: boolean }) {
+  const done = c.status === "sealed" || c.status === "sent";
   const text =
     c.status === "sealed"
-      ? `Sealed ✓${c.sealMs !== undefined ? ` · ${(c.sealMs / 1000).toFixed(1)} s` : ""}`
+      ? `Sealed${c.sealMs !== undefined ? ` · ${(c.sealMs / 1000).toFixed(1)} s` : ""}`
       : c.status === "sent"
-        ? "Sent ✓"
+        ? "Sent"
         : c.status === "failed"
           ? canRetry
             ? "Not sealed — retry"
             : "Not sealed"
           : "Sealing…";
   return (
-    <span role="status" className="text-xs font-medium">
+    <span role="status" className={`inline-flex items-center gap-1 text-sm font-semibold ${c.status === "failed" ? "text-danger" : done ? "text-foreground" : "text-muted"}`}>
+      {done ? <CheckIcon className="size-4 shrink-0" /> : c.status === "failed" ? <WarningIcon className="size-4 shrink-0" /> : null}
       {text}
     </span>
   );

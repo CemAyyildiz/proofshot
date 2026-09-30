@@ -20,7 +20,7 @@ test("FR-18: a visitor's phone reaches a ready camera in ≤ 3 taps, seals a pho
   await expect(phone.getByRole("button", { name: /Send .* to insurer/ })).toHaveCount(0);
 
   await phone.getByRole("button", { name: "Take photo" }).click();
-  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
+  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/^Sealed/, { timeout: 30_000 });
   const guide = phone.getByRole("region", { name: "Now try to fool it" });
   await expect(guide).toBeVisible();
   // The guide is the point of the demo: it scrolls into view instead of waiting below the viewfinder.

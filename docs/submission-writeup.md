@@ -38,7 +38,7 @@ can check a photo without asking anyone.
   **100,340 gas per Seal** (Foundry, Osaka EVM) vs 326,571 without it. On the live chains, a keyless probe ran the same
   OpenZeppelin verification on Monad testnet and mainnet: passkey assertion accepted (13,853 gas), tampered one
   rejected (`docs/spikes/spike-b-probe.json`). Live `seal()` on a deployed Registry: ⏳ `docs/spikes/spike-b-testnet.json`.
-- Seal latency p95 shutter → "Sealed ✓": ⏳ (target ≤ 3 s, NFR-1). Generate `docs/latency.md` from the deployment
+- Seal latency p95 shutter → "Sealed": ⏳ (target ≤ 3 s, NFR-1). Generate `docs/latency.md` from the deployment
   with `DATABASE_URL=… PROOFSHOT_NETWORK=mainnet pnpm --filter web report:latency`; quote the Claim Links row.
 - Cost per Seal: ≈ 0.010 MON at the 102 gwei observed on 2026-09-30 (100,340 gas); confirm with the live `seal()` gas.
 

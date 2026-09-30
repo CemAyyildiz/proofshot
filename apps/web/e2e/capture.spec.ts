@@ -46,7 +46,7 @@ test("a Capturer sets up a passkey, seals a burst of live photos onchain and sen
   for (let i = 0; i < 3; i++) await shutter.click();
   const photos = phone.getByRole("list", { name: "Your photos" }).getByRole("status");
   await expect(photos).toHaveCount(3);
-  await expect(photos.filter({ hasText: /^Sealed ✓ · \d+\.\d s$/ })).toHaveCount(3, { timeout: 30_000 });
+  await expect(photos.filter({ hasText: /^Sealed · \d+\.\d s$/ })).toHaveCount(3, { timeout: 30_000 });
   expect(await phone.locator("main").innerText()).not.toMatch(FORBIDDEN);
 
   // The Carrier sees three sealed Captures before they are sent…
@@ -68,7 +68,7 @@ test("a Capturer sets up a passkey, seals a burst of live photos onchain and sen
   }
 
   // …and receives the exact sealed files once the Capturer sends them (FR-6).
-  await phone.getByRole("button", { name: "Send 3 photos to insurer" }).click();
+  await phone.getByRole("button", { name: "Send 3 sealed photos to insurer" }).click();
   await expect(phone.getByRole("heading", { name: "Sent to your insurer" })).toBeVisible();
   await expect(phone.getByRole("link", { name: "Receipt" })).toHaveCount(3);
   await page.reload();
@@ -79,7 +79,7 @@ test("a Capturer sets up a passkey, seals a burst of live photos onchain and sen
   // Returning Capturer on the same device: no second setup, earlier photos still listed.
   await phone.reload();
   await expect(shutter).toBeEnabled();
-  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(["Sent ✓", "Sent ✓", "Sent ✓"]);
+  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(["Sent", "Sent", "Sent"]);
 });
 
 test("without camera access the Capturer gets guidance and no alternative input", async ({ page, browser }) => {
@@ -154,7 +154,7 @@ test("a frame the camera fails to deliver once is retried, not reported to the C
   await phone.goto(link);
   await phone.getByRole("button", { name: "Continue" }).click();
   await phone.getByRole("button", { name: "Take photo" }).click();
-  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
+  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/^Sealed/, { timeout: 30_000 });
   await expect(phone.getByText("The camera didn't return a photo")).toHaveCount(0);
   await phone.context().close();
 });
@@ -170,7 +170,7 @@ test("offline: a plain message, the photo is kept, and it seals by itself when t
   await expect(photos).toContainText("No connection. This photo is kept on your phone", { timeout: 15_000 });
   await expect(photos).not.toContainText(/Failed to fetch|TypeError|network/i);
   await phone.context().setOffline(false);
-  await expect(photos.getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
+  await expect(photos.getByRole("status")).toHaveText(/^Sealed/, { timeout: 30_000 });
   await phone.context().close();
 });
 
@@ -179,7 +179,7 @@ test("a link revoked mid-session stops new photos with a clear next step; sealed
   const phone = await openAsCapturer(browser, await createClaimLink(page, "HAIL-REVOKED-1"));
   await phone.getByRole("button", { name: "Continue" }).click();
   await phone.getByRole("button", { name: "Take photo" }).click();
-  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
+  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/^Sealed/, { timeout: 30_000 });
 
   await page.getByRole("button", { name: "Revoke link" }).click();
   await page.getByRole("group", { name: /Revoke this link\?/ }).getByRole("button", { name: "Revoke link" }).click();
@@ -189,9 +189,9 @@ test("a link revoked mid-session stops new photos with a clear next step; sealed
   await expect(phone.getByRole("alert").filter({ hasText: "This link is no longer active" })).toBeVisible({ timeout: 15_000 });
   await expect(phone.getByRole("button", { name: "Take photo" })).toBeDisabled();
   await expect(phone.getByRole("button", { name: "Retry" })).toHaveCount(0);
-  await expect(phone.getByRole("list", { name: "Your photos" }).getByText(/Sealed ✓/)).toHaveCount(1);
+  await expect(phone.getByRole("list", { name: "Your photos" }).getByText(/^Sealed/)).toHaveCount(1);
   // The photo sealed while the link was active can still reach the insurer.
-  await phone.getByRole("button", { name: "Send 1 photo to insurer" }).click();
+  await phone.getByRole("button", { name: "Send 1 sealed photo to insurer" }).click();
   await expect(phone.getByRole("heading", { name: "Sent to your insurer" })).toBeVisible();
   await phone.context().close();
 });
@@ -202,7 +202,7 @@ test("a limit reached mid-session stops the shutter once, before another Face ID
   await phone.getByRole("button", { name: "Continue" }).click();
   await phone.getByRole("button", { name: "Take photo" }).click();
   const photos = phone.getByRole("list", { name: "Your photos" });
-  await expect(photos.getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
+  await expect(photos.getByRole("status")).toHaveText(/^Sealed/, { timeout: 30_000 });
 
   // The server now reports a hard limit (here: the carrier's daily budget) when asked for the seal context, which
   // is before the device would ask for Face ID. Counted so the test proves no signature was requested.
@@ -219,7 +219,7 @@ test("a limit reached mid-session stops the shutter once, before another Face ID
   await expect(phone.getByRole("button", { name: "Retry" })).toHaveCount(0);
   await expect(photos.getByText(limit)).toHaveCount(0); // said once, in the banner
   expect(sealPosts).toBe(0);
-  await phone.getByRole("button", { name: "Send 1 photo to insurer" }).click();
+  await phone.getByRole("button", { name: "Send 1 sealed photo to insurer" }).click();
   await expect(phone.getByRole("heading", { name: "Sent to your insurer" })).toBeVisible();
   await phone.context().close();
 });

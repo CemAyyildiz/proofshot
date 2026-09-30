@@ -92,8 +92,8 @@ export async function sealAndSendPhoto(page: Page, browser: Browser, reference: 
   await phone.goto(link);
   await phone.getByRole("button", { name: "Continue" }).click();
   await phone.getByRole("button", { name: "Take photo" }).click();
-  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
-  await phone.getByRole("button", { name: "Send 1 photo to insurer" }).click();
+  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/^Sealed/, { timeout: 30_000 });
+  await phone.getByRole("button", { name: "Send 1 sealed photo to insurer" }).click();
   await expect(phone.getByRole("heading", { name: "Sent to your insurer" })).toBeVisible();
   await phone.context().close();
   await page.goto(claimUrl);

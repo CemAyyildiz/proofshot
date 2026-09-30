@@ -30,7 +30,7 @@ test("edge layouts", async ({ browser }) => {
     await phone.getByRole("button", { name: "Continue" }).click();
     await expect(phone.getByRole("button", { name: "Take photo" })).toBeEnabled();
     await phone.getByRole("button", { name: "Take photo" }).click();
-    await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
+    await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/^Sealed/, { timeout: 30_000 });
     await phone.screenshot({ path: `${OUT}/edge-${tag}-capture.png` });
     await phone.goto("/verify");
     await phone.screenshot({ path: `${OUT}/edge-${tag}-verify.png`, fullPage: true });

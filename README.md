@@ -46,7 +46,7 @@ assumptions and the test behind every contract guarantee.
   precompile) — measured with Foundry on the Osaka EVM. A keyless probe confirmed on **Monad testnet and mainnet**
   that the precompile is live and that the same OpenZeppelin verification accepts a passkey assertion (13,853 gas) and
   rejects a tampered one; live `seal()` gas and latency are pending a funded key ([docs/spikes/spike-b.md](docs/spikes/spike-b.md)).
-- **Fast blocks and finality** are what make the "Sealed ✓ within 3 seconds" target (NFR-1) realistic: the average
+- **Fast blocks and finality** are what make the "Sealed within 3 seconds" target (NFR-1) realistic: the average
   block time measured over 10,000 blocks is 304 ms on testnet and 301 ms on mainnet (2026-09-30). The live
   shutter-to-Sealed latency report is pending with the testnet run.
 - **Per-photo economics**: at that gas, sealing every photo individually is affordable, so each Receipt points at
