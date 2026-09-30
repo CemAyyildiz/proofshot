@@ -130,7 +130,8 @@ export function CaptureScreen({ token, deviceKey, sandbox = false }: { token: st
       update(capture);
       seal(capture, startedAt);
       setSendError("");
-    } catch {
+    } catch (e) {
+      console.warn("[capture] frame grab failed", e);
       setSendError("The camera didn't return a photo. Try again.");
     }
   }

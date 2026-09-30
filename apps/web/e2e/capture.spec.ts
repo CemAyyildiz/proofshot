@@ -119,3 +119,29 @@ test("the viewfinder and shutter fit one screen on a small phone and in landscap
     await phone.context().close();
   }
 });
+
+test("a frame the camera fails to deliver once is retried, not reported to the Capturer", async ({ page, browser }) => {
+  await signIn(page, "marcus@northwind.demo");
+  const link = await createClaimLink(page, "HAIL-RETRY-1");
+  const phone = await (await browser.newContext({ permissions: ["camera"] })).newPage();
+  await addVirtualPasskeyAuthenticator(phone);
+  await simulateSensorNoise(phone);
+  // The first JPEG encode of the page yields no image, as Chrome's toBlob can under memory pressure.
+  await phone.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.toBlob;
+    let failed = false;
+    HTMLCanvasElement.prototype.toBlob = function (callback, ...rest) {
+      if (!failed && rest[0] === "image/jpeg") {
+        failed = true;
+        return setTimeout(() => callback(null), 0) as unknown as void;
+      }
+      return original.call(this, callback, ...rest);
+    };
+  });
+  await phone.goto(link);
+  await phone.getByRole("button", { name: "Continue" }).click();
+  await phone.getByRole("button", { name: "Take photo" }).click();
+  await expect(phone.getByRole("list", { name: "Your photos" }).getByRole("status")).toHaveText(/Sealed ✓/, { timeout: 30_000 });
+  await expect(phone.getByText("The camera didn't return a photo")).toHaveCount(0);
+  await phone.context().close();
+});

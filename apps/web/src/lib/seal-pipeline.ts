@@ -8,12 +8,39 @@ let pdqReady: Promise<void> | undefined;
 export const warmUpFingerprinting = () => (pdqReady ??= initBrowser("/pdq.wasm"));
 
 /** A JPEG straight from the live camera frame. This file is what gets sealed and later sent. */
-export async function grabFrame(video: HTMLVideoElement): Promise<Blob> {
+export async function grabFrame(video: HTMLVideoElement, attempts = 3): Promise<Blob> {
+  // A single grab can come back empty: no decoded frame yet after the stream (re)starts, or toBlob yielding null under
+  // memory pressure. Retry on the next video frame before telling the Capturer anything went wrong.
+  for (let i = 1; ; i++) {
+    try {
+      return await grabOnce(video);
+    } catch (e) {
+      if (i >= attempts) throw e;
+      await nextVideoFrame(video);
+    }
+  }
+}
+
+async function grabOnce(video: HTMLVideoElement): Promise<Blob> {
+  if (!video.videoWidth || !video.videoHeight) throw new Error("no video frame yet");
   const canvas = document.createElement("canvas");
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
-  canvas.getContext("2d")!.drawImage(video, 0, 0);
-  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("capture failed"))), "image/jpeg", 0.92));
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("2D canvas unavailable");
+  ctx.drawImage(video, 0, 0);
+  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob returned no image"))), "image/jpeg", 0.92));
+}
+
+/** Resolves on the next presented video frame (or after 250 ms where that API is missing or the stream stalls). */
+function nextVideoFrame(video: HTMLVideoElement): Promise<void> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, 250);
+    video.requestVideoFrameCallback?.(() => {
+      clearTimeout(timer);
+      resolve();
+    });
+  });
 }
 
 /** Location only if the permission was already granted — never an extra prompt during capture (FR-2). */
