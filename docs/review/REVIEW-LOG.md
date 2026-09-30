@@ -654,3 +654,32 @@ Done:
 
 **Next: Iteration 22 — Contracts, pass 5**: review `importRecords` batch size vs the Osaka per-transaction gas cap
 (2^24) — the app sends 10 per batch; compute the real ceiling and enforce it in both the contract docs and the app.
+
+---
+
+## Iteration 22 — Contracts, pass 5: import batch ceiling (2026-09-30)
+
+Measured `importRecords` execution gas: 1 record 36,982 · 10 → 335,890 · 50 → 1,692,692 · 200 → 7,085,999
+(~35k per record), plus ~11k calldata gas per record (21 words).
+
+Findings:
+
+- **M1** `importRecords` accepted any array length. Past ~350 records a batch exceeds the 2^24 per-transaction gas
+  cap (EIP-7825) and reverts only after the relayer has paid for the attempt.
+- **M2** Contract limits (`MAX_LAG`, the new batch cap) were duplicated in TypeScript by hand with nothing keeping the
+  copies in step.
+- OK: the app sends 10 images per import request (bounded by upload size), far below any ceiling; `seal()` is a single
+  record (~100k gas).
+
+Done: both.
+
+- `Registry.MAX_IMPORT_BATCH = 200` with `BatchTooLarge(size, max)`; a test proves 201 reverts and that a full 200-record
+  batch — execution plus the worst-case EIP-7623 calldata floor plus the 21k base — stays under 16,777,216. ABI and gas
+  snapshot regenerated.
+- `packages/shared/src/registry-limits.ts` mirrors `MAX_IMPORT_BATCH` and `MAX_LAG`; `registry-limits.test.ts` parses
+  `Registry.sol` and fails on drift. The app asserts `IMPORT_BATCH ≤ MAX_IMPORT_BATCH` at load and maps a
+  `BatchTooLarge` revert to a clear 400.
+
+**Next: Iteration 23 — Tests/CI, pass 5**: a final full-suite stability run in production mode ×2, check the CI YAML
+with `actionlint` if available (or a manual review of expressions and permissions), and set least-privilege
+`permissions:` on every workflow.

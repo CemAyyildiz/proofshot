@@ -1,4 +1,5 @@
 import type { Hex32 } from "@proofshot/fingerprint";
+import { MAX_IMPORT_BATCH } from "@proofshot/shared";
 import { eq } from "drizzle-orm";
 import { isServiceUnavailable, relayerErrorKind } from "../chain/errors";
 import type { ImportRecord, Relayer } from "../chain/relayer";
@@ -7,8 +8,9 @@ import type { CarrierScope } from "../dal/claim-files";
 import { fingerprintFile } from "../fingerprint";
 import { DAY_MS, consume } from "../rate-limit";
 
-/** Images per request; one Registry transaction per batch. */
+/** Images per request; one Registry transaction per batch (bounded by the upload size, far below the contract cap). */
 export const IMPORT_BATCH = 10;
+if (IMPORT_BATCH > MAX_IMPORT_BATCH) throw new Error("IMPORT_BATCH exceeds Registry.MAX_IMPORT_BATCH");
 /** FR-13: up to 500 images per import; daily ceiling on sponsored import fees per Carrier. */
 export const IMPORTS_PER_CARRIER_PER_DAY = 2_000;
 
@@ -53,6 +55,7 @@ export async function importBatch(
     const kind = relayerErrorKind(err);
     console.error(`[import] importRecords failed (${kind})`, err);
     if (isServiceUnavailable(kind)) return { ok: false, status: 503, error: "Imports are paused on our side for a moment. Try again later." };
+    if (/BatchTooLarge/.test(String(err))) return { ok: false, status: 400, error: "This batch is larger than the registry accepts." };
     return { ok: false, status: 502, error: "This batch couldn't be recorded. Retry it — already imported photos are skipped." };
   }
 }

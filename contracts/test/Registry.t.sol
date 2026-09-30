@@ -336,6 +336,32 @@ contract RegistryTest is Test {
         assertEq(registry.importRecords(carrier, batch), 0); // retried batch is a no-op
     }
 
+    function _batch(uint256 n, uint256 salt) internal pure returns (Registry.ImportRecord[] memory b) {
+        b = new Registry.ImportRecord[](n);
+        for (uint256 i; i < n; i++) {
+            b[i] = _import(keccak256(abi.encode(salt, i)));
+            for (uint256 t; t < 16; t++) b[i].tiles[t] = keccak256(abi.encode(salt, i, t));
+        }
+    }
+
+    function test_ImportBatchIsCappedAndTheCapFitsOneTransaction() public {
+        uint256 max = registry.MAX_IMPORT_BATCH();
+        Registry.ImportRecord[] memory tooBig = _batch(max + 1, 1);
+        vm.expectRevert(abi.encodeWithSelector(Registry.BatchTooLarge.selector, max + 1, max));
+        vm.prank(relayer);
+        registry.importRecords(keccak256("c"), tooBig);
+
+        Registry.ImportRecord[] memory full = _batch(max, 2);
+        // Calldata floor for the full batch (EIP-7623: 40 gas per non-zero byte, the worst case) + execution must fit
+        // the 2^24 per-transaction cap with room to spare.
+        uint256 calldataGas = abi.encodeCall(Registry.importRecords, (keccak256("c"), full)).length * 40;
+        vm.prank(relayer);
+        uint256 g = gasleft();
+        assertEq(registry.importRecords(keccak256("c"), full), max);
+        uint256 execution = g - gasleft();
+        assertLt(21_000 + calldataGas + execution, 16_777_216);
+    }
+
     function test_ImportIsRelayerOnlyAndNeedsCarrier() public {
         Registry.ImportRecord[] memory batch = new Registry.ImportRecord[](0);
         vm.expectRevert(

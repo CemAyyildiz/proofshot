@@ -36,6 +36,19 @@ export const registryAbi = [
   },
   {
     "type": "function",
+    "name": "MAX_IMPORT_BATCH",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "MAX_LAG",
     "inputs": [],
     "outputs": [
@@ -822,6 +835,22 @@ export const registryAbi = [
         "name": "exactHash",
         "type": "bytes32",
         "internalType": "bytes32"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "BatchTooLarge",
+    "inputs": [
+      {
+        "name": "size",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "max",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ]
   },

@@ -50,6 +50,10 @@ contract Registry is AccessControl, Pausable {
     /// @notice Maximum blocks between the referenced block and inclusion (~30 s at 300 ms blocks).
     uint256 public constant MAX_LAG = 100;
 
+    /// @notice Largest `importRecords` batch. Each record costs ~35k execution gas plus ~11k calldata gas, so 200
+    ///         records (~9.3M) stay well under the 2^24 per-transaction gas cap (EIP-7825) instead of reverting late.
+    uint256 public constant MAX_IMPORT_BATCH = 200;
+
     mapping(bytes32 keyId => DeviceKey) private _deviceKeys;
     mapping(bytes32 exactHash => bool) public isSealed;
     mapping(bytes32 exactHash => bool) public isImported;
@@ -92,6 +96,7 @@ contract Registry is AccessControl, Pausable {
     error InvalidSignature();
     error AdminIsRelayer();
     error NotAuthorized();
+    error BatchTooLarge(uint256 size, uint256 max);
 
     constructor(address admin, address relayer, bytes32[] memory rpIdHashes) {
         if (admin == address(0) || relayer == address(0)) revert ZeroValue();
@@ -196,6 +201,7 @@ contract Registry is AccessControl, Pausable {
         returns (uint256 imported)
     {
         if (carrierId == 0) revert ZeroValue();
+        if (records.length > MAX_IMPORT_BATCH) revert BatchTooLarge(records.length, MAX_IMPORT_BATCH);
         for (uint256 i; i < records.length; i++) {
             ImportRecord calldata rec = records[i];
             if (isImported[rec.exactHash] || isSealed[rec.exactHash]) continue;
