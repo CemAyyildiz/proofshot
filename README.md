@@ -111,7 +111,8 @@ pnpm --filter @proofshot/benchmark bench   # SM-2 benchmark (needs benchmark/dat
 End-to-end tests drive Chrome with a virtual platform authenticator and a fake camera, so every Seal carries a real
 WebAuthn assertion that the Registry verifies onchain. Every product surface is scanned with axe for WCAG 2.1 AA in light and
 dark mode. Registry branch coverage is 100%, with stateful invariants (no re-seal, sealing is permanent, no import of a
-sealed photo) driven by Solidity-signed passkey assertions.
+sealed photo, exactly one admin, and no account ever both admin and relayer) driven by Solidity-signed passkey
+assertions interleaved with random role changes.
 
 CI (`.github/workflows/ci.yml`) runs `pnpm check`, the Registry gas snapshot check and the e2e suite against the
 production build on every push and pull request, plus a deep fuzz/invariant campaign on `main`. A separate **Monad canary**

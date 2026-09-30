@@ -866,3 +866,35 @@ Done: both.
 **Next: Iteration 28 — Tests/CI, pass 6**: add an invariant that no account ever holds both roles (let the handler
 call role functions as the admin); check how long CI takes end to end and whether the Playwright browser cache key
 is right; and make sure a failed e2e uploads the server log as well as the report.
+
+---
+
+## Iteration 28 — Tests/CI, pass 6: role invariants, flake policy, failure artifacts (2026-09-30)
+
+Findings:
+
+- **M1** The new admin rules from iteration 27 were covered only by example tests. No stateful campaign mixed role
+  changes with Seals and imports.
+- **M2** CI used `retries: 1` and nothing more, so a test that failed once and passed on retry turned the build
+  green. The iteration 23 axe timing bug is exactly the kind of failure this would have hidden.
+- **M3** The e2e workflow uploads `apps/web/playwright-report` on failure, but on CI Playwright's default reporter
+  never writes that directory, so the upload was always empty. There was also no `forbidOnly`: a stray `test.only`
+  would silently shrink the suite to one test.
+- OK: the Playwright browser cache key (OS plus lockfile hash) changes whenever Playwright's version changes, and the
+  app server's stdout is piped to the job log.
+
+Done: all.
+
+- The invariant handler now also runs grant/revoke relayer, begin transfer and accept transfer, always as whoever is
+  admin at that moment, across five actors. Two new invariants: **no account holds both roles** and **exactly one
+  admin**. The deep profile passes (512 runs × 128 calls = 65,536 calls). A mutation check confirmed the role
+  invariant fails once the `_grantRole` guard is removed.
+- Playwright on CI: `failOnFlakyTests`, `forbidOnly`, and the `github`, `list` and `html` reporters. A local run with
+  `CI=1 E2E_PROD=1` passes 19/19 and writes `playwright-report/index.html`.
+- The README and judge's guide list the new invariants.
+
+`pnpm check` is green. e2e: 19/19 in dev mode and 19/19 in CI/production mode.
+
+**Next: Iteration 29 — Docs, pass 6**: read the submission write-up end to end as a judge would (structure, the first
+100 words, claims-to-evidence links, ⏳ items) and tighten it. Also make sure `docs/demo-script.md` matches the UI as it
+is now (Try-it scroll, numbered evidence, grouped alerts).

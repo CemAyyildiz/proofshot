@@ -14,7 +14,13 @@ export default defineConfig({
   fullyParallel: false,
   // One dev server, one database and one mail outbox are shared by every test.
   workers: 1,
+  // CI retries once to collect a trace of the first failure, but a test that only passes on retry still fails the
+  // run: a hidden flake is how a real timing bug (a button measured mid-fade by axe) once went unnoticed.
   retries: process.env.CI ? 1 : 0,
+  failOnFlakyTests: !!process.env.CI,
+  forbidOnly: !!process.env.CI,
+  // `github` annotates the failing lines on the PR; `html` is what the workflow uploads on failure.
+  reporter: process.env.CI ? [["github"], ["list"], ["html", { open: "never" }]] : "list",
   use: { baseURL: `http://localhost:${PORT}`, trace: "retain-on-failure" },
   projects: [
     {
