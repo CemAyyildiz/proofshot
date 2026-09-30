@@ -2657,3 +2657,24 @@ planning.
 
 **Next (P2)**: restructure receipts as documents (summary, technical record, collapsible "Verify it yourself", a QR
 when printed); design-system rules (surface levels, muted text for metadata only, button widths, 44 px text links).
+
+## Design pass 1, continued: P2 and P3
+
+- **Receipts read as documents**:
+  - a Summary (sealed at; "Signed less than 1 s before it was sealed" instead of the same minute written twice; key
+    status; carrier);
+  - a Technical record in small mono (Device Key, blocks, Exact Hash, ledger record, registry), full values as
+    before;
+  - "Verify it yourself" collapsed into a `<details>`, with the command scrolling instead of breaking mid-word;
+  - a QR code to the receipt's own URL on paper.
+  - The summary label is "Key status", so a page never shows two "Device Key" terms.
+- **System rules**:
+  - Verdict "what this means" text and the verifier intro are at full contrast; muted grey is kept for metadata.
+  - Receipt, Retry, Discard and back links are 44 px targets. The link inside an alert sentence stays inline.
+- **Try page**: the three steps of the demo, before it starts.
+- **Test harness**: axe's wait for animations now skips unrendered elements. A button's colour transition inside a
+  closed `<details>` never advances, so the wait never finished; it is also capped at 2 s.
+- A full production e2e run had two timeouts while the machine's load average was about 10 (3.4 min against a usual
+  ~40 s). Run alone, both specs passed twice, and the next full run passed 29/29 in 1.0 min.
+
+`pnpm check` is green. e2e in production mode: 29/29.
