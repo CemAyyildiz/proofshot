@@ -1072,3 +1072,45 @@ Done: M1.
 **Next: Iteration 34 — Docs, pass 7**: a fresh-clone dry run following only the README (clone to a temp dir, `pnpm
 install`, `pnpm dev:chain`, `pnpm seed`, `pnpm dev`, open `/`, `/verify`, the demo Console), timing each step and
 fixing any gap a newcomer would hit.
+
+---
+
+## Iteration 34 — Docs, pass 7: a fresh clone, following only the README (2026-09-30)
+
+Method: `git clone` into a temp directory, then the README steps in order, timed: `pnpm install` 5 s (warm pnpm
+store), `pnpm dev:chain` 2 s, `pnpm seed` 2 s, `pnpm dev` ready in 5 s. Then `/`, `/verify`, `/try`,
+`/console/sign-in` and `/api/health` all returned 200; `/api/verify` returned a Verdict; the demo Console was offered;
+the README CLI command worked from the repo root; and `pnpm check` and `pnpm e2e` ran inside the clone.
+
+Findings:
+
+- **H1** `apps/web/.env.example` was never committed. `apps/web/.gitignore` has `.env*`, which overrides the root
+  `!.env.example`. A fresh clone therefore had no env documentation, even though the README and runbook point at it,
+  and `pnpm check` **failed** in the clone (`env-example.test.ts`: ENOENT). CI would have been red on the first push.
+- **H2** A frame-grab failure was reported to the Capturer on the first failure. During the verification runs the
+  UJ-3 e2e failed once with "The camera didn't return a photo. Try again.": the pipeline never reached `seal-context`.
+  One `canvas.toBlob` returning null (Chrome can under memory pressure), or a not-yet-decoded frame, went straight to
+  an error, and the `catch` discarded the cause.
+- **M1** With port 8545 busy (a second `pnpm dev:chain` or a leftover anvil), the newcomer saw only anvil's bare
+  `Address already in use (os error 48)`. Worse, the readiness probe could reach the *other* process and deploy onto
+  someone else's chain.
+- **L1** Every `forge build` printed ten false-positive `incorrect-shift` lint warnings (tests deliberately use
+  `1 << bit`), burying real output in `dev:chain`, e2e and screens logs.
+
+Done: all.
+
+- `!.env.example` in `apps/web/.gitignore`; the template, which has no values for secrets (checked), is now tracked.
+  `pnpm check` passes in the fresh clone, and so does the full e2e suite (19/19 before the new test).
+- `grabFrame` retries up to 3 times on the next presented video frame (`requestVideoFrameCallback`, 250 ms fallback)
+  and throws specific errors. The capture screen logs the cause. A new e2e makes the first JPEG encode return null and
+  asserts the photo still seals with no error shown; it fails without the fix.
+- `dev:chain` checks the port before spawning anvil and prints what to do (`ANVIL_PORT=8555 pnpm dev:chain`, then
+  restart `pnpm dev`). Verified in the clone.
+- `forge-lint: disable-next-line(incorrect-shift)` on the five intentional shifts; `forge build --force` prints no
+  warnings.
+
+`pnpm check` is green. e2e: 20/20 in dev mode and 20/20 in production mode.
+
+**Next: Iteration 35 — Frontend UI/UX, pass 8**: the capture error and recovery states at 375px (camera denied, no
+passkey support, a Seal failing mid-burst, offline and then back online, a revoked link while capturing). Check that
+each has a clear next step and that nothing already sealed is lost.

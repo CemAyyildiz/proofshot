@@ -102,12 +102,14 @@ contract PasskeySpikeTest is Test {
 
     function testFuzz_RevertsOnAnyRecordBitFlip(uint8 field, uint8 bit) public {
         PasskeySpike.CaptureRecord memory r = _record();
+        // forge-lint: disable-next-line(incorrect-shift)
         uint256 mask = 1 << bit;
         field = field % 5;
         if (field == 0) r.pHash ^= bytes32(mask);
         else if (field == 1) r.tiles[bit % 16] ^= bytes32(mask);
         else if (field == 2) r.locCommit ^= bytes32(mask);
         else if (field == 3) r.claimRef ^= bytes32(mask);
+        // forge-lint: disable-next-line(incorrect-shift)
         else r.width ^= uint32(1 << (bit % 32));
         vm.expectRevert(PasskeySpike.InvalidSignature.selector);
         spike.seal(keyId, r, _auth(".auth"));

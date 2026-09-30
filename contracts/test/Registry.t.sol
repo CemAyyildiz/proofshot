@@ -377,6 +377,7 @@ contract RegistryTest is Test {
 
     function testFuzz_RejectsAnyRecordBitFlip(uint8 field, uint8 bit) public {
         Registry.CaptureRecord memory r = _record();
+        // forge-lint: disable-next-line(incorrect-shift)
         uint256 mask = 1 << bit;
         field = field % 8;
         if (field == 0) r.pHash ^= bytes32(mask);
@@ -384,7 +385,9 @@ contract RegistryTest is Test {
         else if (field == 2) r.locCommit ^= bytes32(mask);
         else if (field == 3) r.claimRef ^= bytes32(mask);
         else if (field == 4) r.carrierId ^= bytes32(mask);
+        // forge-lint: disable-next-line(incorrect-shift)
         else if (field == 5) r.width ^= uint32(1 << (bit % 32));
+        // forge-lint: disable-next-line(incorrect-shift)
         else if (field == 6) r.deviceTime ^= uint64(1 << (bit % 64));
         else r.exactHash ^= bytes32(mask);
         _expectSealRevert(r, _auth(".auth"), abi.encodeWithSelector(Registry.InvalidSignature.selector));

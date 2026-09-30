@@ -8,6 +8,7 @@
  * On a fresh chain the Registry lands at 0x5FbDB2315678afecb367f032d93F642f64180aa3 (deployer nonce 0).
  */
 import { spawn } from "node:child_process";
+import { createConnection } from "node:net";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createPublicClient, createWalletClient, http, sha256, toBytes, type Abi, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -25,6 +26,24 @@ const dataDir = new URL(".data/", webDir);
 const statePath = process.env.ANVIL_STATE === "none" ? null : new URL("anvil.json", dataDir).pathname;
 const envPath = process.env.ENV_OUT === "none" ? null : new URL(".env.local", webDir).pathname;
 mkdirSync(dataDir, { recursive: true });
+
+// Refuse a busy port up front. Otherwise anvil exits with a bare "Address already in use", and the readiness probe
+// below could even reach the *other* process and deploy onto someone else's chain.
+const portBusy = await new Promise<boolean>((resolve) => {
+  const socket = createConnection({ host: "127.0.0.1", port: PORT });
+  socket.once("connect", () => {
+    socket.destroy();
+    resolve(true);
+  });
+  socket.once("error", () => resolve(false));
+});
+if (portBusy) {
+  console.error(
+    `Port ${PORT} is already in use, probably by another \`pnpm dev:chain\` or anvil. Stop it, or pick another port:\n` +
+      `  ANVIL_PORT=8555 pnpm dev:chain   (then restart \`pnpm dev\` so it reads the new apps/web/.env.local)`,
+  );
+  process.exit(1);
+}
 
 // Block gas limit = the Osaka per-tx cap (EIP-7825, 2^24); otherwise eth_estimateGas probes with 30M and fails.
 const anvil = spawn("anvil", ["--hardfork", "osaka", "--gas-limit", "16777216", "--port", String(PORT), ...(statePath ? ["--state", statePath] : []), "--silent"], {
