@@ -15,7 +15,7 @@ review findings behind the hardening work are in [docs/review/REVIEW-LOG.md](doc
 - **Try it** (FR-18): a no-sign-up sandbox that reaches a ready camera in ≤ 3 taps and guides visitors to try to fool
   the verifier.
 
-## Hardening from 64 review iterations (senior review → fix loop)
+## Hardening from 69 review iterations (senior review → fix loop)
 
 - **Correctness**: a Seal final onchain can never be lost (DB write and relay split, reconcile from the Registry);
   the Registry index resyncs after the app's own writes; crops are never shown as clean and never as Altered; the
@@ -64,7 +64,7 @@ review findings behind the hardening work are in [docs/review/REVIEW-LOG.md](doc
   in CI, an executable admin runbook, docs that may only reference committed files and existing tests, a server
   coverage floor, e2e on two workers.
 
-### Iterations 59–64 in brief
+### Iterations 59–69 in brief
 
 - **Capture trust**: the capture page leads with who is asking ("Requested by" the carrier), shows the link's real
   expiry instead of a "Secure link" padlock, and tells anyone who wasn't expecting the link not to continue.
@@ -74,6 +74,14 @@ review findings behind the hardening work are in [docs/review/REVIEW-LOG.md](doc
   key and a later revocation, just as the receipt does.
 - **Data layer**: a test fails when the schema changes without a migration; CI runs the deploy-time migrate and seed
   and every database test on a real Postgres server through the production driver.
+- **Money**: a daily sponsored-write budget per carrier (500 for each one-tap demo carrier), Claim File limits per
+  carrier and per demo visitor, and imports counted per image. Before this, a script could open unlimited Claim Files
+  in the demo Console and drain the relayer. The relayer also never sends a duplicate transaction after a lost RPC
+  response; a duplicate would have reverted, cost its full gas limit and shown a successful Seal as failed.
+- **Console**: after replacing or revoking a link, the page says what happened and focuses the next step; failed
+  actions say so.
+- **Contracts**: `pnpm verify:testnet` / `verify:mainnet` publish the Registry's source on MonadVision through Monad's
+  Sourcify.
 
 ## Pending (needs the owner)
 

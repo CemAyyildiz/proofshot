@@ -56,7 +56,8 @@ account enumeration by timing or error), `__Host-` session cookie in production,
 cost keyed on the edge-set client address (a client-written `X-Forwarded-For` can't mint new buckets), a daily
 sponsored-write budget per carrier (key registrations, Seals and imported images; 500 for each one-tap demo carrier)
 and a daily Claim File limit per carrier and per demo visitor, a relayer fee
-ceiling that pauses writes instead of overpaying, CSP without third-party origins, decompression-bomb refusal before
+ceiling that pauses writes instead of overpaying, relayer writes that are broadcast at most once even when an RPC
+response is lost, CSP without third-party origins, decompression-bomb refusal before
 decoding (50 MP), an indexer that tolerates lagging RPCs and reorgs, and a health endpoint that alerts on low relayer
 balance, a paused Registry, fees above the ceiling or missing email. Evidence images are sent `private, no-store`.
 Claim Link tokens carry 192 random bits, never leave the origin in a `Referer`, and can be replaced by the Carrier

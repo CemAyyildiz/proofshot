@@ -64,8 +64,12 @@ Known limit, stated up front: crops beyond ~3% fall to No Record; a crop is neve
 - Registry: 100% branch coverage; stateful invariants (no re-seal, permanent seals, no import of a sealed photo,
   exactly one admin, never admin and relayer at once) over 65k calls with Solidity-signed passkeys and random role
   changes; pause and relayer-rotation runbook tested.
-- Hardening found by review and fixed with tests: decompression-bomb images are refused before decoding (50 MP
-  budget), and demo access can never act as a real person.
+- Hardening found by review and fixed with tests:
+  - decompression-bomb images are refused before decoding (50 MP budget);
+  - demo access can never act as a real person;
+  - a daily sponsored-write budget per carrier stops anyone from draining the relayer through the one-tap demo;
+  - a lost RPC response can never make the relayer send a Seal twice;
+  - database tests also run on a real Postgres server.
 - WCAG 2.1 AA: axe scans every surface, light and dark: 0 violations.
 - CLI and Public Verifier are asserted to return the same Verdict.
 
@@ -83,6 +87,6 @@ chain ID and Registry address inside the signed payload; see `docs/security.md`)
 
 ## 11. Links
 
-- Registry: ⏳ address on Monad mainnet (verified source).
+- Registry: ⏳ address on Monad mainnet, with its source verified on MonadVision (`pnpm --filter @proofshot/contracts verify:mainnet`).
 - Repository: ⏳.
 - Reproduce a Verdict: README → "Reproduce a Verdict yourself".

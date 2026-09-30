@@ -44,7 +44,9 @@ flowchart LR
 **Seal.** The phone fingerprints the JPEG, fetches `claimRef`, `carrierId` and the latest block from
 `/seal-context`, and asks the passkey to sign `sha256(abi.encode(CaptureRecord))` with user verification. The server
 checks the Claim Link, that the record names this Claim File and Carrier, rate limits (50 Seals per link, 200 per
-Device Key per day), then the relayer calls `Registry.seal()`. The contract checks the Device Key, the Signing Window
+Device Key per day, and the carrier's daily sponsored-write budget), then the relayer calls `Registry.seal()`. The
+relayer signs each transaction once and knows its hash before broadcasting, so a lost RPC response never leads to a
+second, duplicate transaction (`apps/web/src/server/chain/send.ts`). The contract checks the Device Key, the Signing Window
 (≤ 100 blocks), the RP ID, UV, no replay, and the P-256 signature via the precompile. If the transaction lands but the
 database write is lost, a retry or the send step adopts the onchain record (same Claim File and Device Key only).
 

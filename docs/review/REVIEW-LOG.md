@@ -2452,3 +2452,35 @@ Done:
 `pnpm check` is green. e2e: 28/28 in dev mode and 28/28 in production mode.
 
 **Next: Iteration 69 — Docs/README, pass 14.**
+
+## Iteration 69 — Docs/README, pass 14: iterations 65–68 in the documents people read
+
+Method: for each change since the last docs pass, checked whether the architecture, the security model, the
+submission write-up and the changelog tell the truth about it.
+
+Findings:
+
+- **M1** The write-up's "Engineering quality" section still listed only two hardening items. The strongest ones from
+  review were missing:
+  - the per-carrier sponsored-write budget that closed an anonymous relayer drain (66);
+  - at-most-once relayer sends (68);
+  - database tests on a real Postgres server (63).
+- **M2** The Seal flow in `architecture.md` named only the per-link and per-key limits. It said nothing about the
+  carrier budget or the relayer's send guarantee. `security.md`'s safeguards list also left out the latter.
+- **L1** The write-up's Registry link said "verified source" without saying how; `pnpm verify:mainnet` exists since 67.
+- **L2** The changelog stopped at iteration 64.
+
+Done: all.
+
+- The write-up lists the five hardening items. Its Registry link names the verify command.
+- `architecture.md` describes the carrier budget and the at-most-once send, and cites
+  `apps/web/src/server/chain/send.ts`.
+- `security.md` lists the send guarantee among the safeguards.
+- The changelog covers 69 iterations, with Money, Console and Contracts bullets for 65–68.
+
+`pnpm check` is green, including the repo-docs check that every cited path exists. e2e: 28/28 in dev mode. Only docs
+changed.
+
+**Next: Iteration 70 — Frontend UI/UX, pass 15**: what a policyholder sees when the carrier's daily budget or a
+per-link limit is reached mid-burst (429s from `/seals`). Is the message clear, is the shutter still offered, does
+Retry make sense, and at 375 px?
