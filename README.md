@@ -8,6 +8,8 @@ without an account and without trusting Proofshot.
 
 Built for the Monad Metropolis hackathon, Track 04 (Trust, Identity & AI Infrastructure).
 
+**Judging? Start with the [5-minute judge's guide](docs/judges-guide.md).**
+
 ## What it does
 
 | Who | What they get |

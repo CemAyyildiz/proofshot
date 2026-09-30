@@ -603,3 +603,28 @@ Contract tests: 42.
 **Next: Iteration 20 — Docs, pass 4**: a one-page "judge's guide" (5-minute path through the product, what to click,
 what each proof shows, where the evidence files are), linked from the README top; and a final pass on the landing
 page copy against the now-measured live-chain facts.
+
+---
+
+## Iteration 20 — Docs, pass 4: the judge's path (2026-09-30)
+
+Findings:
+
+- **H1** Landing copy claimed the seal is verified "within seconds" — live latency is not measured yet.
+- **M1** The landing page never mentioned Monad or the one thing now proven on the live chains (native passkey
+  verification on testnet and mainnet).
+- **M2** No short path for a judge: the README is thorough but long; nothing says "do this, then look here".
+- **M3** (product gap, found while writing the guide) Judges can't enter the Console on a hosted demo: sign-in is a
+  magic link to demo inboxes they don't control. The Carrier half of the product (UJ-2, UJ-3) is only visible in the
+  video or by running locally.
+
+Done: H1, M1, M2. M3 goes to the next backend iteration.
+
+- Landing: "a public ledger checks that signature before recording the seal" (no timing claim) and a calm
+  "Checked onchain, on Monad" section stating what was confirmed on testnet and mainnet.
+- `docs/judges-guide.md`: a 3-minute hands-on path with every Verdict to expect, an evidence table (claim → file →
+  how to re-run), where the Console flows are shown, and the honest limits. Linked at the top of the README.
+
+**Next: Iteration 21 — Backend, pass 5**: judge access to the demo Console — an opt-in (`DEMO_ACCESS=1`) one-tap
+sign-in limited to the seeded demo carriers, with its own rate limits and upload caps, never available for real
+carriers, clearly labelled as a demo.

@@ -4,7 +4,7 @@ import { env } from "@/lib/env";
 import { StartDemoButton } from "./try/start-demo-button";
 
 const STEPS = [
-  ["Sealed at capture", "The policyholder takes the photo in Proofshot. One Face ID prompt signs it with a key that never leaves their phone, and the seal is verified on a public ledger within seconds."],
+  ["Sealed at capture", "The policyholder takes the photo in Proofshot. One Face ID prompt signs it with a key that never leaves their phone, and a public ledger checks that signature before recording the seal."],
   ["Checked from any copy", "Anyone holding any copy, even one compressed by a messaging app, can see when it was sealed and exactly which regions were changed since."],
   ["Reused photos caught", "Carriers share fingerprints, never photos. A photo already used in another claim, at any carrier, raises a Duplicate Alert."],
 ] as const;
@@ -58,6 +58,17 @@ export default async function Home() {
             </li>
           ))}
         </ol>
+      </section>
+
+      <section aria-labelledby="monad-heading" className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-5">
+        <h2 id="monad-heading" className="text-lg font-semibold">
+          Checked onchain, on Monad
+        </h2>
+        <p className="text-sm text-muted">
+          Each seal is verified by a smart contract on Monad using the network&apos;s native support for the signatures
+          phones already make (passkeys, P-256) — no wallet, no extra app. We confirmed that path on Monad testnet and
+          mainnet; the registry holds fingerprints only, never photos.
+        </p>
       </section>
 
       <section aria-labelledby="proves-heading" className="grid gap-6 sm:grid-cols-2">
