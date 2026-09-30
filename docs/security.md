@@ -56,7 +56,10 @@ account enumeration by timing or error), `__Host-` session cookie in production,
 cost keyed on the edge-set client address (a client-written `X-Forwarded-For` can't mint new buckets), a relayer fee
 ceiling that pauses writes instead of overpaying, CSP without third-party origins, decompression-bomb refusal before
 decoding (50 MP), an indexer that tolerates lagging RPCs and reorgs, and a health endpoint that alerts on low relayer
-balance, a paused Registry, fees above the ceiling or missing email. Details and the review history:
+balance, a paused Registry, fees above the ceiling or missing email. Evidence images are sent `private, no-store`.
+Verification Receipts are kept so shared links stay valid (FR-9); each holds the checked file's SHA-256, size and
+Verdict only — never the image or its perceptual fingerprints — under an unguessable 72-bit id, and the Verifier says
+so before anyone checks a file. Details and the review history:
 [review/REVIEW-LOG.md](review/REVIEW-LOG.md).
 
 ## Deployment assumptions

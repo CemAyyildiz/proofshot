@@ -43,6 +43,13 @@ test("UJ-2: an adjuster drops in an edited version and gets Altered with a Tile 
   const evidence = marcus.getByRole("region", { name: "Evidence" });
   await expect(evidence.getByText("Altered")).toBeVisible({ timeout: 15_000 });
   await expect(evidence.getByRole("figure")).toContainText(/\d+ of 16 regions differ from the sealed photo/);
+  // Evidence images never linger in a browser cache (shared adjuster workstations) and need the Carrier's session.
+  const src = await evidence.getByRole("img", { name: /Team upload \d+ with changed regions highlighted/ }).getAttribute("src");
+  const image = await marcus.request.get(src!);
+  expect(image.status()).toBe(200);
+  expect(image.headers()["cache-control"]).toBe("private, no-store");
+  const anonymous = await (await browser.newContext()).request.get(new URL(src!, marcus.url()).toString());
+  expect(anonymous.status()).not.toBe(200);
   // Other claims' photos of this scene are duplicates; the file's own sealed photo is never flagged against itself.
   await expect(marcus.getByRole("region", { name: /Duplicate Alerts/ })).not.toContainText("Identical file");
 });

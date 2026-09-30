@@ -1930,3 +1930,38 @@ Done: all.
 public check, forever, and each row keeps the fingerprint of an image someone chose not to share. Decide on a
 retention rule consistent with the privacy copy ("your image is not kept"), make sure shared receipt links degrade
 gracefully, and prune with the daily job.
+
+---
+
+## Iteration 56 — Backend, pass 12: what a check leaves behind (2026-09-30)
+
+Method: I listed exactly what `verifications` stores per public check and compared it with what the Verifier tells
+people. I then followed evidence images from storage to the browser.
+
+Findings:
+
+- **M1 (transparency)** The copy wasn't false, but it was incomplete. The page said "your image is not kept", and
+  that is true: a row holds only the file's SHA-256, its size, the Verdict and the match data, with no image and no
+  perceptual fingerprints. But every check also creates a **public, shareable receipt** that is kept indefinitely,
+  because FR-9 promises stable links. Someone checking a private photo wasn't told a link to the result now exists.
+- **M2 (privacy)** Evidence images were served with `Cache-Control: private, max-age=3600`. That keeps them out of
+  shared caches, but on a shared adjuster workstation the browser cache kept claim photos for an hour after sign-out.
+- OK (decided): receipts stay. Deleting them would break links pasted into claim files, and each row carries nothing
+  that identifies the image beyond its SHA-256. Ids are 72 random bits, so they can't be enumerated. Growth is bounded
+  by the per-client rate limit, and a row is about 300 bytes.
+
+Done: both.
+
+- Below the drop zone, the Verifier now says: "Each check creates a receipt link you can share: it records the file's
+  SHA-256 fingerprint, its size and the result — never the image. Only people you give the link to can open it." The
+  result card reads "image not stored".
+- Evidence images are sent with `Cache-Control: private, no-store`. The UJ-2 e2e fetches the upload's image with the
+  session (200, `private, no-store`) and without it (not 200).
+- `security.md` documents the evidence caching and the receipt retention rule.
+
+`pnpm check` is green. e2e: 25/25 in dev mode and 25/25 in production mode.
+
+**Next: Iteration 57 — Contracts, pass 12**: a fresh look at event design for indexers other than ours. Could a
+third-party indexer reconstruct everything the Verdict needs from events alone, including revocations? Are `indexed`
+fields the right ones for common queries (by carrier, by key, by claimRef)? Changing an event now means a redeploy
+before launch, so decide carefully and document the outcome either way.

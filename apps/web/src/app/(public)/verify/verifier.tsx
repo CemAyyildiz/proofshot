@@ -107,7 +107,7 @@ export function Verifier() {
             )}
             <div className="min-w-0">
               <p className="truncate font-medium">{state.file.name}</p>
-              <p className="text-muted">Checked just now · not stored</p>
+              <p className="text-muted">Checked just now · image not stored</p>
             </div>
           </div>
         )}

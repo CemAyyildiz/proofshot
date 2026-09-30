@@ -18,6 +18,10 @@ export default function VerifyPage() {
         </p>
       </header>
       <Verifier />
+      <p className="text-sm text-muted">
+        Each check creates a receipt link you can share: it records the file&apos;s SHA-256 fingerprint, its size and
+        the result — never the image. Only people you give the link to can open it.
+      </p>
     </main>
   );
 }
