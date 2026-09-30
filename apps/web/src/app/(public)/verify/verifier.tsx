@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { AlterationCheck, VerdictKind } from "@/components/verdict/copy";
+import { CheckIcon } from "@/components/icons";
 import { TileMap } from "@/components/verdict/tile-map";
 import { VerdictPanel } from "@/components/verdict/verdict-panel";
 
@@ -32,6 +33,7 @@ function postWithProgress(url: string, body: FormData, onProgress: (fraction: nu
     xhr.open("POST", url);
     xhr.responseType = "json";
     xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total);
+    xhr.upload.onload = () => onProgress(1); // some browsers never report a computable final progress event
     xhr.onload = () => resolve({ status: xhr.status, body: (xhr.response as Record<string, unknown>) ?? {} });
     xhr.onerror = () => reject(new Error("network"));
     xhr.send(body);
@@ -95,6 +97,8 @@ export function Verifier() {
     const r = state.result;
     return (
       <div className="flex flex-col gap-4">
+        {/* What was checked comes before the result, so a second or third check can't be misread as the first. */}
+        <FileRow file={state.file} preview={preview?.url} detail="Checked just now · image not stored" />
         <VerdictPanel
           view={{ ...r, record: r.record ? { kind: r.record.kind, sealedAt: new Date(r.record.sealedAt) } : null }}
         />
@@ -107,19 +111,8 @@ export function Verifier() {
             {r.alteredTiles.map((i) => `${Math.floor(i / 4) + 1},${(i % 4) + 1}`).join("; ")}. This browser can&apos;t display
             the file itself to draw the map.
           </p>
-        ) : (
-          <div className="flex items-center gap-3 rounded-md border border-line bg-surface p-3 text-sm">
-            {preview && (
-              /* eslint-disable-next-line @next/next/no-img-element -- the viewer's own file, in-session only */
-              <img src={preview.url} alt="" className="size-14 shrink-0 rounded object-cover" />
-            )}
-            <div className="min-w-0">
-              <p className="truncate font-medium">{state.file.name}</p>
-              <p className="text-muted">Checked just now · image not stored</p>
-            </div>
-          </div>
-        )}
-        <div className="flex flex-wrap gap-3">
+        ) : null}
+        <div className="flex flex-col gap-3 sm:flex-row">
           <Link href={r.receiptUrl} className="btn-primary">
             Open Verification Receipt
           </Link>
@@ -151,12 +144,15 @@ export function Verifier() {
         }`}
       >
         {state.name === "checking" ? (
-          <span role="status" className="flex w-full max-w-xs flex-col items-center gap-2">
-            <span className="flex items-center gap-2">
-              <span className="size-4 animate-spin rounded-full border-2 border-line border-t-accent" aria-hidden="true" />
-              {state.uploaded < 1 ? `Uploading ${state.file.name}… ${Math.round(state.uploaded * 100)}%` : `Checking ${state.file.name}…`}
+          <span role="status" aria-busy="true" className="flex w-full max-w-sm flex-col gap-4 text-left">
+            <FileRow file={state.file} preview={preview?.url} />
+            <span className="flex flex-col gap-2.5">
+              <Step
+                state={state.uploaded < 1 ? "active" : "done"}
+                label={state.uploaded >= 1 ? "Uploaded" : state.uploaded > 0 ? `Uploading… ${Math.round(state.uploaded * 100)}%` : "Uploading…"}
+              />
+              <Step state={state.uploaded < 1 ? "waiting" : "active"} label="Fingerprinting and comparing with the public registry" />
             </span>
-            <progress className="h-1.5 w-full" max={1} value={state.uploaded < 1 ? state.uploaded : undefined} aria-label="Upload progress" />
           </span>
         ) : (
           <>
@@ -193,5 +189,38 @@ export function Verifier() {
         </div>
       )}
     </div>
+  );
+}
+
+function FileRow({ file, preview, detail }: { file: File; preview?: string; detail?: string }) {
+  return (
+    <span className="flex items-center gap-3 rounded-md border border-line bg-surface p-3 text-sm">
+      {preview ? (
+        /* eslint-disable-next-line @next/next/no-img-element -- the viewer's own file, in-session only */
+        <img src={preview} alt="" className="size-12 shrink-0 rounded object-cover" />
+      ) : (
+        <span className="size-12 shrink-0 rounded bg-line" aria-hidden="true" />
+      )}
+      <span className="flex min-w-0 flex-col">
+        <span className="truncate font-medium">{file.name}</span>
+        <span className="text-muted">{detail ?? (file.size < 1024 * 1024 ? `${Math.max(1, Math.round(file.size / 1024))} KB` : `${(file.size / 1024 / 1024).toFixed(1)} MB`)}</span>
+      </span>
+    </span>
+  );
+}
+
+/** One stage of a check. Two honest stages: the upload we can measure, and the server's work we can only wait for. */
+function Step({ state, label }: { state: "waiting" | "active" | "done"; label: string }) {
+  return (
+    <span className={`flex items-center gap-2.5 text-sm ${state === "waiting" ? "text-muted" : "text-foreground"}`}>
+      {state === "done" ? (
+        <CheckIcon className="size-4 shrink-0" />
+      ) : state === "active" ? (
+        <span className="size-4 shrink-0 animate-spin rounded-full border-2 border-line border-t-accent" aria-hidden="true" />
+      ) : (
+        <span className="size-4 shrink-0 rounded-full border-2 border-line" aria-hidden="true" />
+      )}
+      <span className={state === "active" ? "font-medium" : undefined}>{label}</span>
+    </span>
   );
 }
