@@ -48,6 +48,8 @@ test("desktop visitors get a QR code that continues on a phone", async ({ page }
   expect(body).toMatchObject({ ok: true, registryPaused: false, problems: [] });
   expect(body.relayerBalanceMon).toBeGreaterThan(1);
   await expect(page.getByRole("img", { name: /QR code for .*\/try$/ })).toBeVisible();
+  // A typeable fallback for cameras that won't scan it.
+  await expect(page.getByRole("complementary", { name: "Try it on your phone" })).toContainText("localhost:3100/try");
   await page.goto("/try");
   await expect(page.getByRole("button", { name: "Start the demo" })).toBeVisible();
 });

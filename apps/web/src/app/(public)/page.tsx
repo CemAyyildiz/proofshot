@@ -12,6 +12,8 @@ const STEPS = [
 export default async function Home() {
   const tryUrl = new URL("/try", env().APP_URL).toString();
   const qr = await QRCode.toString(tryUrl, { type: "svg", margin: 1, errorCorrectionLevel: "M" });
+  // Shown under the code for anyone whose camera won't scan it.
+  const tryUrlShort = tryUrl.replace(/^https?:\/\//, "");
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-14 px-4 py-10 sm:py-16">
@@ -20,8 +22,9 @@ export default async function Home() {
           <p className="eyebrow">Capture provenance for insurance claims</p>
           <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">Claim photos that prove themselves.</h1>
           <p className="text-lg text-muted">
-            Generative edits and recycled photos are hitting every claims desk. Proofshot seals each photo on the
-            policyholder&apos;s phone at the moment of capture, so anyone can check it later without trusting us.
+            An AI editor can add damage to a photo in seconds, and genuine photos get reused from one claim to the next.
+            Proofshot seals each photo on the policyholder&apos;s phone at the moment of capture, so anyone can check it
+            later without trusting us.
           </p>
           <div className="flex flex-col gap-3 sm:hidden">
             <StartDemoButton />
@@ -42,6 +45,7 @@ export default async function Home() {
           <div className="w-48 rounded bg-white p-2" dangerouslySetInnerHTML={{ __html: qr }} role="img" aria-label={`QR code for ${tryUrl}`} />
           <p className="font-medium">Try it on your phone</p>
           <p className="text-sm text-muted">Scan to seal a photo, then try to fool the verifier. No sign-up.</p>
+          <p className="break-all font-mono text-xs text-muted">{tryUrlShort}</p>
         </aside>
       </section>
 

@@ -1298,3 +1298,38 @@ Done: all.
 primary CTA ("Try it on this phone") is above the fold, the QR hand-off on desktop, and whether it states the one
 proof point (verified onchain on Monad) without crypto jargon for non-technical visitors. Use ui-ux-pro-max landing
 guidance.
+
+---
+
+## Iteration 40 — Frontend UI/UX, pass 9: the landing page (2026-09-30)
+
+Method: regenerated screens and reviewed the landing page at 375px, 1280px, 320px, in landscape and in dark mode.
+
+Findings:
+
+- **M1** The hero led with an unverifiable absolute: "Generative edits and recycled photos are hitting *every*
+  claims desk." The PRD asks for honest claims, and the one statistic behind it (Verisk) is still flagged ⏳ for
+  re-checking.
+- **M2** The desktop QR card showed no URL in text. It existed only in the `aria-label`, so a visitor whose phone
+  camera wouldn't scan the code (a glare-heavy screen, an old phone, a projector at a demo table) had nothing to type.
+- OK: at 375px the primary CTA "Try it on this phone" sits above the fold (y ≈ 420); the secondary action is visually
+  subordinate.
+- OK: the order is problem, how it works, "Checked onchain, on Monad", then proves and does-not-prove. That puts the
+  honest limits on the first page, not just in the docs.
+- OK: at 320px and in landscape there is no horizontal scroll; dark mode has adequate contrast (and axe passes in
+  both schemes since iteration 24).
+- OK: the Monad paragraph uses technical terms (smart contract, P-256). That is appropriate on a page aimed at judges
+  and carriers; the Capturer surfaces themselves stay free of them.
+
+Done: both.
+
+- The hero now states a checkable capability: "An AI editor can add damage to a photo in seconds, and genuine photos
+  get reused from one claim to the next."
+- The QR card prints the scheme-less URL under the code (`localhost:3100/try` locally, the deployed host in
+  production). The sandbox e2e asserts it.
+
+`pnpm check` is green. e2e: 22/22 in dev mode.
+
+**Next: Iteration 41 — Backend, pass 9**: the magic-link and session lifecycle: session expiry and rotation, sign-out
+everywhere, cookie flags in production (`Secure`, `HttpOnly`, `SameSite`, `__Host-` prefix), CSRF on server actions,
+and what happens to open sessions when a user is removed from a carrier.
