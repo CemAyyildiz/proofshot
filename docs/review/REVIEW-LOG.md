@@ -1809,3 +1809,44 @@ Done: H1 and H2.
 **Next: Iteration 53 — Tests/CI, pass 11**: coverage for the web app. Run vitest with v8 coverage on `apps/web` and
 `packages/*`, list the least-covered server modules, and add tests where a gap hides a real branch (error paths in
 routes, not trivial getters). Consider a coverage floor in CI once the number is known.
+
+---
+
+## Iteration 53 — Tests/CI, pass 11: coverage, and the rate-limit bypass it pointed at (2026-09-30)
+
+Method: v8 coverage over `apps/web/src/server` (lines 79.9 %, branches 88.7 %) and a list of the least-covered
+modules. Most gaps were glue that e2e already drives: the relayer, the chain source and the session helpers. At 0 %
+the one that mattered was `client-key.ts`, which every rate limit depends on.
+
+Findings:
+
+- **Critical (security, host-dependent)** Every rate limit could be bypassed on the recommended host.
+  - `clientKey` used the **leftmost** `x-forwarded-for` entry. On Vercel that was safe because Vercel overwrites the
+    header. On Railway (the host since iteration 50) the edge **appends** the real address to whatever the client
+    sent. Railway staff confirm this on their forum, and state that `X-Real-IP` is no longer client-settable.
+  - So a client could send `X-Forwarded-For: <random>` on each request and get a fresh rate-limit bucket every time.
+    That bypasses sandbox creation (every sandbox Claim File allows sponsored Seals, so it drains the relayer's MON),
+    the verifier, sign-in and demo entry.
+  - I reproduced it against `next start` with a Railway-shaped request (`X-Forwarded-For: 6.6.6.6, 203.0.113.9`,
+    `X-Real-IP: 203.0.113.9`): the old code keyed on `6.6.6.6`. I also confirmed that Next itself only adds
+    `x-forwarded-for` when the header is absent, and never appends.
+- **M1** No coverage measurement or floor existed for the web server code, so a module could drop to zero unnoticed,
+  as `client-key.ts` had.
+
+Done: both.
+
+- `clientIp()` now prefers `x-real-ip` (set by the edge on Railway, Vercel and nginx). Failing that it takes the
+  **rightmost** `x-forwarded-for` entry, which the nearest proxy wrote. The failure mode behind an extra proxy is
+  stricter limits, never a bypass.
+  - Tests: a spoofed leftmost entry is ignored, rotating fake IPs map to one key, the single-hop and missing-header
+    cases work, and only the hash is used as the key.
+- `@vitest/coverage-v8` (pinned to vitest 3.2.7). The web `test` script runs with coverage over `src/server/**` and
+  thresholds of lines, functions and statements 75 %, branches 85 %, a little under the measured values, so
+  `pnpm check` and CI fail on a real regression. Current: lines 79.9 %, branches 88.9 %.
+
+`pnpm check` is green. e2e: 24/24 in dev mode and 24/24 in production mode (the tests' own `x-forwarded-for`
+isolation still works: a single value is also the rightmost).
+
+**Next: Iteration 54 — Docs, pass 11**: the security model after iterations 50–53 (host assumptions: the client IP
+from the edge, the body limits, the fee cap). Make `security.md` state the hosting assumptions the guarantees
+depend on, and check the README "Status and honest limits" is still true.
