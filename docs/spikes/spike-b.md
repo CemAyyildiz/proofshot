@@ -39,6 +39,12 @@ runs the Registry's exact OpenZeppelin `WebAuthn.verify` on each network's own E
 | Monad testnet (10143) | present, accepts | valid | rejected | 13,853 |
 | Monad mainnet (143) | present, accepts | valid | rejected | 13,853 |
 
+**Fees, 2026-09-30** (public RPCs, `eth_feeHistory` over 20 blocks): base fee at Monad's 100 gwei floor on both
+networks; suggested tip 2 gwei (mainnet p90 tip up to 80 gwei). Monad charges the **gas limit**, not gas used. The
+whole Seal transaction — execution plus the 21,000 base and ~1.35 KB of calldata — measures 99,961–101,729 gas in the
+e2e run (local Osaka chain), with the gas limit exactly equal to gas used (no padding, asserted in
+`capture.spec.ts`). At 102 gwei that is ≈ 0.010 MON per Seal. The relayer caps fees at `RELAYER_MAX_FEE_GWEI` (500).
+
 **Block time, 2026-09-30** (public RPCs, timestamps of the head and 10,000 blocks earlier): testnet 304 ms, mainnet
 301 ms on average. The Registry's `MAX_LAG = 100` blocks therefore gives a Signing Window of about 30 s. The indexer's
 64-block re-scan covers about 19 s.

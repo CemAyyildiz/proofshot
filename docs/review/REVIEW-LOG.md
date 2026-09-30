@@ -1766,3 +1766,46 @@ Done: both.
 estimation (EIP-1559 on Monad) could overpay or underpay during spikes, whether we should cap `maxFeePerGas` (config)
 so a fee spike can't drain the relayer, and whether `/api/health` should report the current base fee. Use the public
 RPC keylessly to read `eth_feeHistory`.
+
+---
+
+## Iteration 52 — Contracts, pass 11: what a Seal really costs on Monad, and fee spikes (2026-09-30)
+
+Method: read Monad's gas-pricing docs, measured live fees from the public RPCs without keys (`eth_feeHistory`,
+`eth_maxPriorityFeePerGas`), and measured real Seal transactions end to end on the local chain.
+
+Findings:
+
+- **Fact that changes the cost model:** Monad charges `min(base + tip, maxFee) × gasLimit`. It charges the gas
+  **limit**, not gas used. Any padding of the gas limit is money burnt on every Seal.
+- **M1 (checked, no change needed)** I suspected the "≈ 0.010 MON per Seal" figure used execution gas only and left
+  out the 21,000 base and ~1.35 KB of calldata. The e2e run disproves that: full Seal transactions use 99,961–101,729
+  gas, and viem sets the gas **limit exactly to the estimate**, so nothing is padded. The published figure holds at the
+  transaction level. It is now written down with its source, and the e2e asserts that the limit stays within 10 % of
+  gas used, so a future padding change can't slip in.
+- **H1** Fees had no ceiling. viem's EIP-1559 default is `maxFee = 1.2 × base + tip`, with no upper bound.
+  Measured today: base fee at the 100 gwei floor, tip 2 gwei, and the mainnet p90 tip up to 80 gwei in the last 20
+  blocks. In a fee spike every sponsored Seal simply cost more, until the relayer ran dry.
+- **H2 (latent)** A relayer transaction whose max fee ended up below the base fee would sit pending and block **every
+  later nonce** of the relayer. All Seals would stall until it cleared.
+
+Done: H1 and H2.
+
+- `capFees()` (pure, unit-tested):
+  - clamps `maxFeePerGas` to `RELAYER_MAX_FEE_GWEI` (default 500, which is 5× the floor and at most about 0.05 MON
+    per Seal);
+  - keeps the tip within what the cap leaves above the base fee;
+  - throws `FeeTooHigh` *before sending* when the base fee alone exceeds the cap, so nothing is left pending to block
+    the nonce queue.
+- Every relayer write (register key, seal, import) goes through it. `FeeTooHigh` is the new `fee-too-high` kind and
+  counts as service-unavailable, so the Capturer hears "paused on our side" and not a retry prompt.
+- `/api/health` now reports `baseFeeGwei` and returns 503 with `gas-price-above-cap` above the ceiling.
+  `.env.example`, the env schema (the drift test passes), `deploy.md` and the owner checklist ("what to do") are
+  updated.
+- `spike-b.md` records the fee and transaction-gas measurements with their dates.
+
+`pnpm check` is green. e2e: 24/24 in dev mode and 24/24 in production mode, and the fee path ran on Anvil in both.
+
+**Next: Iteration 53 — Tests/CI, pass 11**: coverage for the web app. Run vitest with v8 coverage on `apps/web` and
+`packages/*`, list the least-covered server modules, and add tests where a gap hides a real branch (error paths in
+routes, not trivial getters). Consider a coverage floor in CI once the number is known.

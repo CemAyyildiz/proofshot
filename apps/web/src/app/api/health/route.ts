@@ -1,4 +1,4 @@
-import { formatEther } from "viem";
+import { formatEther, formatGwei } from "viem";
 import { env } from "@/lib/env";
 import { mailConfigured } from "@/server/auth/mail";
 import { RelayerNotConfigured, getRelayer } from "@/server/chain/relayer";
@@ -9,7 +9,7 @@ import { RelayerNotConfigured, getRelayer } from "@/server/chain/relayer";
  * URL alerts before people hit errors.
  */
 export async function GET() {
-  const { network, RELAYER_MIN_BALANCE_MON } = env();
+  const { network, RELAYER_MIN_BALANCE_MON, RELAYER_MAX_FEE_GWEI } = env();
   const base = { network: network.name, chainId: network.chainId };
   let relayer;
   try {
@@ -19,15 +19,17 @@ export async function GET() {
     throw e;
   }
   try {
-    const { balanceWei, paused } = await relayer.status();
+    const { balanceWei, paused, baseFeeWei } = await relayer.status();
     const balance = Number(formatEther(balanceWei));
+    const baseFeeGwei = Number(formatGwei(baseFeeWei));
     const problems = [
       ...(balance < RELAYER_MIN_BALANCE_MON ? ["relayer-low-balance"] : []),
       ...(paused ? ["registry-paused"] : []),
+      ...(baseFeeGwei > RELAYER_MAX_FEE_GWEI ? ["gas-price-above-cap"] : []),
       ...(mailConfigured() ? [] : ["sign-in-email-not-configured"]),
     ];
     return Response.json(
-      { ok: problems.length === 0, ...base, relayerBalanceMon: balance, registryPaused: paused, problems },
+      { ok: problems.length === 0, ...base, relayerBalanceMon: balance, registryPaused: paused, baseFeeGwei, problems },
       { status: problems.length ? 503 : 200, headers: { "Cache-Control": "no-store" } },
     );
   } catch (e) {

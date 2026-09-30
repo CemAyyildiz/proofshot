@@ -45,6 +45,7 @@ Set these on the host (see `apps/web/.env.example`):
 | `REGISTRY_ADDRESS`, `REGISTRY_DEPLOY_BLOCK` | from `deployments/<chainId>.json` |
 | `LOGS_BLOCK_RANGE` | max blocks per `eth_getLogs`; set it to your RPC's limit (the indexer halves the range automatically if the RPC refuses) |
 | `RELAYER_PRIVATE_KEY` | the relayer key |
+| `RELAYER_MAX_FEE_GWEI` | fee ceiling, default 500 (Monad's floor is 100). Monad charges the gas **limit**, which the relayer sets to the estimate with no padding (asserted in e2e); above the ceiling Seals wait and `/api/health` reports `gas-price-above-cap` |
 | `DATABASE_URL` | Postgres |
 | `STORAGE_DRIVER` + `S3_*` | evidence image storage (see below) |
 | `APP_URL` | public origin, e.g. `https://proofshot.app` |

@@ -1,10 +1,11 @@
 import "server-only";
 import { type CaptureRecord, type Hex, type WebAuthnAuth, registryAbi } from "@proofshot/shared";
-import { createPublicClient, createWalletClient, defineChain, type PublicClient } from "viem";
+import { createPublicClient, createWalletClient, defineChain, parseGwei, type PublicClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { env } from "@/lib/env";
 import { invalidateRegistry } from "../registry";
 import { processSingleton } from "../singleton";
+import { capFees } from "./fees";
 import { rpcTransport } from "./transport";
 
 export interface SealResult {
@@ -21,8 +22,8 @@ export interface Relayer {
   deviceKey(keyId: Hex): Promise<{ qx: Hex; qy: Hex; revokedAtBlock: bigint }>;
   seal(keyId: Hex, record: CaptureRecord, auth: WebAuthnAuth): Promise<SealResult>;
   importRecords(carrierId: Hex, records: ImportRecord[]): Promise<SealResult>;
-  /** Relayer balance (wei) and whether the Registry is paused, for health checks. */
-  status(): Promise<{ balanceWei: bigint; paused: boolean }>;
+  /** Relayer balance (wei), whether the Registry is paused, and the current base fee (wei), for health checks. */
+  status(): Promise<{ balanceWei: bigint; paused: boolean; baseFeeWei: bigint }>;
 }
 
 /** Mirrors `Registry.ImportRecord`. */
@@ -54,6 +55,12 @@ function createViemRelayer(): Relayer {
   const account = privateKeyToAccount(e.RELAYER_PRIVATE_KEY as Hex);
   const wallet = createWalletClient({ chain, transport, account });
   const address = e.REGISTRY_ADDRESS as Hex;
+  const feeCap = parseGwei(String(e.RELAYER_MAX_FEE_GWEI));
+  /** Current fees, capped; throws FeeTooHigh (before anything is sent) when the network is above the cap. */
+  const fees = async () => {
+    const [estimate, block] = await Promise.all([pub.estimateFeesPerGas(), pub.getBlock({ blockTag: "latest" })]);
+    return capFees(estimate, block.baseFeePerGas ?? 0n, feeCap);
+  };
 
   // Serialise submissions from this process so nonces are handed out in order; retry, with a short backoff, if
   // another instance (e.g. during a zero-downtime deploy) or a lagging fallback RPC raced us to a nonce.
@@ -78,11 +85,12 @@ function createViemRelayer(): Relayer {
 
   return {
     async status() {
-      const [balanceWei, paused] = await Promise.all([
+      const [balanceWei, paused, block] = await Promise.all([
         pub.getBalance({ address: account.address }),
         pub.readContract({ address, abi: registryAbi, functionName: "paused" }),
+        pub.getBlock({ blockTag: "latest" }),
       ]);
-      return { balanceWei, paused: paused as boolean };
+      return { balanceWei, paused: paused as boolean, baseFeeWei: block.baseFeePerGas ?? 0n };
     },
     async latestBlock() {
       const b = await pub.getBlock({ blockTag: "latest" });
@@ -97,11 +105,12 @@ function createViemRelayer(): Relayer {
       return { qx: k.qx, qy: k.qy, revokedAtBlock: k.revokedAtBlock };
     },
     registerDeviceKey(keyId, qx, qy) {
-      return submit(() => wallet.writeContract({ address, abi: registryAbi, functionName: "registerDeviceKey", args: [keyId, qx, qy] }));
+      return submit(async () => wallet.writeContract({ address, abi: registryAbi, functionName: "registerDeviceKey", args: [keyId, qx, qy], ...(await fees()) }));
     },
     async seal(keyId, record, auth) {
-      const txHash = await submit(() =>
+      const txHash = await submit(async () =>
         wallet.writeContract({
+          ...(await fees()),
           address,
           abi: registryAbi,
           functionName: "seal",
@@ -118,8 +127,9 @@ function createViemRelayer(): Relayer {
       return { txHash, blockNumber: receipt.blockNumber };
     },
     async importRecords(carrierId, records) {
-      const txHash = await submit(() =>
+      const txHash = await submit(async () =>
         wallet.writeContract({
+          ...(await fees()),
           address,
           abi: registryAbi,
           functionName: "importRecords",

@@ -24,6 +24,8 @@ export const serverEnvSchema = z.object({
   RELAYER_RECEIPT_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
   /** /api/health reports unhealthy (503) below this relayer balance, so uptime monitoring alerts before Seals fail. */
   RELAYER_MIN_BALANCE_MON: z.coerce.number().nonnegative().default(1),
+  /** Highest total gas price (base + priority, gwei) the relayer will pay; above it, writes pause instead of draining funds. */
+  RELAYER_MAX_FEE_GWEI: z.coerce.number().positive().default(500),
   DATABASE_URL: z.string().min(1).optional(),
   /** Where evidence images live: "fs" (a persistent disk) or "s3" (any S3-compatible bucket, e.g. Cloudflare R2). */
   STORAGE_DRIVER: z.enum(["fs", "s3"]).default("fs"),

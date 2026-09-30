@@ -54,6 +54,15 @@ test("a Capturer sets up a passkey, seals a burst of live photos onchain and sen
     expect(await chain.readContract({ address: E2E_REGISTRY, abi: registryAbi, functionName: "isSealed", args: [exactHash] })).toBe(true);
   }
 
+  // Monad charges the gas *limit*, not the gas used: the relayer must not pad it. Also records the real per-Seal
+  // transaction gas (execution + 21,000 base + calldata), which is what a Seal costs.
+  const sealLogs = await chain.getContractEvents({ address: E2E_REGISTRY, abi: registryAbi, eventName: "CaptureSealed", fromBlock: 0n });
+  for (const log of sealLogs.slice(-3)) {
+    const [tx, receipt] = await Promise.all([chain.getTransaction({ hash: log.transactionHash }), chain.getTransactionReceipt({ hash: log.transactionHash })]);
+    expect(Number(tx.gas), "gas limit vs gas used").toBeLessThanOrEqual(Math.ceil(Number(receipt.gasUsed) * 1.1));
+    console.log(`[gas] seal tx: gasUsed ${receipt.gasUsed}, gasLimit ${tx.gas}, calldata ${(tx.input.length - 2) / 2} bytes`);
+  }
+
   // …and receives the exact sealed files once the Capturer sends them (FR-6).
   await phone.getByRole("button", { name: "Send 3 photos to insurer" }).click();
   await expect(phone.getByRole("heading", { name: "Sent to your insurer" })).toBeVisible();
