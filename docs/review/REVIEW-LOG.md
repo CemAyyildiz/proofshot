@@ -2523,3 +2523,36 @@ Done: all.
 `pnpm check` is green. e2e: 29/29 in dev mode and 29/29 in production mode.
 
 **Next: Iteration 71 — Backend, pass 15.**
+
+## Iteration 71 — Backend, pass 15: what public, unauthenticated URLs reveal and cost
+
+Method: listed every page and route that needs no session. For each, asked two questions: what server-side
+configuration reaches the response, and what outbound calls (RPC, database) one request triggers.
+
+Findings:
+
+- **H1 (secret exposure)** Every receipt's "Verify it yourself" command printed `--rpc ${rpcUrl}`, which is the app's
+  own `RPC_URL`. In production that is typically a provider endpoint with the API key in the URL (Alchemy, QuickNode,
+  Ankr style: `…/v2/<key>`). Every public receipt would have published the key, and with it the ability to spend the
+  quota the relayer and indexer depend on. Only the receipt used the URL publicly, but that page is the most shared
+  one.
+- **M1** `/api/health` is public and uncached. Each request made three RPC calls (balance, `paused`, latest block),
+  so anyone could turn our health URL into load on our RPC quota and rate limits, which Seals need.
+- OK:
+  - errors returned to clients are fixed messages; viem errors, which contain `URL: <rpc>`, only reach server logs;
+  - the receipt's block-time lookup is cached per block and only runs for records that exist;
+  - `seal-context` is rate-limited per link and rejects unknown tokens before any RPC call.
+
+Done:
+
+- New `PUBLIC_RPC_URL`, defaulting to the network's public RPC and never `RPC_URL`. Receipts use it.
+  - Unit test: with a key-bearing `RPC_URL`, the public URL is still `https://rpc.monad.xyz`.
+  - e2e now runs the whole app with `RPC_URL=…/?apikey=E2E-SECRET-KEY` (Anvil accepts it). The receipt shows
+    `--rpc http://127.0.0.1:8546`, and the page source never contains the key.
+- The health status is cached for 15 s in the process. A failure isn't cached, so the next call retries at once.
+  - Unit test: 20 concurrent calls make one chain read; after a failure the next call reads again.
+- `deploy.md`, `.env.example` and `security.md` updated.
+
+`pnpm check` is green. e2e: 29/29 in dev mode and 29/29 in production mode.
+
+**Next: Iteration 72 — Contracts, pass 15.**

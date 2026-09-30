@@ -1,7 +1,23 @@
 import { formatEther, formatGwei } from "viem";
 import { env } from "@/lib/env";
 import { mailConfigured } from "@/server/auth/mail";
-import { RelayerNotConfigured, getRelayer } from "@/server/chain/relayer";
+import { RelayerNotConfigured, getRelayer, type Relayer } from "@/server/chain/relayer";
+import { processSingleton } from "@/server/singleton";
+
+/**
+ * The public, unauthenticated URL would otherwise turn every request into three RPC calls, letting anyone spend the
+ * app's RPC quota (and rate limits) that Seals depend on. One chain read per 15 s serves any number of callers.
+ */
+const STATUS_TTL_MS = 15_000;
+function cachedStatus(relayer: Relayer): ReturnType<Relayer["status"]> {
+  const cache = processSingleton("health-status", () => ({ at: 0, value: null as ReturnType<Relayer["status"]> | null }));
+  if (!cache.value || Date.now() - cache.at > STATUS_TTL_MS) {
+    cache.at = Date.now();
+    cache.value = relayer.status();
+    cache.value.catch(() => (cache.at = 0)); // don't serve a failure for the whole TTL
+  }
+  return cache.value;
+}
 
 /**
  * Liveness plus the conditions that silently break the product: a relayer running out of MON, a paused Registry, and
@@ -19,7 +35,7 @@ export async function GET() {
     throw e;
   }
   try {
-    const { balanceWei, paused, baseFeeWei } = await relayer.status();
+    const { balanceWei, paused, baseFeeWei } = await cachedStatus(relayer);
     const balance = Number(formatEther(balanceWei));
     const baseFeeGwei = Number(formatGwei(baseFeeWei));
     const problems = [

@@ -57,7 +57,8 @@ cost keyed on the edge-set client address (a client-written `X-Forwarded-For` ca
 sponsored-write budget per carrier (key registrations, Seals and imported images; 500 for each one-tap demo carrier)
 and a daily Claim File limit per carrier and per demo visitor, a relayer fee
 ceiling that pauses writes instead of overpaying, relayer writes that are broadcast at most once even when an RPC
-response is lost, CSP without third-party origins, decompression-bomb refusal before
+response is lost, an RPC URL (which may carry a provider API key) that is never shown to the public,
+a health check that reads the chain at most every 15 s however often it is called, CSP without third-party origins, decompression-bomb refusal before
 decoding (50 MP), an indexer that tolerates lagging RPCs and reorgs, and a health endpoint that alerts on low relayer
 balance, a paused Registry, fees above the ceiling or missing email. Evidence images are sent `private, no-store`.
 Claim Link tokens carry 192 random bits, never leave the origin in a `Referer`, and can be replaced by the Carrier
