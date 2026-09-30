@@ -103,6 +103,14 @@ test("capture all surfaces", async ({ browser }) => {
   await shot(desk, "d-receipt-verification");
   await desk.goto(`/r/${exactHash}`);
   await shot(desk, "d-receipt-seal");
+  // As printed or saved to PDF for a claim file (A4 width at 96 dpi).
+  await desk.setViewportSize({ width: 794, height: 1123 });
+  await desk.emulateMedia({ media: "print" });
+  await shot(desk, "print-receipt-seal");
+  await desk.goto(receiptUrl);
+  await shot(desk, "print-receipt-verification");
+  await desk.emulateMedia({ media: "screen" });
+  await desk.setViewportSize({ width: 1280, height: 800 });
   const dark = await (await browser.newContext({ viewport: { width: 375, height: 812 }, colorScheme: "dark" })).newPage();
   for (const [path, name] of [
     ["/", "landing"],

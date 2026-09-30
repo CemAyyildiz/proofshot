@@ -80,6 +80,19 @@ test("the Public Verifier returns one honest Verdict per copy and a public recei
   await visitor.goto(`/r/${exactHash}`);
   await expect(visitor.getByRole("heading", { name: "Sealed photo" })).toBeVisible();
   await expect(visitor.getByText("Device Key")).toBeVisible();
+  // Every hash is shown in full: a receipt is audit evidence.
+  await expect(visitor.getByRole("definition").filter({ hasText: exactHash })).toBeVisible();
+
+  // Printed or saved as PDF for a claim file: no site navigation or buttons, the receipt's own URL instead, and the
+  // Verdict colours kept on the light palette even from a dark-mode browser.
+  await visitor.emulateMedia({ media: "print", colorScheme: "dark" });
+  await expect(visitor.getByRole("navigation", { name: "Main" })).toBeHidden();
+  await expect(visitor.getByRole("button", { name: "Copy command" })).toBeHidden();
+  await expect(visitor.getByText(`This receipt online: http://localhost:3100/r/${exactHash}`)).toBeVisible();
+  expect(await visitor.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(255, 255, 255)");
+  expect(await visitor.evaluate(() => getComputedStyle(document.documentElement).printColorAdjust)).toBe("exact");
+  await visitor.emulateMedia({ media: "screen", colorScheme: null });
+  await expect(visitor.getByText(/This receipt online/)).toBeHidden();
 });
 
 test("the Public Verifier rate-limits a single client and unknown receipts are 404", async ({ request }) => {

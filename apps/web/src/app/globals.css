@@ -18,7 +18,8 @@
   --verdict-fg: #ffffff;
 }
 
-@media (prefers-color-scheme: dark) {
+/* Screen only: a receipt printed from a dark-mode browser still prints on the light palette. */
+@media screen and (prefers-color-scheme: dark) {
   :root {
     --background: #121315;
     --surface: #1b1c1f;
@@ -123,5 +124,21 @@ button {
   }
   .eyebrow {
     @apply text-xs font-semibold uppercase tracking-widest text-muted;
+  }
+}
+
+/* Receipts get printed or saved as PDF and attached to claim files. Keep Verdict colours (browsers drop backgrounds by
+   default, which would leave white text on white) and don't split a card across pages. */
+@media print {
+  html {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body {
+    background: #ffffff;
+  }
+  section,
+  dl {
+    break-inside: avoid;
   }
 }

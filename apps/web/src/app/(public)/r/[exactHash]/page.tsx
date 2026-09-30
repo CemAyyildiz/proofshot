@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ReceiptDetails, VerifyYourself } from "@/components/receipt/receipt-details";
+import { PrintedReceiptUrl, ReceiptDetails, VerifyYourself } from "@/components/receipt/receipt-details";
 import { VerdictBadge } from "@/components/verdict/verdict-badge";
 import { formatDateTime } from "@/lib/format";
 import { registryEntries } from "@/server/registry";
@@ -20,6 +20,7 @@ export default async function CaptureReceipt({ params }: PageProps<"/r/[exactHas
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-10">
       <header className="flex flex-col gap-3">
         <p className="eyebrow">Seal Receipt</p>
+        <PrintedReceiptUrl path={`/r/${hash}`} />
         <h1 className="text-2xl font-semibold">Sealed photo</h1>
         <div>
           <VerdictBadge kind="original" />
@@ -34,7 +35,7 @@ export default async function CaptureReceipt({ params }: PageProps<"/r/[exactHas
       </header>
       <ReceiptDetails record={record} />
       <VerifyYourself />
-      <Link href="/verify" className="text-sm underline underline-offset-4">
+      <Link href="/verify" className="text-sm underline underline-offset-4 print:hidden">
         Check a copy of this photo
       </Link>
     </main>

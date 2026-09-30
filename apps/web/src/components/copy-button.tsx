@@ -7,7 +7,7 @@ export function CopyButton({ value, label = "Copy" }: { value: string; label?: s
   return (
     <button
       type="button"
-      className="self-start rounded-md border border-line bg-surface px-3 py-2 text-sm hover:border-foreground/40"
+      className="self-start rounded-md border print:hidden border-line bg-surface px-3 py-2 text-sm hover:border-foreground/40"
       onClick={async () => {
         await navigator.clipboard.writeText(value);
         setCopied(true);

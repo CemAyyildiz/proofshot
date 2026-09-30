@@ -4,7 +4,23 @@ import { env } from "@/lib/env";
 import { formatDateTime } from "@/lib/format";
 import { blockTime } from "@/server/registry/chain-source";
 
-const short = (h: string) => `${h.slice(0, 10)}…${h.slice(-6)}`;
+/** Full values, never shortened: a receipt is audit evidence, and a printed "0x82ab…ddf4a6" can't be checked. */
+const Hash = ({ value }: { value: string }) => <code className="break-all">{value}</code>;
+
+/** Only on paper: where this receipt lives, so a printed or PDF copy leads back to the live, re-checkable page. */
+export function PrintedReceiptUrl({ path }: { path: string }) {
+  const url = new URL(path, env().APP_URL).toString();
+  return (
+    <p className="hidden text-xs print:block">
+      This receipt online: <span className="font-mono">{url}</span>
+    </p>
+  );
+}
+
+/** Seconds between the referenced block and the sealing block; sub-second on Monad, so never "0 s". */
+export function windowLabel(seconds: number): string {
+  return seconds < 1 ? "under 1 s" : `${seconds} s`;
+}
 
 /** Onchain references for a Registry entry: what a third party needs to re-check it. */
 export async function ReceiptDetails({ record }: { record: RegistryEntry }) {
@@ -16,7 +32,7 @@ export async function ReceiptDetails({ record }: { record: RegistryEntry }) {
     [record.kind === "sealed" ? "Sealed" : "Imported", formatDateTime(sealedAt)],
   ];
   if (record.kind === "sealed" && record.refBlock !== undefined) {
-    const span = refTime !== null ? ` — a window of ${Math.max(0, record.blockTimestamp - refTime)} s` : "";
+    const span = refTime !== null ? ` — a window of ${windowLabel(Math.max(0, record.blockTimestamp - refTime))}` : "";
     rows.push([
       "Signing Window",
       <>
@@ -25,20 +41,20 @@ export async function ReceiptDetails({ record }: { record: RegistryEntry }) {
         {span}
       </>,
     ]);
-    rows.push(["Device Key", <code key="k">{short(record.keyId!)}</code>]);
+    rows.push(["Device Key", <Hash key="k" value={record.keyId!} />]);
   } else {
     rows.push(["Signature", "None — imported records are not device-signed"]);
   }
   rows.push(["Carrier", "a carrier"]);
-  rows.push(["Exact Hash", <code key="e">{short(record.exactHash)}</code>]);
+  rows.push(["Exact Hash", <Hash key="e" value={record.exactHash} />]);
   rows.push([
     "Ledger record",
     txUrl ? (
       <a key="t" href={txUrl} className="underline underline-offset-4" rel="noreferrer" target="_blank">
-        {short(record.txHash)} on the public explorer
+        <Hash value={record.txHash} /> <span className="print:hidden">on the public explorer</span>
       </a>
     ) : (
-      <code key="t">{short(record.txHash)}</code>
+      <Hash key="t" value={record.txHash} />
     ),
   ]);
   return (
@@ -63,7 +79,7 @@ export async function ReceiptDetails({ record }: { record: RegistryEntry }) {
 
 export function VerifyYourself() {
   const { network, REGISTRY_ADDRESS, rpcUrl } = env();
-  const command = `pnpm install\npnpm --filter proofshot-verify start photo.jpg --rpc ${rpcUrl} --registry ${REGISTRY_ADDRESS ?? "<registry address>"}`;
+  const command = `pnpm install\npnpm --filter proofshot-verify start ./photo.jpg --rpc ${rpcUrl} --registry ${REGISTRY_ADDRESS ?? "<registry address>"}`;
   return (
     <section aria-labelledby="diy-heading" className="flex flex-col gap-2 text-sm">
       <h2 id="diy-heading" className="font-semibold">

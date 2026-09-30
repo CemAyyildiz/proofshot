@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ReceiptDetails, VerifyYourself } from "@/components/receipt/receipt-details";
+import { PrintedReceiptUrl, ReceiptDetails, VerifyYourself } from "@/components/receipt/receipt-details";
 import { VerdictPanel } from "@/components/verdict/verdict-panel";
 import { formatDateTime } from "@/lib/format";
 import { getDb } from "@/server/db";
@@ -24,6 +24,7 @@ export default async function VerificationReceipt({ params }: PageProps<"/v/[id]
       <header>
         <p className="eyebrow">Verification Receipt</p>
         <p className="text-sm text-muted">Checked {formatDateTime(v.createdAt)} · Receipt {v.id}</p>
+        <PrintedReceiptUrl path={`/v/${v.id}`} />
       </header>
       <VerdictPanel
         headingLevel={1}
@@ -55,7 +56,7 @@ export default async function VerificationReceipt({ params }: PageProps<"/v/[id]
       </section>
       {record && <ReceiptDetails record={record} />}
       <VerifyYourself />
-      <Link href="/verify" className="text-sm underline underline-offset-4">
+      <Link href="/verify" className="text-sm underline underline-offset-4 print:hidden">
         Verify another photo
       </Link>
     </main>

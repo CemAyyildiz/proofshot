@@ -933,3 +933,42 @@ Done: all.
 **Next: Iteration 30 — Frontend UI/UX, pass 7**: review the Public Verifier result states at 375px (all four
 Verdicts plus the crop warning) for scannability, and receipts on desktop for print/PDF (an adjuster will attach them
 to a claim file). Consider a print stylesheet.
+
+---
+
+## Iteration 30 — Frontend UI/UX, pass 7: Verifier results and receipts on paper (2026-09-30)
+
+Method: regenerated screens; reviewed the four Verdicts and the crop warning at 375px, then rendered both receipts as
+printed at A4 width (new `print-receipt-*` screenshots).
+
+Findings:
+
+- **H1** Receipts had no print styles. An adjuster who prints one, or saves it as PDF for a claim file, got the site
+  navigation, the footer and a "Copy command" button, and nowhere on the page was the receipt's own URL. Browsers also
+  drop background colours when printing, so the white-on-colour Verdict badge would print as white on white. A
+  dark-mode browser would print the dark palette.
+- **H2** The Device Key, Exact Hash and ledger record were shortened (`0x82ab4850…ddf4a6`). A receipt is audit
+  evidence, and a shortened value can't be checked against the chain, least of all on paper.
+- **L1** The Signing Window read "a window of 0 s" whenever the two blocks fell within the same second, which on
+  Monad is the normal case.
+- **L2** The receipt's CLI command still said `photo.jpg`; iteration 24 made paths resolve from the caller's
+  directory, and the README uses `./photo.jpg`.
+- OK: at 375px the Verifier results read in the right order (badge, warning, summary, then what it means and what it
+  does not mean), and the crop warning is as prominent as the Verdict.
+
+Done: all.
+
+- Print: the dark palette is now `screen`-only, and printing uses `print-color-adjust: exact`, a white body and no card
+  split across pages. Navigation, footer, copy buttons and "verify another" links are hidden on paper, and each
+  receipt prints "This receipt online: <URL>".
+- Every hash on the receipt is shown in full and wraps. The explorer link keeps the full hash.
+- Windows under a second read "under 1 s".
+- e2e: the receipt shows the full Exact Hash; under print media (with a dark colour scheme) the navigation and copy
+  button are hidden, the URL line is visible, the body is white and `print-color-adjust` is exact; the URL line is
+  hidden again on screen.
+
+`pnpm check` is green. e2e: 19/19 in dev mode and 19/19 in production mode.
+
+**Next: Iteration 31 — Backend, pass 7**: review the indexer and registry cache under chain reorgs and RPC
+inconsistencies (Monad finality, a log served then missing, duplicate logs across range boundaries). Also check
+`registryEntries` memory growth as the Registry grows (every request loads every entry).

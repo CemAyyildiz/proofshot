@@ -14,7 +14,7 @@ export function SiteHeader() {
         <Link href="/" aria-label="Proofshot home" className="rounded">
           <Wordmark />
         </Link>
-        <nav aria-label="Main" className="flex items-center gap-0.5 text-sm sm:gap-1">
+        <nav aria-label="Main" className="flex items-center print:hidden gap-0.5 text-sm sm:gap-1">
           {NAV.map((n) => (
             <Link
               key={n.href}
@@ -33,7 +33,7 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t border-line">
+    <footer className="mt-auto border-t border-line print:hidden">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-2 px-4 py-6 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
         <p>Proofshot — proof created at capture, checkable by anyone.</p>
         <p>Photos never leave the carrier. Only fingerprints are public.</p>
