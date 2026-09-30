@@ -1892,3 +1892,41 @@ Done: all.
 - a HEIC on Chrome (no preview but a Verdict).
 
 Check that each state has a clear next step and doesn't lose the chosen file.
+
+---
+
+## Iteration 55 — Frontend UI/UX, pass 12: the Public Verifier when things go wrong (2026-09-30)
+
+Method: walked every non-Verdict outcome of `/verify` against the route's actual responses: 400 (no file), 413 (over
+20 MB or over 50 MP), 415 (not an image), 429 (rate limited), 503 (Registry unreachable), a network failure, and a
+proxy error with no JSON body.
+
+Findings:
+
+- **M1** A temporary failure lost the chosen file. After a 429, a 503 or a dropped connection the Verifier showed
+  the message, but the only way on was to find and pick the file again. On a phone that means reopening the gallery.
+  These failures are about timing, not the file, and the message itself says "try again".
+- **M2** A drop while a check was running started a second check. The file input is disabled while busy, but the
+  drop zone's `onDrop` was not, so the second result could overwrite the first.
+- **L1** A response with no JSON body, for example a proxy's HTML 413, fell back to a vague "Something went wrong".
+- OK: the server messages are specific and actionable (20 MB, 50 MP, the supported formats, "wait a few minutes",
+  "registry unreachable so no Verdict"). A HEIC that Chrome can't preview still gets its Verdict; for Altered the
+  changed regions are listed as text.
+
+Done: all.
+
+- The error state keeps the file for 429, 5xx and network failures, and shows **"Try again with <file name>"** (which
+  wraps at 375px) next to the message, inside the same `role="alert"`. For 4xx failures caused by the file itself there
+  is no retry, only a fresh choice.
+- Checks are serialised: a drop or pick while busy is ignored.
+- A body-less 413 reads "This image is too large to upload.", and other body-less failures say the problem is on our
+  side.
+- New e2e: the first `/api/verify` call is intercepted to return 503. The alert shows, and "Try again with
+  claim-photo.png" produces a Verdict without picking the file again.
+
+`pnpm check` is green. e2e: 25/25 in dev mode and 25/25 in production mode.
+
+**Next: Iteration 56 — Backend, pass 12**: the verification receipt store. `verifications` grows by one row per
+public check, forever, and each row keeps the fingerprint of an image someone chose not to share. Decide on a
+retention rule consistent with the privacy copy ("your image is not kept"), make sure shared receipt links degrade
+gracefully, and prune with the daily job.

@@ -15,7 +15,12 @@ interface Result {
   record: { kind: "sealed" | "imported"; sealedAt: string } | null;
 }
 
-type State = { name: "idle" } | { name: "checking"; file: File; uploaded: number } | { name: "done"; file: File; result: Result } | { name: "error"; message: string };
+type State =
+  | { name: "idle" }
+  | { name: "checking"; file: File; uploaded: number }
+  | { name: "done"; file: File; result: Result }
+  /** `retry` keeps the chosen file when the failure is ours or temporary (rate limit, registry, network). */
+  | { name: "error"; message: string; retry?: File };
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif";
 const MAX_BYTES = 20 * 1024 * 1024;
@@ -53,6 +58,7 @@ export function Verifier() {
   }, [file]);
 
   async function check(f: File) {
+    if (state.name === "checking") return; // one check at a time, even for a drop while busy
     if (f.size > MAX_BYTES) return setState({ name: "error", message: "This image is larger than 20 MB." });
     setState({ name: "checking", file: f, uploaded: 0 });
     const form = new FormData();
@@ -60,11 +66,15 @@ export function Verifier() {
     try {
       const res = await postWithProgress("/api/verify", form, (uploaded) => setState({ name: "checking", file: f, uploaded }));
       if (res.status < 200 || res.status >= 300) {
-        return setState({ name: "error", message: (res.body.error as string) ?? "Something went wrong. Try again." });
+        const message =
+          (res.body.error as string | undefined) ??
+          (res.status === 413 ? "This image is too large to upload." : "Something went wrong on our side. Try again.");
+        // 429 and 5xx are about timing, not the file: offer to send the same file again.
+        return setState({ name: "error", message, retry: res.status === 429 || res.status >= 500 ? f : undefined });
       }
       setState({ name: "done", file: f, result: res.body as unknown as Result });
     } catch {
-      setState({ name: "error", message: "We couldn't reach the verifier. Check your connection and try again." });
+      setState({ name: "error", message: "We couldn't reach the verifier. Check your connection and try again.", retry: f });
     }
   }
 
@@ -126,7 +136,7 @@ export function Verifier() {
           e.preventDefault();
           setDragging(false);
           const f = e.dataTransfer.files[0];
-          if (f) void check(f);
+          if (f && state.name !== "checking") void check(f);
         }}
         className={`flex min-h-48 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-center has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent ${
           dragging ? "border-accent bg-surface" : "border-line bg-surface/50 hover:border-foreground/30"
@@ -165,9 +175,14 @@ export function Verifier() {
       </label>
 
       {state.name === "error" && (
-        <p role="alert" className="text-danger">
-          {state.message}
-        </p>
+        <div role="alert" className="flex flex-wrap items-center gap-3">
+          <p className="text-danger">{state.message}</p>
+          {state.retry && (
+            <button type="button" className="btn-secondary max-w-full text-left [overflow-wrap:anywhere]" onClick={() => void check(state.retry!)}>
+              Try again with {state.retry.name}
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

@@ -95,6 +95,21 @@ test("the Public Verifier returns one honest Verdict per copy and a public recei
   await expect(visitor.getByText(/This receipt online/)).toBeHidden();
 });
 
+test("a temporary failure keeps the chosen file and offers to try it again", async ({ page }) => {
+  let first = true;
+  await page.route("**/api/verify", async (route) => {
+    if (!first) return route.continue();
+    first = false;
+    await route.fulfill({ status: 503, json: { error: "The public registry is temporarily unreachable, so no Verdict can be given. Try again in a minute." } });
+  });
+  await page.goto("/verify");
+  const png = await sharp({ create: { width: 640, height: 480, channels: 3, background: "#4a6" } }).png().toBuffer();
+  await page.locator("#verify-file").setInputFiles({ name: "claim-photo.png", mimeType: "image/png", buffer: png });
+  await expect(page.getByRole("alert").filter({ hasText: "temporarily unreachable" })).toBeVisible();
+  await page.getByRole("button", { name: "Try again with claim-photo.png" }).click();
+  await expect(page.getByRole("heading", { name: /^Verdict:/ })).toBeAttached({ timeout: 20_000 });
+});
+
 test("an ordinary phone-size photo (well over 4.5 MB) goes through the production server", async ({ request }) => {
   // Serverless platforms cap request bodies around 4.5 MB; this app must accept the 20 MB it promises (docs/deploy.md).
   const photo = await sharp({ create: { width: 4000, height: 3000, channels: 3, background: "#808080", noise: { type: "gaussian", mean: 128, sigma: 60 } } })
