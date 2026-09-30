@@ -1603,3 +1603,36 @@ Done: both.
 **Next: Iteration 48 — Tests/CI, pass 10**: total CI wall time and caching. The e2e job builds Next in production
 each run, so check whether `.next/cache` can be cached safely. Check Foundry's compilation cache across jobs. Look
 for any step that could be parallelised.
+
+---
+
+## Iteration 48 — Tests/CI, pass 10: build determinism and CI caching (2026-09-30)
+
+Method: I measured cold and warm builds locally: `.next` removed, then `contracts/out` and `contracts/cache` removed.
+
+Findings:
+
+- **H1** The build depended on Google Fonts at build time. The first cold `next build` of this pass **failed** with
+  24 `next/font/google` errors ("Module not found … internal/font/google/font"); the retry a minute later passed.
+  `next/font/google` downloads IBM Plex from `fonts.gstatic.com` during every build that lacks a warm `.next/cache`.
+  A network blip therefore breaks CI, and on the day it matters it breaks a production deploy. Runtime was never
+  affected: the fonts were already self-hosted and the CSP allows no third-party origins.
+- **L1** CI rebuilt Next from scratch in both the `check` and `e2e` jobs with no build cache. Locally the cold build
+  took 9 s and a warm one 1–2 s: a small but free saving.
+- OK: Foundry compiles cold in about 2 s, not worth a cache. The pnpm store and the Playwright browsers were already
+  cached.
+
+Done: both.
+
+- IBM Plex Sans (400/500/600/700) and Mono (400/500), latin subset, are vendored as woff2 in `src/app/fonts/`
+  (122 KB), taken from `@fontsource` 5.3.0 together with both SIL OFL 1.1 licence files. `layout.tsx` now uses
+  `next/font/local` with the same CSS variables and `display: swap`. A cold build passes with no font fetch, and
+  `.next/static` references no Google URL. Screens confirm the typography is unchanged.
+- The `check` and `e2e` jobs cache `apps/web/.next/cache`, keyed on the lockfile plus source hashes and restoring from
+  lockfile-only (actions pinned by SHA, actionlint clean).
+
+`pnpm check` is green. e2e: 23/23 in dev mode and 23/23 in production mode.
+
+**Next: Iteration 49 — Docs, pass 10**: the OWNER-TODO checklist, read through against what exists now: the runbook,
+latency report, health conditions, demo retention and canary issues. Every owner step should point at the doc or
+command that now automates or verifies it, and steps that are no longer needed should go.
