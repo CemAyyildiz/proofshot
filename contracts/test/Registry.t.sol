@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std/Test.sol";
 import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
+import {IAccessControlDefaultAdminRules} from "@openzeppelin/contracts/access/extensions/IAccessControlDefaultAdminRules.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {WebAuthn} from "@openzeppelin/contracts/utils/cryptography/WebAuthn.sol";
 import {Registry} from "../src/Registry.sol";
@@ -70,10 +71,51 @@ contract RegistryTest is Test {
 
     function test_ConstructorRejectsZeroAddresses() public {
         bytes32[] memory rp = new bytes32[](0);
-        vm.expectRevert(Registry.ZeroValue.selector);
+        vm.expectRevert(abi.encodeWithSelector(IAccessControlDefaultAdminRules.AccessControlInvalidDefaultAdmin.selector, address(0)));
         new Registry(address(0), relayer, rp);
         vm.expectRevert(Registry.ZeroValue.selector);
         new Registry(admin, address(0), rp);
+    }
+
+    function test_RelayerAndAdminRolesNeverShareAnAccount() public {
+        bytes32 relayerRole = registry.RELAYER_ROLE();
+        // The admin can't make itself (or any admin) a relayer…
+        vm.expectRevert(Registry.AdminIsRelayer.selector);
+        vm.prank(admin);
+        registry.grantRole(relayerRole, admin);
+        // …and can't hand the admin role to the hot relayer key: the transfer can't be accepted.
+        vm.prank(admin);
+        registry.beginDefaultAdminTransfer(relayer);
+        vm.warp(block.timestamp + registry.ADMIN_TRANSFER_DELAY() + 1);
+        vm.expectRevert(Registry.AdminIsRelayer.selector);
+        vm.prank(relayer);
+        registry.acceptDefaultAdminTransfer();
+        assertEq(registry.defaultAdmin(), admin);
+    }
+
+    function test_AdminCannotBeOrphanedOrMovedInOneStep() public {
+        bytes32 adminRole = registry.DEFAULT_ADMIN_ROLE();
+        address next = makeAddr("next-admin");
+        // No direct grant of the admin role, and no instant renounce.
+        vm.expectRevert(IAccessControlDefaultAdminRules.AccessControlEnforcedDefaultAdminRules.selector);
+        vm.prank(admin);
+        registry.grantRole(adminRole, next);
+        vm.expectRevert(abi.encodeWithSelector(IAccessControlDefaultAdminRules.AccessControlEnforcedDefaultAdminDelay.selector, uint48(0)));
+        vm.prank(admin);
+        registry.renounceRole(adminRole, admin);
+        assertTrue(registry.hasRole(adminRole, admin));
+
+        // A transfer takes two steps and the delay; the new admin must accept.
+        vm.prank(admin);
+        registry.beginDefaultAdminTransfer(next);
+        vm.expectRevert(abi.encodeWithSelector(IAccessControlDefaultAdminRules.AccessControlEnforcedDefaultAdminDelay.selector, uint48(block.timestamp + 1 days)));
+        vm.prank(next);
+        registry.acceptDefaultAdminTransfer();
+        vm.warp(block.timestamp + 1 days + 1);
+        vm.prank(next);
+        registry.acceptDefaultAdminTransfer();
+        assertEq(registry.defaultAdmin(), next);
+        assertFalse(registry.hasRole(adminRole, admin));
     }
 
     function test_ConstructorRejectsAdminAsRelayer() public {

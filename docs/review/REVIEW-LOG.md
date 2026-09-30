@@ -831,3 +831,38 @@ Done: H1, H2, M1.
 **Next: Iteration 27 — Contracts, pass 6**: review the Registry's admin paths: `setRpIdHash` removal semantics,
 role-renounce footguns (an admin renouncing the last admin), event coverage for every admin action (so indexers and
 auditors can reconstruct config history), and whether `pause` should also block `revokeDeviceKey`.
+
+---
+
+## Iteration 27 — Contracts, pass 6: admin paths (2026-09-30)
+
+Findings:
+
+- **H1** The admin/relayer split was only checked in the constructor. Under plain `AccessControl` the admin could
+  later `grantRole(RELAYER_ROLE, admin)`, or `grantRole(DEFAULT_ADMIN_ROLE, relayer)` and hand the cold role to the
+  hot server key. Either one silently defeats the incident runbook (T-8).
+- **H2** One `renounceRole(DEFAULT_ADMIN_ROLE, admin)` call, or a grant to a mistyped address followed by a renounce,
+  would orphan the Registry for good: no pause, no relayer rotation, no RP ID changes.
+- OK: every admin action already emits an event (`RpIdHashAllowed`, OZ `Paused`/`Unpaused`, `RoleGranted`/`RoleRevoked`),
+  so config history can be rebuilt from logs. `revokeDeviceKey` deliberately works while paused, because revocation is
+  part of incident response. That is documented, so no change.
+
+Done: both.
+
+- `Registry` is now `AccessControlDefaultAdminRules` with `ADMIN_TRANSFER_DELAY = 1 days`. There is exactly one admin,
+  transfers take two steps and the new admin must accept after the delay, and a direct admin grant or instant
+  renounce reverts.
+- `_grantRole` is overridden so no account can hold both roles, whether through deploy, `grantRole` or accepting an
+  admin transfer (`AdminIsRelayer`).
+- Two new tests cover role separation in both directions and the two-step, delayed transfer, including the
+  instant-renounce revert. 45 contract tests pass, including the deep profile (fuzz 10k, invariants 512×128), and
+  branch coverage stays at 100%.
+- Cost: `seal()` is +25 gas from the longer selector dispatch: **100,340** with the precompile (Osaka), **326,571**
+  without. README, judge's guide, write-up and spike notes are updated; the gas snapshot and ABI are regenerated;
+  `deploy.md` and threat model T-8 describe the admin rules.
+
+`pnpm check` is green. e2e: 19/19 in dev mode and 19/19 in production mode.
+
+**Next: Iteration 28 — Tests/CI, pass 6**: add an invariant that no account ever holds both roles (let the handler
+call role functions as the admin); check how long CI takes end to end and whether the Playwright browser cache key
+is right; and make sure a failed e2e uploads the server log as well as the report.

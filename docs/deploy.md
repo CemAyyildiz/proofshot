@@ -3,7 +3,9 @@
 ## 1. Registry (testnet, then mainnet)
 
 Keys: a **deployer**, an **admin** (cold, never on a server) and a **relayer** (hot, funded with MON, lives in the
-app's env). The contract rejects admin == relayer.
+app's env). The contract never lets one account hold both roles, at deploy or later. There is exactly one admin,
+and it moves only by a two-step transfer: `beginDefaultAdminTransfer(new)`, then the new key calls
+`acceptDefaultAdminTransfer()` after 1 day. A plain `renounceRole` can't orphan the Registry.
 
 ```bash
 cd contracts

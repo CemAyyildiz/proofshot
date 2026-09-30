@@ -42,7 +42,7 @@ runs the Registry's exact OpenZeppelin `WebAuthn.verify` on each network's own E
 This confirms the core assumption on the live chains: passkey signatures verify natively and cheaply on Monad.
 
 **Cost at the live gas price (both networks reported 102 gwei on 2026-09-30):** a Registry deploy simulated on a
-testnet fork uses ~3.2M gas (≈ 0.33 MON); one Seal at the locally measured 100,315 gas ≈ 0.010 MON, so 1,000 Seals
+testnet fork uses ~3.2M gas (≈ 0.33 MON); one Seal at the locally measured 100,340 gas ≈ 0.010 MON, so 1,000 Seals
 ≈ 10 MON and 5,000 ≈ 51 MON. The USD budget in PRD §10.2 depends on the MON price at submission — not asserted here.
 
 **Still pending (needs a funded key):** a deployed Registry on testnet, `seal()` gas on the live chain and
@@ -64,5 +64,5 @@ Open `/spike/passkey` over HTTPS on iPhone Safari and Android Chrome, create a p
 - **`seal()` is relayer-only in v1.** The Device Key signature proves the device took the photo. But the relayer attests `carrierId` and `claimRef`, after it validates the Claim Link. If `seal()` were permissionless, anyone holding a key could attribute Seals to any Carrier and pollute Duplicate Alerts. A permissionless `seal()` becomes possible once the Claim Link binding is itself signed onchain.
 - **`rpIdHash` allowlist.** The admin manages it, so dev, preview and production RP IDs can be enabled independently.
 - **Device Key revocation (T-7).** A revoked key cannot seal from the revocation block on. Earlier Seals stay valid.
-- **Production `seal()` gas: 100,315** with the precompile (Osaka): the spike plus RP ID, revocation and pause checks.
+- **Production `seal()` gas: 100,340** with the precompile (Osaka): the spike plus RP ID, revocation and pause checks.
 - **Go/no-go:** **go** for onchain verification. The testnet run will confirm it on the live precompile.

@@ -34,7 +34,7 @@ legally. See [docs/threat-model.md](docs/threat-model.md).
 ## Why Monad
 
 - **Passkeys verified onchain, cheaply.** Monad ships the P-256 signature precompile (EIP-7951), so the contract
-  verifies a WebAuthn assertion over the whole Capture Record for **100,315 gas per Seal** (vs 326,546 without the
+  verifies a WebAuthn assertion over the whole Capture Record for **100,340 gas per Seal** (vs 326,571 without the
   precompile) — measured with Foundry on the Osaka EVM. A keyless probe confirmed on **Monad testnet and mainnet**
   that the precompile is live and that the same OpenZeppelin verification accepts a passkey assertion (13,853 gas) and
   rejects a tampered one; live `seal()` gas and latency are pending a funded key ([docs/spikes/spike-b.md](docs/spikes/spike-b.md)).

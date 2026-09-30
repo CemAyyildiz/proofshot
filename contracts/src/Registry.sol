@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {AccessControlDefaultAdminRules} from "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {WebAuthn} from "@openzeppelin/contracts/utils/cryptography/WebAuthn.sol";
 
@@ -17,7 +17,11 @@ import {WebAuthn} from "@openzeppelin/contracts/utils/cryptography/WebAuthn.sol"
 ///      Incident response for a compromised relayer key: the admin (a separate, cold key) pauses all writes, revokes
 ///      the relayer role and any Device Keys it registered, grants the role to a fresh relayer, and unpauses.
 ///      Records already written stay in the event log; their `keyId` and block let verifiers discount them.
-contract Registry is AccessControl, Pausable {
+///
+///      Roles: exactly one admin (OpenZeppelin DefaultAdminRules), moved only by a two-step transfer that the new
+///      admin must accept after `ADMIN_TRANSFER_DELAY`, so the Registry can't be orphaned by a stray `renounceRole` or
+///      handed to a mistyped address. No account may ever hold both the admin and the relayer role.
+contract Registry is AccessControlDefaultAdminRules, Pausable {
     struct CaptureRecord {
         bytes32 exactHash; // SHA-256 of the original image bytes
         bytes32 pHash; // PDQ of the whole image
@@ -46,6 +50,9 @@ contract Registry is AccessControl, Pausable {
     }
 
     bytes32 public constant RELAYER_ROLE = keccak256("RELAYER_ROLE");
+
+    /// @notice Wait between starting and accepting an admin transfer (including a renounce, i.e. a transfer to zero).
+    uint48 public constant ADMIN_TRANSFER_DELAY = 1 days;
 
     /// @notice Maximum blocks between the referenced block and inclusion (~30 s at 300 ms blocks).
     uint256 public constant MAX_LAG = 100;
@@ -98,13 +105,20 @@ contract Registry is AccessControl, Pausable {
     error NotAuthorized();
     error BatchTooLarge(uint256 size, uint256 max);
 
-    constructor(address admin, address relayer, bytes32[] memory rpIdHashes) {
-        if (admin == address(0) || relayer == address(0)) revert ZeroValue();
-        // The relayer is a hot key on a server; the admin must be a different (cold) key that can stop it.
-        if (admin == relayer) revert AdminIsRelayer();
-        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+    constructor(address admin, address relayer, bytes32[] memory rpIdHashes)
+        AccessControlDefaultAdminRules(ADMIN_TRANSFER_DELAY, admin)
+    {
+        if (relayer == address(0)) revert ZeroValue();
         _grantRole(RELAYER_ROLE, relayer);
         for (uint256 i; i < rpIdHashes.length; i++) _setRpIdHash(rpIdHashes[i], true);
+    }
+
+    /// @dev The relayer is a hot key on a server; the admin is a separate cold key that can stop it. Enforced on every
+    ///      grant (deploy, `grantRole`, accepting an admin transfer), not only at deploy.
+    function _grantRole(bytes32 role, address account) internal override returns (bool) {
+        if (role == RELAYER_ROLE && hasRole(DEFAULT_ADMIN_ROLE, account)) revert AdminIsRelayer();
+        if (role == DEFAULT_ADMIN_ROLE && hasRole(RELAYER_ROLE, account)) revert AdminIsRelayer();
+        return super._grantRole(role, account);
     }
 
     // ─── Admin ─────────────────────────────────────────────────────────────────────────────────────────────
