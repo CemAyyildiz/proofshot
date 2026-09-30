@@ -44,6 +44,11 @@ DATABASE_URL=... pnpm --filter web db:migrate
 DATABASE_URL=... pnpm --filter web db:seed northwind=you@example.com
 ```
 
+The seeded Northwind and Harbor carriers are **demo tenants**: with `DEMO_ACCESS=1` any visitor can enter them, and
+everything in them is visible to every visitor. Adding your email (as above) only lets you sign in to the demo
+tenant by email; demo entry always acts as the seeded placeholder account, never as you. Never put real claim data
+in a demo tenant.
+
 Evidence images: on a host with a persistent disk use `STORAGE_DRIVER=fs` (+ `STORAGE_DIR`). On serverless hosts
 (Vercel) use `STORAGE_DRIVER=s3` with a **private** S3-compatible bucket — Cloudflare R2 works (`S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com`,
 `S3_REGION=auto`) — plus `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`. Never make the bucket public: images

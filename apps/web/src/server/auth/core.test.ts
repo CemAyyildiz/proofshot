@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { eq } from "drizzle-orm";
 import type { Db } from "../db/client";
 import { testDb } from "../test-db";
 import { carriers, users } from "../db/schema";
@@ -56,6 +57,17 @@ describe("demo sessions", () => {
     const token = await openDemoSession(db, "harbor", t0);
     expect(await sessionUser(db, token!, t0)).toMatchObject({ carrierName: "Harbor Insurance", isDemo: true });
     expect(await sessionUser(db, token!, new Date(t0.getTime() + DEMO_SESSION_TTL_MS + 1))).toBeNull();
+  });
+
+  it("act as the seeded placeholder, never as a real person added to the demo carrier", async () => {
+    const [northwind] = await db.select().from(carriers).where(eq(carriers.slug, "northwind"));
+    // Inserted first so an unordered lookup would be likely to pick it.
+    await db.delete(users).where(eq(users.carrierId, northwind!.id));
+    await db.insert(users).values({ carrierId: northwind!.id, email: "owner@real.example" });
+    expect(await openDemoSession(db, "northwind")).toBeNull();
+    await db.insert(users).values({ carrierId: northwind!.id, email: "marcus@northwind.demo" });
+    const token = await openDemoSession(db, "northwind");
+    expect(await sessionUser(db, token!)).toMatchObject({ email: "marcus@northwind.demo", isDemo: true });
   });
 
   it("never open for a real carrier, the sandbox or an unknown slug", async () => {

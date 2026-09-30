@@ -1,7 +1,8 @@
 import { createHash, randomBytes } from "node:crypto";
-import { and, eq, gt, isNull } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull } from "drizzle-orm";
 import type { Db } from "../db/client";
 import { carriers, magicLinkTokens, sessions, users } from "../db/schema";
+import { SEED_CARRIERS } from "../db/seed";
 
 export const MAGIC_LINK_TTL_MS = 15 * 60 * 1000;
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -55,11 +56,15 @@ export const DEMO_SESSION_TTL_MS = 2 * 60 * 60 * 1000;
  * workspace can never be entered without its own sign-in link.
  */
 export async function openDemoSession(db: Db, carrierSlug: string, now = new Date()): Promise<string | null> {
+  // Only the seeded placeholder account: an operator's own email added to a demo carrier must never be shown to
+  // (or acted as by) anonymous visitors.
+  const demoEmails: readonly string[] = SEED_CARRIERS.find((c) => c.slug === carrierSlug)?.users ?? [];
+  if (demoEmails.length === 0) return null;
   const [row] = await db
     .select({ userId: users.id })
     .from(carriers)
     .innerJoin(users, eq(users.carrierId, carriers.id))
-    .where(and(eq(carriers.slug, carrierSlug), eq(carriers.isDemo, true)))
+    .where(and(eq(carriers.slug, carrierSlug), eq(carriers.isDemo, true), inArray(users.email, [...demoEmails])))
     .limit(1);
   return row ? openSession(db, row.userId, now, DEMO_SESSION_TTL_MS) : null;
 }
