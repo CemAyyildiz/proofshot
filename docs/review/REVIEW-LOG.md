@@ -1636,3 +1636,45 @@ Done: both.
 **Next: Iteration 49 — Docs, pass 10**: the OWNER-TODO checklist, read through against what exists now: the runbook,
 latency report, health conditions, demo retention and canary issues. Every owner step should point at the doc or
 command that now automates or verifies it, and steps that are no longer needed should go.
+
+---
+
+## Iteration 49 — Docs, pass 10: the owner's checklist against the product as it now is (2026-09-30)
+
+`OWNER-TODO.html` is git-ignored by design (it is the owner's private, Turkish checklist), so only this entry is
+committed. I read it end to end against what iterations 23–48 changed.
+
+Findings:
+
+- **H1** The key instructions no longer matched the contract. The checklist asked for **one** funded key per network
+  (a "deployer"). Since iteration 27 the Registry refuses an account that holds both the admin and the relayer role,
+  and the deploy needs `REGISTRY_ADMIN` and `REGISTRY_RELAYER`. The relayer key also has to reach the host and pay
+  every Seal. Followed as written, the mainnet step would have produced either a refused deploy or a cold admin key
+  sitting in a `.env` file.
+- **M1** Nothing told the owner that the production hostname must be decided **before** deploy. The RP ID is written
+  into the Registry, and changing it later needs an admin transaction.
+- **M2** `docs/security.md` asks reporters to use GitHub's private vulnerability reporting, but nothing told the owner
+  to switch it on.
+- **L1** The uptime step still described two 503 causes; there are now four (low balance, paused, chain unreachable,
+  email not configured). It also didn't say how to read `problems`. The demo retention and the runbook were not
+  mentioned.
+
+Done: all.
+
+- Testnet: two keys (deployer, which is also the admin, and a relayer), both in `.env.testnet`.
+- Mainnet: three roles, explained in one sentence each:
+  - admin in an encrypted keystore (`cast wallet import proofshot-admin --interactive`) or on a Ledger; only its
+    **address** goes into `.env.mainnet`, and the runbook's `ADMIN_SIGNER="--account proofshot-admin"` shows how it
+    signs later;
+  - deployer and relayer as plain keys, with funding amounts derived from the measured gas.
+- A new step: decide the final hostname and send it before deploy, with a pointer to the runbook for adding one
+  later.
+- The GitHub step now includes enabling private vulnerability reporting. The uptime step lists all four `problems`
+  and the action for each. The hosting step mentions the 7-day demo retention.
+
+No code changed, so the last green `pnpm check` and e2e runs (iteration 48) still apply.
+
+**Next: Iteration 50 — Frontend UI/UX, pass 11**: the imports page (Console → Import history). Check the upload
+affordance, progress for a 10-file batch, the mixed-outcome result list ("imported", "not a readable image", "over 50
+megapixels"), and what an adjuster learns about the transaction, with no crypto jargon beyond what a carrier
+back-office needs.
