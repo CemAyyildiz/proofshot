@@ -117,5 +117,19 @@ describe("replaceClaimLink", () => {
     expect(await resolveClaimLink(db, again!.token, now)).toMatchObject({ state: "active" });
     expect((await getClaimFile(northwind, file.id))!.link.token).toBe(again!.token);
   });
+
+  it("handles two replacements at once (a double click, two adjusters): both succeed and every old token is retired", async () => {
+    const db = await testDb();
+    const northwind = await carrierScope(db, "northwind");
+    const file = await createClaimFile(northwind, "DOUBLE-1");
+    const now = new Date(Date.now() + 1000);
+    const [a, b] = await Promise.all([replaceClaimLink(northwind, file.id, now), replaceClaimLink(northwind, file.id, now)]);
+    const current = (await getClaimFile(northwind, file.id))!.link.token;
+    expect([a!.token, b!.token]).toContain(current);
+    // The original and the link that was replaced second are both retired: none is left pointing nowhere.
+    for (const token of [file.link.token, a!.token, b!.token].filter((t) => t !== current)) {
+      expect(await resolveClaimLink(db, token, now)).toMatchObject({ claimFileId: file.id, state: "revoked" });
+    }
+  });
 });
 

@@ -98,7 +98,10 @@ export async function replaceClaimLink(scope: CarrierScope, claimFileId: string,
   const file = await getClaimFile(scope, claimFileId);
   if (!file) return null;
   return scope.db.transaction(async (tx) => {
-    await tx.insert(retiredClaimLinks).values({ token: file.link.token, claimFileId: file.id, retiredAt: now });
+    // Retire whatever token is current once the row is locked, not the one read above: a concurrent replacement
+    // (a double click, two adjusters) may have moved it on, and its token must be retired too.
+    const [current] = await tx.select({ token: claimLinks.token }).from(claimLinks).where(eq(claimLinks.claimFileId, file.id)).for("update");
+    await tx.insert(retiredClaimLinks).values({ token: current!.token, claimFileId: file.id, retiredAt: now });
     const [link] = await tx
       .update(claimLinks)
       .set({ token: newClaimLinkToken(), expiresAt: new Date(now.getTime() + CLAIM_LINK_TTL_MS), revokedAt: null, createdAt: now })
