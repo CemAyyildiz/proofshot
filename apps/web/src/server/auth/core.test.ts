@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "../db/client";
 import { testDb } from "../test-db";
-import { MAGIC_LINK_TTL_MS, SESSION_TTL_MS, endSession, issueMagicLink, redeemMagicLink, sessionUser } from "./core";
+import { carriers, users } from "../db/schema";
+import { DEMO_SESSION_TTL_MS, MAGIC_LINK_TTL_MS, SESSION_TTL_MS, endSession, issueMagicLink, openDemoSession, redeemMagicLink, sessionUser } from "./core";
 
 let db: Db;
 beforeEach(async () => {
@@ -46,5 +47,22 @@ describe("sessions", () => {
     expect(await sessionUser(db, session, new Date(t0.getTime() + SESSION_TTL_MS + 1))).toBeNull();
     await endSession(db, session);
     expect(await sessionUser(db, session, t0)).toBeNull();
+  });
+});
+
+describe("demo sessions", () => {
+  it("open only for seeded demo carriers, and expire after two hours", async () => {
+    const t0 = new Date("2026-09-30T10:00:00Z");
+    const token = await openDemoSession(db, "harbor", t0);
+    expect(await sessionUser(db, token!, t0)).toMatchObject({ carrierName: "Harbor Insurance", isDemo: true });
+    expect(await sessionUser(db, token!, new Date(t0.getTime() + DEMO_SESSION_TTL_MS + 1))).toBeNull();
+  });
+
+  it("never open for a real carrier, the sandbox or an unknown slug", async () => {
+    const [real] = await db.insert(carriers).values({ slug: "acme", name: "Acme Insurance", pseudonymousId: "0x01" }).returning();
+    await db.insert(users).values({ carrierId: real!.id, email: "claims@acme.example" });
+    expect(await openDemoSession(db, "acme")).toBeNull();
+    expect(await openDemoSession(db, "sandbox")).toBeNull();
+    expect(await openDemoSession(db, "nope")).toBeNull();
   });
 });

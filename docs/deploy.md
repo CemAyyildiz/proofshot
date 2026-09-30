@@ -34,6 +34,7 @@ Set these in the hosting provider (see `apps/web/.env.example`):
 | `STORAGE_DRIVER` + `S3_*` | evidence image storage (see below) |
 | `APP_URL` | public origin, e.g. `https://proofshot.app` |
 | `RESEND_API_KEY`, `MAIL_FROM` | sign-in email (required in production: without it sign-in refuses rather than logging tokens) |
+| `DEMO_ACCESS` | `1` on the judging deployment: one-tap entry into the two seeded demo carriers (never real ones) |
 | `CRON_SECRET` | ≥ 16 random characters; `vercel.json` schedules the daily `/api/cron/maintenance` cleanup |
 
 Then migrate and seed once:

@@ -54,6 +54,7 @@ export default defineConfig({
         RESEND_API_KEY: "",
         SIGNIN_LIMIT_PER_EMAIL: "1000",
         MAIL_DEV_OUTBOX: "1",
+        DEMO_ACCESS: "1",
         PROOFSHOT_NETWORK: "local",
         RPC_URL: E2E_RPC,
         REGISTRY_ADDRESS: E2E_REGISTRY,

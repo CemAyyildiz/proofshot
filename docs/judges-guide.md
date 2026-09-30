@@ -31,11 +31,16 @@ Five minutes, a phone, no sign-up.
 | Accessibility | `apps/web/e2e/a11y.spec.ts` — axe WCAG 2.1 AA, light and dark: 0 violations |
 | Every requirement → code → test | `docs/traceability.md` |
 
-## 3. The Carrier side (Console)
+## 3. The Carrier side (2 minutes, laptop)
 
-The adjuster and investigator flows — evidence view, **Altered** with a Tile Map on an emailed image, and a
-**Duplicate Alert · another carrier** — are in the demo video (script: `docs/demo-script.md`). To run them yourself:
-README → "Run it locally" (one local chain, two demo carriers).
+1. Open **Carrier Console** → **Explore the demo Console** → **Northwind Mutual · adjuster** (no email; a banner
+   marks it as a demo shared with other visitors).
+2. Create a Claim File, open it, and **Upload and verify** the edited copy from step 1 → **Altered** with the Tile Map.
+3. Go back to sign-in in a private window and choose **Harbor Insurance · investigator**. Create a Claim File and
+   upload the WhatsApp copy → **Duplicate Alert · another carrier**, showing match strength and date only — nothing
+   about Northwind, its claim or its image.
+
+The same flows are in the demo video (script: `docs/demo-script.md`) and run locally via README → "Run it locally".
 
 ## Honest limits
 

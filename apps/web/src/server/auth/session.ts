@@ -7,13 +7,13 @@ import { SESSION_TTL_MS, endSession, sessionUser, type SessionUser } from "./cor
 
 export const SESSION_COOKIE = "ps_session";
 
-export async function setSessionCookie(token: string) {
+export async function setSessionCookie(token: string, ttlMs = SESSION_TTL_MS) {
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_TTL_MS / 1000,
+    maxAge: ttlMs / 1000,
   });
 }
 

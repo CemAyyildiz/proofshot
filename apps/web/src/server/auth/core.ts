@@ -14,6 +14,7 @@ export interface SessionUser {
   email: string;
   carrierId: string;
   carrierName: string;
+  isDemo: boolean;
 }
 
 /** Issues a single-use sign-in token for a known Carrier User. Unknown emails return null (callers must not reveal this). */
@@ -37,18 +38,35 @@ export async function redeemMagicLink(db: Db, token: string, now = new Date()): 
     .where(and(eq(magicLinkTokens.tokenHash, hashToken(token)), isNull(magicLinkTokens.usedAt), gt(magicLinkTokens.expiresAt, now)))
     .returning({ userId: magicLinkTokens.userId });
   if (!claimed) return null;
+  return openSession(db, claimed.userId, now);
+}
+
+async function openSession(db: Db, userId: string, now: Date, ttlMs = SESSION_TTL_MS): Promise<string> {
   const sessionToken = newToken();
-  await db.insert(sessions).values({
-    tokenHash: hashToken(sessionToken),
-    userId: claimed.userId,
-    expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
-  });
+  await db.insert(sessions).values({ tokenHash: hashToken(sessionToken), userId, expiresAt: new Date(now.getTime() + ttlMs) });
   return sessionToken;
+}
+
+/** Demo sessions are short: a judge's visit, not a working day. */
+export const DEMO_SESSION_TTL_MS = 2 * 60 * 60 * 1000;
+
+/**
+ * One-tap entry into a seeded demo carrier (DEMO_ACCESS). Only carriers flagged `isDemo` qualify, so a real carrier's
+ * workspace can never be entered without its own sign-in link.
+ */
+export async function openDemoSession(db: Db, carrierSlug: string, now = new Date()): Promise<string | null> {
+  const [row] = await db
+    .select({ userId: users.id })
+    .from(carriers)
+    .innerJoin(users, eq(users.carrierId, carriers.id))
+    .where(and(eq(carriers.slug, carrierSlug), eq(carriers.isDemo, true)))
+    .limit(1);
+  return row ? openSession(db, row.userId, now, DEMO_SESSION_TTL_MS) : null;
 }
 
 export async function sessionUser(db: Db, sessionToken: string, now = new Date()): Promise<SessionUser | null> {
   const [row] = await db
-    .select({ userId: users.id, email: users.email, carrierId: carriers.id, carrierName: carriers.name })
+    .select({ userId: users.id, email: users.email, carrierId: carriers.id, carrierName: carriers.name, isDemo: carriers.isDemo })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
     .innerJoin(carriers, eq(carriers.id, users.carrierId))

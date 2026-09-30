@@ -7,10 +7,13 @@ import { type CarrierScope, getClaimFile } from "../dal/claim-files";
 import { decodeForPreview } from "../fingerprint";
 import { claimRefFor } from "../capture/seal";
 import type { Storage } from "../storage";
+import { DAY_MS, consume } from "../rate-limit";
 import { verifyImage } from "../verify/verify";
 import { raiseDuplicateAlerts } from "./duplicates";
 
 const PREVIEW_MAX = 1600;
+/** In-file verifications per Carrier per day: bounds storage and CPU (demo carriers are open to visitors). */
+export const UPLOADS_PER_CARRIER_PER_DAY = 500;
 
 function sniffContentType(b: Uint8Array): string {
   if (b[0] === 0xff && b[1] === 0xd8) return "image/jpeg";
@@ -21,7 +24,7 @@ function sniffContentType(b: Uint8Array): string {
 
 export type UploadResult =
   | { ok: true; uploadId: string; verificationId: string; verdict: string; alerts: number }
-  | { ok: false; status: 400 | 404 | 413 | 415; error: string };
+  | { ok: false; status: 400 | 404 | 413 | 415 | 429; error: string };
 
 /**
  * FR-14: a Carrier User verifies an image received outside Proofshot (e.g. by email) inside a Claim File. The
@@ -37,6 +40,9 @@ export async function uploadIntoClaimFile(
 ): Promise<UploadResult> {
   const file = await getClaimFile(scope, claimFileId);
   if (!file) return { ok: false, status: 404, error: "Claim File not found." };
+  if (!(await consume(scope.db, `upload:${scope.carrierId}`, UPLOADS_PER_CARRIER_PER_DAY, DAY_MS)).allowed) {
+    return { ok: false, status: 429, error: "Your carrier has reached today's verification limit. Try again tomorrow." };
+  }
 
   const result = await verifyImage(scope.db, chainId, entries, bytes, { claimFileId: file.id });
   if (!result.ok) return result;

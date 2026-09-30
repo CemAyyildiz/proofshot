@@ -25,6 +25,11 @@ export default async function WorkspaceLayout({ children }: LayoutProps<"/consol
           </form>
         </div>
       </header>
+      {session.isDemo && (
+        <p className="border-b border-line bg-background px-4 py-2 text-center text-sm text-muted">
+          Demo workspace · {session.carrierName} is a fictional carrier. Anything you add here is visible to other visitors.
+        </p>
+      )}
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">{children}</main>
     </div>
   );

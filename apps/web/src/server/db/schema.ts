@@ -11,6 +11,8 @@ export const carriers = pgTable("carriers", {
   name: text("name").notNull(),
   pseudonymousId: text("pseudonymous_id").notNull().unique(),
   isSandbox: boolean("is_sandbox").notNull().default(false),
+  /** Seeded demo carrier: visitors may enter its Console without email when DEMO_ACCESS=1. Never a real carrier. */
+  isDemo: boolean("is_demo").notNull().default(false),
   createdAt: createdAt(),
 });
 

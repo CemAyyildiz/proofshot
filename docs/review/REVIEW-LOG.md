@@ -628,3 +628,29 @@ Done: H1, M1, M2. M3 goes to the next backend iteration.
 **Next: Iteration 21 — Backend, pass 5**: judge access to the demo Console — an opt-in (`DEMO_ACCESS=1`) one-tap
 sign-in limited to the seeded demo carriers, with its own rate limits and upload caps, never available for real
 carriers, clearly labelled as a demo.
+
+---
+
+## Iteration 21 — Backend, pass 5: judge access to the demo Console (2026-09-30)
+
+Closes M3 from iteration 20.
+
+Design constraints: opt-in per deployment; impossible to use against a real carrier; bounded cost; unmistakably a
+demo to whoever enters.
+
+Done:
+
+- `carriers.is_demo` (migration 0005); the seed marks Northwind and Harbor as demo carriers and now updates flags on
+  every run (it used to be insert-only, which would have left existing databases unflagged).
+- `openDemoSession(db, slug)` opens a **2-hour** session for a seeded user, and only when the carrier is `is_demo`.
+  Unit tests: works for Harbor; `null` for a real carrier, the sandbox and unknown slugs; expires after 2 h.
+- `enterDemo` server action behind `DEMO_ACCESS=1`, rate-limited to 20 demo sessions per client per hour.
+- Sign-in shows **Explore the demo Console** (Northwind · adjuster / Harbor · investigator) only when enabled; the
+  Console shows a "Demo workspace · fictional carrier · visible to other visitors" banner.
+- New general safeguard: in-file verifications capped at 500 per carrier per day (storage and CPU), since demo
+  carriers are open to visitors.
+- e2e: one tap into Harbor's Console with the banner; the axe scan covers the new sign-in section.
+- Judge's guide step 3 is now hands-on; deploy docs and OWNER-TODO ask for `DEMO_ACCESS=1` on the judging deployment.
+
+**Next: Iteration 22 — Contracts, pass 5**: review `importRecords` batch size vs the Osaka per-transaction gas cap
+(2^24) — the app sends 10 per batch; compute the real ceiling and enforce it in both the contract docs and the app.

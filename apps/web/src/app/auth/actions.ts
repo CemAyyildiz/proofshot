@@ -4,12 +4,13 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { env } from "@/lib/env";
-import { issueMagicLink, redeemMagicLink } from "@/server/auth/core";
+import { DEMO_SESSION_TTL_MS, issueMagicLink, openDemoSession, redeemMagicLink } from "@/server/auth/core";
 import { signInAllowed } from "@/server/auth/limits";
 import { sendMagicLinkEmail } from "@/server/auth/mail";
 import { clearSession, setSessionCookie } from "@/server/auth/session";
 import { clientKey } from "@/server/client-key";
 import { getDb } from "@/server/db";
+import { consume } from "@/server/rate-limit";
 
 export interface SignInState {
   status: "idle" | "sent" | "invalid" | "limited";
@@ -36,6 +37,17 @@ export async function completeSignIn(form: FormData) {
   const session = await redeemMagicLink(await getDb(), String(form.get("token") ?? ""));
   if (!session) redirect("/auth/verify?error=expired");
   await setSessionCookie(session);
+  redirect("/console");
+}
+
+/** One tap into a seeded demo carrier's Console (DEMO_ACCESS=1 only). */
+export async function enterDemo(form: FormData) {
+  if (env().DEMO_ACCESS !== "1") redirect("/console/sign-in");
+  const db = await getDb();
+  if (!(await consume(db, `demo:${clientKey(await headers())}`, 20, 60 * 60 * 1000)).allowed) redirect("/console/sign-in?demo=limited");
+  const session = await openDemoSession(db, String(form.get("carrier") ?? ""));
+  if (!session) redirect("/console/sign-in");
+  await setSessionCookie(session, DEMO_SESSION_TTL_MS);
   redirect("/console");
 }
 

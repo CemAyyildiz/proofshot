@@ -43,6 +43,8 @@ export const serverEnvSchema = z.object({
   /** Sign-in links per address per hour (raised only in automated tests). */
   /** Shared secret the hosting scheduler sends to /api/cron/maintenance. Unset: the route is disabled. */
   CRON_SECRET: z.string().min(16).optional(),
+  /** "1" lets visitors enter the seeded demo carriers' Console with one tap (no email). Never touches real carriers. */
+  DEMO_ACCESS: z.enum(["0", "1"]).default("0"),
   /** "1" exposes developer spike pages (/spike/passkey) in production, e.g. for real-device fixtures. */
   ENABLE_SPIKE_PAGES: z.enum(["0", "1"]).default("0"),
   /** "1" allows the dev outbox (links in logs and .data/outbox.jsonl) in production builds — automated tests only. */

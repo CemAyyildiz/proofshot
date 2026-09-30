@@ -54,3 +54,12 @@ test("a used sign-in link cannot be reused", async ({ page, browser }) => {
   await other.getByRole("button", { name: "Sign in" }).click();
   await expect(other.getByRole("heading", { name: "This sign-in link is no longer valid" })).toBeVisible();
 });
+
+test("judges can enter a demo carrier's Console with one tap, clearly labelled as a demo", async ({ page }) => {
+  await page.goto("/console/sign-in");
+  const demo = page.getByRole("region", { name: "Explore the demo Console" });
+  await demo.getByRole("button", { name: /Harbor Insurance/ }).click();
+  await expect(page).toHaveURL(/\/console$/);
+  await expect(page.getByText(/Demo workspace · Harbor Insurance is a fictional carrier/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Claim Files" })).toBeVisible();
+});
