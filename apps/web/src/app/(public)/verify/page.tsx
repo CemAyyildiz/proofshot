@@ -12,7 +12,7 @@ export default function VerifyPage() {
       <header className="flex flex-col gap-2">
         <p className="eyebrow">Public Verifier</p>
         <h1 className="text-3xl font-semibold">Verify a photo</h1>
-        <p className="text-muted">
+        <p className="text-foreground/80">
           Drop in any copy of a claim photo, even one forwarded over a messaging app. You&apos;ll see whether it was
           sealed, when, and whether anything was changed. No account needed, and your image is not kept.
         </p>

@@ -23,13 +23,21 @@ async function auditScheme(page: Page, name: string) {
   await expect(page, `${name} has a document title`).toHaveTitle(/\S/);
   // Measure the settled UI: a button fading from disabled to enabled (150 ms) otherwise reads as low contrast mid-way.
   // Infinite ones (spinners) never finish, so they are skipped.
+  // Only animations on rendered elements: one inside a closed <details> never advances, so it never finishes.
   await page.evaluate(() =>
-    Promise.all(
-      document
-        .getAnimations()
-        .filter((a) => a.effect?.getComputedTiming().endTime !== Infinity)
-        .map((a) => a.finished.catch(() => undefined)),
-    ),
+    Promise.race([
+      Promise.all(
+        document
+          .getAnimations()
+          .filter((a) => a.effect?.getComputedTiming().endTime !== Infinity)
+          .filter((a) => {
+            const target = (a.effect as KeyframeEffect | null)?.target;
+            return !(target instanceof Element) || target.checkVisibility();
+          })
+          .map((a) => a.finished.catch(() => undefined)),
+      ),
+      new Promise((r) => setTimeout(r, 2_000)),
+    ]),
   );
   const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
   // Selector plus axe's own reason (e.g. the measured contrast ratio), so a CI failure is diagnosable from the log alone.

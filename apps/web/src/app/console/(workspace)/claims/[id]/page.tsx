@@ -51,7 +51,7 @@ export default async function ClaimFilePage({ params, searchParams }: PageProps<
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link href="/console" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground">
+        <Link href="/console" className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted hover:text-foreground">
           <ArrowLeftIcon /> All Claim Files
         </Link>
         <h1 className="mt-2 text-2xl font-semibold [overflow-wrap:anywhere]">{file.reference}</h1>
@@ -176,7 +176,7 @@ export default async function ClaimFilePage({ params, searchParams }: PageProps<
                 )}
                 <span className="text-muted">Sealed {formatDateTime(c.sealedAt)}{c.sentAt ? " · Photo received" : ""}</span>
                 <AlertLink count={alertCount(c.exactHash)} anchor={`photo-${i + 1}`} />
-                <a href={`/r/${c.exactHash}`} className="underline underline-offset-4">
+                <a href={`/r/${c.exactHash}`} className="inline-flex min-h-11 items-center self-start underline underline-offset-4">
                   Receipt
                 </a>
               </li>
@@ -205,7 +205,7 @@ export default async function ClaimFilePage({ params, searchParams }: PageProps<
                   <span className="text-muted">Checked {formatDateTime(u.createdAt)}</span>
                   <AlertLink count={alertCount(u.exactHash)} anchor={`upload-${i + 1}`} />
                   {u.verificationId && (
-                    <a href={`/v/${u.verificationId}`} className="underline underline-offset-4">
+                    <a href={`/v/${u.verificationId}`} className="inline-flex min-h-11 items-center self-start underline underline-offset-4">
                       Receipt
                     </a>
                   )}
@@ -223,7 +223,7 @@ export default async function ClaimFilePage({ params, searchParams }: PageProps<
 function AlertLink({ count, anchor }: { count: number; anchor: string }) {
   if (count === 0) return null;
   return (
-    <a href={`#alerts-${anchor}`} className="inline-flex items-center gap-1.5 font-medium underline underline-offset-4">
+    <a href={`#alerts-${anchor}`} className="inline-flex min-h-11 items-center gap-1.5 self-start font-medium underline underline-offset-4">
       <WarningIcon className="size-4 shrink-0" />
       {count} Duplicate Alert{count === 1 ? "" : "s"}
     </a>

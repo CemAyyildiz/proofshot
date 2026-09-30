@@ -355,13 +355,13 @@ export function CaptureScreen({
               {c.status === "failed" && (
                 <span className="flex flex-wrap gap-x-3 text-sm">
                   {!stopped && (
-                    <button type="button" className="min-h-9 underline underline-offset-4" onClick={() => seal(c, performance.now())}>
+                    <button type="button" className="min-h-11 underline underline-offset-4" onClick={() => seal(c, performance.now())}>
                       Retry
                     </button>
                   )}
                   <ConfirmAction
                     trigger="Discard"
-                    triggerClassName="min-h-9 underline underline-offset-4"
+                    triggerClassName="min-h-11 underline underline-offset-4"
                     question="Delete this photo?"
                     confirmLabel="Delete"
                     onConfirm={() => discard(c)}

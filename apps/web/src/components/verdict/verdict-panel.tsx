@@ -21,11 +21,11 @@ export function VerdictPanel({ view, headingLevel = 2 }: { view: VerdictView; he
       <dl className="grid gap-2 text-sm">
         <div>
           <dt className="font-semibold">What this means</dt>
-          <dd className="text-muted">{copy.means}</dd>
+          <dd className="text-foreground/80">{copy.means}</dd>
         </div>
         <div>
           <dt className="font-semibold">What it does not mean</dt>
-          <dd className="text-muted">{copy.doesNotMean}</dd>
+          <dd className="text-foreground/80">{copy.doesNotMean}</dd>
         </div>
       </dl>
       {view.record?.kind === "imported" && <p className="text-sm text-muted">{IMPORTED_NOTE}</p>}
