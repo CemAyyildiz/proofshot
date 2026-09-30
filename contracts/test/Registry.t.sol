@@ -3,7 +3,8 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std/Test.sol";
 import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
-import {IAccessControlDefaultAdminRules} from "@openzeppelin/contracts/access/extensions/IAccessControlDefaultAdminRules.sol";
+import {IAccessControlDefaultAdminRules} from
+    "@openzeppelin/contracts/access/extensions/IAccessControlDefaultAdminRules.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {WebAuthn} from "@openzeppelin/contracts/utils/cryptography/WebAuthn.sol";
 import {Registry} from "../src/Registry.sol";
@@ -38,7 +39,9 @@ contract RegistryTest is Test {
         r.exactHash = vm.parseJsonBytes32(json, ".record.exactHash");
         r.pHash = vm.parseJsonBytes32(json, ".record.pHash");
         bytes32[] memory tiles = vm.parseJsonBytes32Array(json, ".record.tiles");
-        for (uint256 i; i < 16; i++) r.tiles[i] = tiles[i];
+        for (uint256 i; i < 16; i++) {
+            r.tiles[i] = tiles[i];
+        }
         r.width = uint32(vm.parseJsonUint(json, ".record.width"));
         r.height = uint32(vm.parseJsonUint(json, ".record.height"));
         r.locCommit = vm.parseJsonBytes32(json, ".record.locCommit");
@@ -62,7 +65,9 @@ contract RegistryTest is Test {
         registry.seal(keyId, r, a);
     }
 
-    function _expectSealRevert(Registry.CaptureRecord memory r, WebAuthn.WebAuthnAuth memory a, bytes memory err) internal {
+    function _expectSealRevert(Registry.CaptureRecord memory r, WebAuthn.WebAuthnAuth memory a, bytes memory err)
+        internal
+    {
         vm.expectRevert(err);
         _seal(r, a);
     }
@@ -71,7 +76,11 @@ contract RegistryTest is Test {
 
     function test_ConstructorRejectsZeroAddresses() public {
         bytes32[] memory rp = new bytes32[](0);
-        vm.expectRevert(abi.encodeWithSelector(IAccessControlDefaultAdminRules.AccessControlInvalidDefaultAdmin.selector, address(0)));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControlDefaultAdminRules.AccessControlInvalidDefaultAdmin.selector, address(0)
+            )
+        );
         new Registry(address(0), relayer, rp);
         vm.expectRevert(Registry.ZeroValue.selector);
         new Registry(admin, address(0), rp);
@@ -100,7 +109,11 @@ contract RegistryTest is Test {
         vm.expectRevert(IAccessControlDefaultAdminRules.AccessControlEnforcedDefaultAdminRules.selector);
         vm.prank(admin);
         registry.grantRole(adminRole, next);
-        vm.expectRevert(abi.encodeWithSelector(IAccessControlDefaultAdminRules.AccessControlEnforcedDefaultAdminDelay.selector, uint48(0)));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControlDefaultAdminRules.AccessControlEnforcedDefaultAdminDelay.selector, uint48(0)
+            )
+        );
         vm.prank(admin);
         registry.renounceRole(adminRole, admin);
         assertTrue(registry.hasRole(adminRole, admin));
@@ -108,7 +121,12 @@ contract RegistryTest is Test {
         // A transfer takes two steps and the delay; the new admin must accept.
         vm.prank(admin);
         registry.beginDefaultAdminTransfer(next);
-        vm.expectRevert(abi.encodeWithSelector(IAccessControlDefaultAdminRules.AccessControlEnforcedDefaultAdminDelay.selector, uint48(block.timestamp + 1 days)));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControlDefaultAdminRules.AccessControlEnforcedDefaultAdminDelay.selector,
+                uint48(block.timestamp + 1 days)
+            )
+        );
         vm.prank(next);
         registry.acceptDefaultAdminTransfer();
         vm.warp(block.timestamp + 1 days + 1);
@@ -130,7 +148,9 @@ contract RegistryTest is Test {
         address fresh = makeAddr("fresh-relayer");
 
         // Only the admin can pause.
-        vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, attacker, bytes32(0)));
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, attacker, bytes32(0))
+        );
         vm.prank(attacker);
         registry.pause();
 
@@ -157,7 +177,11 @@ contract RegistryTest is Test {
         registry.unpause();
 
         // The old relayer is out; the revoked key can't seal even through the new relayer.
-        vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, attacker, registry.RELAYER_ROLE()));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, attacker, registry.RELAYER_ROLE()
+            )
+        );
         vm.prank(attacker);
         registry.seal(keyId, r, _auth(".auth"));
         vm.expectRevert(abi.encodeWithSelector(Registry.DeviceKeyIsRevoked.selector, keyId));
@@ -195,7 +219,9 @@ contract RegistryTest is Test {
 
     function test_AdminManagesRpIds() public {
         bytes32 prod = sha256("proofshot.app");
-        vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, relayer, bytes32(0)));
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, relayer, bytes32(0))
+        );
         vm.prank(relayer);
         registry.setRpIdHash(prod, true);
 
@@ -208,7 +234,9 @@ contract RegistryTest is Test {
 
     function test_RegisterDeviceKeyIsRelayerOnlyAndImmutable() public {
         vm.expectRevert(
-            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, registry.RELAYER_ROLE())
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, registry.RELAYER_ROLE()
+            )
         );
         vm.prank(stranger);
         registry.registerDeviceKey(keccak256("k"), qx, qy);
@@ -249,7 +277,17 @@ contract RegistryTest is Test {
         Registry.CaptureRecord memory r = _record();
         vm.expectEmit(address(registry));
         emit Registry.CaptureSealed(
-            r.exactHash, keyId, r.carrierId, r.pHash, r.tiles, r.width, r.height, r.locCommit, r.claimRef, r.deviceTime, r.refBlock
+            r.exactHash,
+            keyId,
+            r.carrierId,
+            r.pHash,
+            r.tiles,
+            r.width,
+            r.height,
+            r.locCommit,
+            r.claimRef,
+            r.deviceTime,
+            r.refBlock
         );
         _seal(r, _auth(".auth"));
         assertTrue(registry.isSealed(r.exactHash));
@@ -265,7 +303,9 @@ contract RegistryTest is Test {
 
     function test_SealIsRelayerOnly() public {
         vm.expectRevert(
-            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, registry.RELAYER_ROLE())
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, registry.RELAYER_ROLE()
+            )
         );
         vm.prank(stranger);
         registry.seal(keyId, _record(), _auth(".auth"));
@@ -324,7 +364,9 @@ contract RegistryTest is Test {
         bytes32 localhost = LOCALHOST; // evaluating the constant calls the sha256 precompile, which would eat the prank
         vm.prank(admin);
         registry.setRpIdHash(localhost, false);
-        _expectSealRevert(_record(), _auth(".auth"), abi.encodeWithSelector(Registry.RpIdNotAllowed.selector, localhost));
+        _expectSealRevert(
+            _record(), _auth(".auth"), abi.encodeWithSelector(Registry.RpIdNotAllowed.selector, localhost)
+        );
     }
 
     function test_RejectsShortAuthenticatorData() public {
@@ -382,7 +424,9 @@ contract RegistryTest is Test {
         b = new Registry.ImportRecord[](n);
         for (uint256 i; i < n; i++) {
             b[i] = _import(keccak256(abi.encode(salt, i)));
-            for (uint256 t; t < 16; t++) b[i].tiles[t] = keccak256(abi.encode(salt, i, t));
+            for (uint256 t; t < 16; t++) {
+                b[i].tiles[t] = keccak256(abi.encode(salt, i, t));
+            }
         }
     }
 
@@ -407,7 +451,9 @@ contract RegistryTest is Test {
     function test_ImportIsRelayerOnlyAndNeedsCarrier() public {
         Registry.ImportRecord[] memory batch = new Registry.ImportRecord[](0);
         vm.expectRevert(
-            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, registry.RELAYER_ROLE())
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, stranger, registry.RELAYER_ROLE()
+            )
         );
         vm.prank(stranger);
         registry.importRecords(keccak256("c"), batch);

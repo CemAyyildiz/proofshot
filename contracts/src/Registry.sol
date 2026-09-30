@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {AccessControlDefaultAdminRules} from "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
+import {AccessControlDefaultAdminRules} from
+    "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {WebAuthn} from "@openzeppelin/contracts/utils/cryptography/WebAuthn.sol";
 
@@ -54,7 +55,7 @@ contract Registry is AccessControlDefaultAdminRules, Pausable {
     /// @notice Wait between starting and accepting an admin transfer (including a renounce, i.e. a transfer to zero).
     uint48 public constant ADMIN_TRANSFER_DELAY = 1 days;
 
-    /// @notice Maximum blocks between the referenced block and inclusion (~30 s at 300 ms blocks).
+    /// @notice Maximum blocks between the referenced block and inclusion (~30 s at the measured ~300 ms block time).
     uint256 public constant MAX_LAG = 100;
 
     /// @notice Largest `importRecords` batch. Each record costs ~35k execution gas plus ~11k calldata gas, so 200
@@ -90,7 +91,12 @@ contract Registry is AccessControlDefaultAdminRules, Pausable {
     );
     /// @notice A Carrier imported fingerprints of a photo received outside Proofshot. Unsigned by design.
     event RecordImported(
-        bytes32 indexed exactHash, bytes32 indexed carrierId, bytes32 pHash, bytes32[16] tiles, uint32 width, uint32 height
+        bytes32 indexed exactHash,
+        bytes32 indexed carrierId,
+        bytes32 pHash,
+        bytes32[16] tiles,
+        uint32 width,
+        uint32 height
     );
 
     error ZeroValue();
@@ -110,7 +116,9 @@ contract Registry is AccessControlDefaultAdminRules, Pausable {
     {
         if (relayer == address(0)) revert ZeroValue();
         _grantRole(RELAYER_ROLE, relayer);
-        for (uint256 i; i < rpIdHashes.length; i++) _setRpIdHash(rpIdHashes[i], true);
+        for (uint256 i; i < rpIdHashes.length; i++) {
+            _setRpIdHash(rpIdHashes[i], true);
+        }
     }
 
     /// @dev The relayer is a hot key on a server; the admin is a separate cold key that can stop it. Enforced on every

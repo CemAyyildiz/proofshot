@@ -26,12 +26,17 @@ contract DeployRegistry is Script {
     }
 
     /// @dev Env-free entry point so tests don't race on process-global environment variables.
-    function deploy(uint256 expected, address admin, address relayer, string[] memory rpIds) public returns (Registry registry) {
+    function deploy(uint256 expected, address admin, address relayer, string[] memory rpIds)
+        public
+        returns (Registry registry)
+    {
         // Guards against broadcasting a testnet configuration to mainnet or vice versa.
         if (block.chainid != expected) revert WrongChain(expected, block.chainid);
 
         bytes32[] memory rpIdHashes = new bytes32[](rpIds.length);
-        for (uint256 i; i < rpIds.length; i++) rpIdHashes[i] = sha256(bytes(rpIds[i]));
+        for (uint256 i; i < rpIds.length; i++) {
+            rpIdHashes[i] = sha256(bytes(rpIds[i]));
+        }
 
         uint256 deployBlock = block.number;
         vm.startBroadcast();

@@ -1009,3 +1009,36 @@ Done: H1, H2.
 **Next: Iteration 32 — Contracts, pass 7**: gas and calldata review of `seal()` (can `tiles` be packed? calldata
 dominates on L1s but Monad pricing differs, so measure first). Re-check that every NatSpec `@dev` still matches the
 code after iterations 22 and 27, and run `forge fmt --check` and `slither` if available.
+
+---
+
+## Iteration 32 — Contracts, pass 7: static analysis, formatting, and the block time behind every window (2026-09-30)
+
+Findings:
+
+- **M1** Solidity formatting was not enforced: `forge fmt --check` failed on 7 files, and nothing in `pnpm lint` or CI
+  ran it.
+- **M2** Two contradictory block-time assumptions. The Registry says `MAX_LAG` is "~30 s at 300 ms blocks";
+  iteration 31's `rescanBlocks` comment assumed about 400 ms ("~25 s"). I measured instead of guessing, from the
+  public RPCs, using the timestamps of the head and the block 10,000 earlier: **testnet 304 ms, mainnet 301 ms**. The
+  Registry comment was right; 64 re-scanned blocks is about **19 s**, not 25 s, which corrects the iteration 31 entry.
+- OK: **Slither** (via `uvx`, 102 detectors, dependencies, tests and spikes excluded) reports **0 findings** on
+  `Registry.sol`.
+- OK: NatSpec matches the code after iterations 22 and 27: the check order in `seal()`, import skipping, the admin
+  rules and the incident runbook.
+- OK, by design: `seal()` does not reject a zero `exactHash` or `carrierId`. The relayer builds records from its own
+  fingerprinting and Claim Links, and a zero SHA-256 is not a real photo. A check would cost gas on every Seal to guard
+  the trusted role against itself.
+- OK, measured: calldata. The 16 tiles are 256-bit PDQ hashes, which are incompressible, so packing gains nothing.
+
+Done: M1, M2.
+
+- `forge fmt` applied; contracts now have `lint: forge fmt --check`, so `pnpm lint`, `pnpm check` and CI enforce it.
+- The measured block time is recorded in the README ("Why Monad") and `docs/spikes/spike-b.md`, together with what it
+  means for the Signing Window (~30 s) and the re-scan (~19 s). Code comments are corrected.
+
+`pnpm check` is green, including the new lint. The gas snapshot is unchanged. e2e: 19/19 in dev mode.
+
+**Next: Iteration 33 — Tests/CI, pass 7**: add the Slither run to CI as a contracts job (pinned version via `uvx`),
+and verify that the local `pnpm check` time stays reasonable (measure it). Also check that `pnpm test` has no
+order-dependent tests by running vitest with `--sequence.shuffle`.

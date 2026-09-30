@@ -39,6 +39,10 @@ runs the Registry's exact OpenZeppelin `WebAuthn.verify` on each network's own E
 | Monad testnet (10143) | present, accepts | valid | rejected | 13,853 |
 | Monad mainnet (143) | present, accepts | valid | rejected | 13,853 |
 
+**Block time, 2026-09-30** (public RPCs, timestamps of the head and 10,000 blocks earlier): testnet 304 ms, mainnet
+301 ms on average. The Registry's `MAX_LAG = 100` blocks therefore gives a Signing Window of about 30 s. The indexer's
+64-block re-scan covers about 19 s.
+
 This confirms the core assumption on the live chains: passkey signatures verify natively and cheaply on Monad.
 
 **Cost at the live gas price (both networks reported 102 gwei on 2026-09-30):** a Registry deploy simulated on a

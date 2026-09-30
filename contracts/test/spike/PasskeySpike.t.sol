@@ -22,7 +22,9 @@ contract PasskeySpikeTest is Test {
         r.exactHash = vm.parseJsonBytes32(json, ".record.exactHash");
         r.pHash = vm.parseJsonBytes32(json, ".record.pHash");
         bytes32[] memory tiles = vm.parseJsonBytes32Array(json, ".record.tiles");
-        for (uint256 i; i < 16; i++) r.tiles[i] = tiles[i];
+        for (uint256 i; i < 16; i++) {
+            r.tiles[i] = tiles[i];
+        }
         r.width = uint32(vm.parseJsonUint(json, ".record.width"));
         r.height = uint32(vm.parseJsonUint(json, ".record.height"));
         r.locCommit = vm.parseJsonBytes32(json, ".record.locCommit");

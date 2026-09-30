@@ -153,7 +153,9 @@ contract RegistryInvariantTest is Test {
 
     /// Sealing is permanent.
     function invariant_SealedStaysSealed() public view {
-        for (uint256 i; i < handler.sealedCount(); i++) assertTrue(registry.isSealed(handler.sealedHashes(i)));
+        for (uint256 i; i < handler.sealedCount(); i++) {
+            assertTrue(registry.isSealed(handler.sealedHashes(i)));
+        }
     }
 
     /// A sealed photo can never be re-registered as an unsigned import.
@@ -165,7 +167,9 @@ contract RegistryInvariantTest is Test {
     function invariant_NoAccountHoldsBothRoles() public view {
         for (uint256 i; i < 5; i++) {
             address a = handler.actors(i);
-            assertFalse(registry.hasRole(registry.DEFAULT_ADMIN_ROLE(), a) && registry.hasRole(registry.RELAYER_ROLE(), a));
+            assertFalse(
+                registry.hasRole(registry.DEFAULT_ADMIN_ROLE(), a) && registry.hasRole(registry.RELAYER_ROLE(), a)
+            );
         }
     }
 
@@ -174,7 +178,9 @@ contract RegistryInvariantTest is Test {
         address current = registry.defaultAdmin();
         assertTrue(current != address(0));
         uint256 admins;
-        for (uint256 i; i < 5; i++) if (registry.hasRole(registry.DEFAULT_ADMIN_ROLE(), handler.actors(i))) admins++;
+        for (uint256 i; i < 5; i++) {
+            if (registry.hasRole(registry.DEFAULT_ADMIN_ROLE(), handler.actors(i))) admins++;
+        }
         assertEq(admins, 1);
         assertTrue(registry.hasRole(registry.DEFAULT_ADMIN_ROLE(), current));
     }

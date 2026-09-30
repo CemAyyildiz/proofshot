@@ -18,8 +18,11 @@ library WebAuthnSigner {
     {
         a.authenticatorData = abi.encodePacked(sha256(bytes(rpId)), bytes1(0x05), uint32(0));
         a.clientDataJSON = string.concat(
-            '{"type":"webauthn.get","challenge":"', Base64.encodeURL(abi.encodePacked(challenge)), '","origin":"https://',
-            rpId, '"}'
+            '{"type":"webauthn.get","challenge":"',
+            Base64.encodeURL(abi.encodePacked(challenge)),
+            '","origin":"https://',
+            rpId,
+            '"}'
         );
         a.typeIndex = 1;
         a.challengeIndex = 23;

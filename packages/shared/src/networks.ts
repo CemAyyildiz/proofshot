@@ -26,7 +26,7 @@ export const networks: Record<NetworkName, NetworkConfig> = {
     chainId: 10143,
     defaultRpcUrl: "https://testnet-rpc.monad.xyz",
     explorerUrl: "https://testnet.monadexplorer.com",
-    rescanBlocks: 64n, // ~25 s at Monad's block time, far past finality
+    rescanBlocks: 64n, // ~19 s at the measured ~300 ms block time, far past finality
   },
   mainnet: {
     name: "mainnet",

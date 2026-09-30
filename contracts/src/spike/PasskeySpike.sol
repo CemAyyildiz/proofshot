@@ -67,7 +67,17 @@ contract PasskeySpike {
 
         isSealed[r.exactHash] = true;
         emit CaptureSealed(
-            r.exactHash, keyId, r.carrierId, r.pHash, r.tiles, r.width, r.height, r.locCommit, r.claimRef, r.deviceTime, r.refBlock
+            r.exactHash,
+            keyId,
+            r.carrierId,
+            r.pHash,
+            r.tiles,
+            r.width,
+            r.height,
+            r.locCommit,
+            r.claimRef,
+            r.deviceTime,
+            r.refBlock
         );
     }
 }
