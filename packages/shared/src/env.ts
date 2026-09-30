@@ -16,6 +16,8 @@ export const serverEnvSchema = z.object({
    * API key. Defaults to the network's public endpoint.
    */
   PUBLIC_RPC_URL: z.url().optional(),
+  /** Public source repository, linked from the landing page and footer when set. */
+  PUBLIC_REPO_URL: z.url().optional(),
   REGISTRY_ADDRESS: address.optional(),
   /** Block the Registry was deployed in; the indexer starts here. */
   REGISTRY_DEPLOY_BLOCK: z.coerce.bigint().nonnegative().default(0n),

@@ -1,42 +1,44 @@
 import Link from "next/link";
+import { env } from "@/lib/env";
 import { Wordmark } from "./logo";
-
-const NAV = [
-  { href: "/verify", label: "Verify a photo", short: "Verify" },
-  { href: "/try", label: "Try it", short: "Try it" },
-  { href: "/console", label: "Carrier Console", short: "Console" },
-] as const;
+import { NavLinks } from "./nav-links";
 
 export function SiteHeader() {
   return (
     <header className="border-b border-line bg-surface/80 backdrop-blur supports-[backdrop-filter]:bg-surface/70">
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3">
-        <Link href="/" aria-label="Proofshot home" className="rounded">
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-1.5">
+        <Link href="/" aria-label="Proofshot home" className="inline-flex min-h-11 items-center rounded">
           <Wordmark />
         </Link>
-        <nav aria-label="Main" className="flex items-center print:hidden gap-0.5 text-sm sm:gap-1">
-          {NAV.map((n) => (
-            <Link
-              key={n.href}
-              href={n.href}
-              className="whitespace-nowrap rounded-md px-2 py-2 text-muted hover:bg-background hover:text-foreground sm:px-2.5"
-            >
-              <span className="sm:hidden">{n.short}</span>
-              <span className="hidden sm:inline">{n.label}</span>
-            </Link>
-          ))}
-        </nav>
+        <NavLinks />
       </div>
     </header>
   );
 }
 
 export function SiteFooter() {
+  const { network, REGISTRY_ADDRESS, PUBLIC_REPO_URL } = env();
+  const links = [
+    { href: "/verify", label: "Verify a photo" },
+    { href: "/try", label: "Try it" },
+    { href: "/console", label: "Carrier Console" },
+    ...(PUBLIC_REPO_URL ? [{ href: PUBLIC_REPO_URL, label: "Source code" }] : []),
+    ...(network.explorerUrl && REGISTRY_ADDRESS ? [{ href: `${network.explorerUrl}/address/${REGISTRY_ADDRESS}`, label: "Registry contract" }] : []),
+  ];
   return (
     <footer className="mt-auto border-t border-line print:hidden">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-2 px-4 py-6 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
-        <p>Proofshot — proof created at capture, checkable by anyone.</p>
-        <p>Photos never leave the carrier. Only fingerprints are public.</p>
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-6 text-sm sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-1 text-muted">
+          <p className="font-medium text-foreground">Proofshot — proof created at capture, checkable by anyone.</p>
+          <p>Photos never leave the carrier. Only fingerprints are public.</p>
+        </div>
+        <nav aria-label="Footer" className="-mx-2 flex flex-wrap">
+          {links.map((l) => (
+            <a key={l.href} href={l.href} className="inline-flex min-h-11 items-center px-2 text-muted underline-offset-4 hover:text-foreground hover:underline">
+              {l.label}
+            </a>
+          ))}
+        </nav>
       </div>
     </footer>
   );
