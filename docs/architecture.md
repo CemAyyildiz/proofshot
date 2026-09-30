@@ -61,3 +61,9 @@ memory; it resyncs at most once a second, and immediately after its own writes. 
 never a stale Verdict. On Monad networks every sync also re-reads the last 64 blocks. A log that a lagging RPC node
 left out is picked up on a later pass. A record whose block hash changed (a reorg) is dropped. A record that is only
 missing from one read, while its block is unchanged, is kept.
+
+**Guard rails.** Uploads are refused above 20 MB and, from the image header alone, above 50 megapixels; at most two
+images decode at once per process. Sign-in links are sent after the response, so timing never reveals whether an
+account exists; the production session cookie is `__Host-` prefixed. `/api/health` returns 503 when the relayer's
+balance is low, the Registry is paused, the chain is unreachable or no email provider is configured. Roles, trust
+assumptions and the test behind each guarantee are in [security.md](security.md).

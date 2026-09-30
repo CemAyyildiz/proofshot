@@ -39,6 +39,13 @@ describe("docs reference only committed files", () => {
     expect(missing).toEqual([]);
   });
 
+  it("names only test files that exist (a renamed test must not leave the traceability table pointing nowhere)", () => {
+    const basenames = new Set(tracked.map((t) => t.slice(t.lastIndexOf("/") + 1)));
+    const named = docs.flatMap((d) => [...readFileSync(`${root}${d}`, "utf8").matchAll(/`([\w.-]+\.(?:test\.ts|spec\.ts|t\.sol))`/g)].map((m) => m[1]!));
+    expect(named.length).toBeGreaterThan(15);
+    expect(named.filter((n) => !basenames.has(n))).toEqual([]);
+  });
+
   it("the produced-later allow-list has no stale entries", () => {
     const named = new Set(docs.flatMap(references));
     expect(Object.keys(PRODUCED_LATER).filter((p) => !named.has(p) || exists(p))).toEqual([]);
