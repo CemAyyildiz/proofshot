@@ -1,6 +1,18 @@
 import { and, eq, inArray, isNotNull, lt, or } from "drizzle-orm";
 import type { Db } from "./db/client";
-import { captures, carriers, claimFiles, claimLinks, duplicateAlerts, magicLinkTokens, rateLimits, sessions, uploads, verifications } from "./db/schema";
+import {
+  captures,
+  carriers,
+  claimFiles,
+  claimLinks,
+  duplicateAlerts,
+  magicLinkTokens,
+  rateLimits,
+  retiredClaimLinks,
+  sessions,
+  uploads,
+  verifications,
+} from "./db/schema";
 import { type Storage, claimFilePrefix } from "./storage";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -53,6 +65,7 @@ export async function pruneDemoData(db: Db, storage: Storage, now = new Date()) 
     await tx.update(verifications).set({ claimFileId: null }).where(inArray(verifications.claimFileId, ids));
     await tx.delete(captures).where(inArray(captures.claimFileId, ids));
     await tx.delete(claimLinks).where(inArray(claimLinks.claimFileId, ids));
+    await tx.delete(retiredClaimLinks).where(inArray(retiredClaimLinks.claimFileId, ids));
     await tx.delete(claimFiles).where(inArray(claimFiles.id, ids));
   });
   return { demoClaimFiles: ids.length };

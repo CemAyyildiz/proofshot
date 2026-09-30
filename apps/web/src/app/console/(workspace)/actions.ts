@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { REFERENCE_MAX, createClaimFile, revokeClaimLink } from "@/server/dal/claim-files";
+import { REFERENCE_MAX, createClaimFile, replaceClaimLink, revokeClaimLink } from "@/server/dal/claim-files";
 import { carrierScope } from "@/server/dal/scope";
 
 export interface CreateClaimState {
@@ -21,6 +21,13 @@ export async function createClaim(_: CreateClaimState, form: FormData): Promise<
 export async function revokeLink(form: FormData) {
   const id = String(form.get("claimFileId") ?? "");
   await revokeClaimLink(await carrierScope(), id);
+  revalidatePath(`/console/claims/${id}`);
+  revalidatePath("/console");
+}
+
+export async function replaceLink(form: FormData) {
+  const id = String(form.get("claimFileId") ?? "");
+  await replaceClaimLink(await carrierScope(), id);
   revalidatePath(`/console/claims/${id}`);
   revalidatePath("/console");
 }

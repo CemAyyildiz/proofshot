@@ -2112,3 +2112,37 @@ Done: all.
 entropy; whether they appear in logs (the Next request log prints paths like `GET /c/<token>`); whether they leak
 via the Referer (policy is same-origin) or analytics; and whether a Carrier can rotate a leaked link without losing
 the Claim File's photos.
+
+## Iteration 61 — Backend, pass 13: Claim Link token lifecycle
+
+Question: a Claim Link is a capability URL sent by SMS. What happens when it leaks, reaches the wrong person, or
+expires before the policyholder gets to it?
+
+Findings:
+
+- **M1** A Carrier could only revoke a link, not replace it. A misdirected, leaked or expired link meant creating a
+  second Claim File for the same claim, which split the photos across two files.
+- OK: tokens carry 192 random bits (24 bytes from `crypto.randomBytes`), and the Referrer-Policy is `same-origin`, so
+  tokens never leave the origin in a `Referer`. There are no third-party analytics.
+- Accepted and documented: tokens appear in request paths, so they show up in the host's HTTP access logs, and they
+  are stored as-is, because the Console must show the link again. The operator already has database access, and the
+  link's 14-day life and the new replace action limit the exposure.
+
+Done:
+
+- **Replace link / Issue a new link** in the Claim File. A new `retired_claim_links` table (migration 0008) keeps
+  the old token. `replaceClaimLink` moves the Claim File to a fresh token with a new 14-day expiry in one transaction.
+- `resolveClaimLink` resolves a retired token as `revoked`. The old link therefore takes no new photos, but a photo
+  already sealed through it can still be delivered, following the rule from iteration 36.
+- The demo prune removes retired tokens along with their Claim File.
+- Tests:
+  - Unit: replace, tenancy (another Carrier's file returns null), replacing a revoked link, and sending after
+    replacement.
+  - Prune: removes retired tokens.
+  - e2e: replacing gives a new link, the old one shows "This link is no longer active", and the new one opens the
+    capture flow.
+- docs/security.md records the token decisions.
+
+`pnpm check` is green. e2e: 28/28 in dev mode and 28/28 in production mode.
+
+**Next: Iteration 62 — Contracts, pass 13.**

@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import type { Db } from "../db/client";
 import { carrierScope, testDb } from "../test-db";
-import { CLAIM_LINK_TTL_MS, type CarrierScope, createClaimFile, getClaimFile, listClaimFiles, resolveClaimLink, revokeClaimLink } from "./claim-files";
+import { CLAIM_LINK_TTL_MS, type CarrierScope, createClaimFile, getClaimFile, listClaimFiles, replaceClaimLink, resolveClaimLink, revokeClaimLink } from "./claim-files";
 
 let db: Db;
 let northwind: CarrierScope;
@@ -94,3 +94,28 @@ describe("listClaimFiles search and paging", () => {
     expect(new Set([...page1, ...page2].map((f) => f.id)).size).toBe(4);
   });
 });
+
+describe("replaceClaimLink", () => {
+  it("retires the old token (it still resolves, inactive) and issues a fresh 14-day link for the same file", async () => {
+    const db = await testDb();
+    const northwind = await carrierScope(db, "northwind");
+    const harbor = await carrierScope(db, "harbor");
+    const file = await createClaimFile(northwind, "LEAKED-1");
+    const now = new Date(Date.now() + 1000);
+    expect(await replaceClaimLink(harbor, file.id, now)).toBeNull(); // not Harbor's file
+
+    const fresh = await replaceClaimLink(northwind, file.id, now);
+    expect(fresh!.token).not.toBe(file.link.token);
+    expect(fresh!.expiresAt.getTime()).toBe(now.getTime() + CLAIM_LINK_TTL_MS);
+    expect(await resolveClaimLink(db, fresh!.token, now)).toMatchObject({ claimFileId: file.id, state: "active" });
+    // The old token no longer takes photos, but still maps to the file, so already-sealed photos can be delivered.
+    expect(await resolveClaimLink(db, file.link.token, now)).toMatchObject({ claimFileId: file.id, state: "revoked" });
+
+    // A revoked (or expired) link can be followed by a new one.
+    await revokeClaimLink(northwind, file.id, now);
+    const again = await replaceClaimLink(northwind, file.id, now);
+    expect(await resolveClaimLink(db, again!.token, now)).toMatchObject({ state: "active" });
+    expect((await getClaimFile(northwind, file.id))!.link.token).toBe(again!.token);
+  });
+});
+

@@ -77,6 +77,18 @@ export const claimLinks = pgTable("claim_links", {
   createdAt: createdAt(),
 });
 
+/**
+ * Tokens a Carrier replaced (leaked, forwarded to the wrong person, or simply expired). They accept no new photos but
+ * still resolve, so photos sealed through them before the replacement can be delivered.
+ */
+export const retiredClaimLinks = pgTable("retired_claim_links", {
+  token: text("token").primaryKey(),
+  claimFileId: uuid("claim_file_id")
+    .notNull()
+    .references(() => claimFiles.id),
+  retiredAt: timestamp("retired_at", { withTimezone: true }).notNull(),
+});
+
 /** Registered passkeys. `keyId` is the bytes32 used onchain. */
 export const deviceKeys = pgTable("device_keys", {
   keyId: text("key_id").primaryKey(),

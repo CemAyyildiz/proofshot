@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { and, asc, desc, eq, ilike, sql } from "drizzle-orm";
 import type { Db } from "../db/client";
-import { captures, carriers, claimFiles, claimLinks, duplicateAlerts, uploads } from "../db/schema";
+import { captures, carriers, claimFiles, claimLinks, duplicateAlerts, retiredClaimLinks, uploads } from "../db/schema";
 
 export const CLAIM_LINK_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 export const REFERENCE_MAX = 80;
@@ -90,6 +90,25 @@ export async function revokeClaimLink(scope: CarrierScope, claimFileId: string, 
 }
 
 /**
+ * Issues a fresh link for the Claim File (new token, new 14-day expiry). The old token is retired, not deleted: it
+ * accepts no new photos, but photos already sealed through it can still be delivered. Returns null when the Claim
+ * File is not this Carrier's.
+ */
+export async function replaceClaimLink(scope: CarrierScope, claimFileId: string, now = new Date()) {
+  const file = await getClaimFile(scope, claimFileId);
+  if (!file) return null;
+  return scope.db.transaction(async (tx) => {
+    await tx.insert(retiredClaimLinks).values({ token: file.link.token, claimFileId: file.id, retiredAt: now });
+    const [link] = await tx
+      .update(claimLinks)
+      .set({ token: newClaimLinkToken(), expiresAt: new Date(now.getTime() + CLAIM_LINK_TTL_MS), revokedAt: null, createdAt: now })
+      .where(eq(claimLinks.claimFileId, file.id))
+      .returning();
+    return link!;
+  });
+}
+
+/**
  * Public (unauthenticated) resolution of a Claim Link for the Capturer. Exposes only what the capture
  * landing page shows: Carrier name, claim reference and link state.
  */
@@ -110,7 +129,24 @@ export async function resolveClaimLink(db: Db, token: string, now = new Date()) 
     .innerJoin(claimFiles, eq(claimFiles.id, claimLinks.claimFileId))
     .innerJoin(carriers, eq(carriers.id, claimFiles.carrierId))
     .where(eq(claimLinks.token, token));
-  return row ? { ...row, state: claimLinkState(row, now) } : null;
+  if (row) return { ...row, state: claimLinkState(row, now) };
+  // A replaced token: same Claim File, always inactive.
+  const [retired] = await db
+    .select({
+      claimFileId: claimFiles.id,
+      reference: claimFiles.reference,
+      carrierName: carriers.name,
+      carrierPseudonymousId: carriers.pseudonymousId,
+      isSandbox: carriers.isSandbox,
+      retiredAt: retiredClaimLinks.retiredAt,
+    })
+    .from(retiredClaimLinks)
+    .innerJoin(claimFiles, eq(claimFiles.id, retiredClaimLinks.claimFileId))
+    .innerJoin(carriers, eq(carriers.id, claimFiles.carrierId))
+    .where(eq(retiredClaimLinks.token, token));
+  if (!retired) return null;
+  const { retiredAt, ...rest } = retired;
+  return { ...rest, expiresAt: retiredAt, revokedAt: retiredAt, sealCount: 0, state: "revoked" as const };
 }
 
 /** Sealed Captures of one of this Carrier's Claim Files, oldest first. */

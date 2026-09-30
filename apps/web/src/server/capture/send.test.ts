@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "../db/client";
 import { captures, claimFiles, deviceKeys } from "../db/schema";
-import { createClaimFile, revokeClaimLink, type CarrierScope } from "../dal/claim-files";
+import { createClaimFile, replaceClaimLink, revokeClaimLink, type CarrierScope } from "../dal/claim-files";
 import { FsStorage, captureKey } from "../storage";
 import { carrierScope, testDb } from "../test-db";
 import { MAX_IMAGE_BYTES, receiveCaptureFile, recordTimings } from "./send";
@@ -73,6 +73,13 @@ describe("receiveCaptureFile", () => {
     expect(await receiveCaptureFile(db, storage, token, exactHash, tampered)).toMatchObject({ ok: false, status: 400 });
     expect(await receiveCaptureFile(db, storage, token, exactHash, photo)).toEqual({ ok: true, status: "received" });
     expect(await storage.get(captureKey(scope.carrierId, fileId, exactHash))).toEqual(photo);
+  });
+});
+
+describe("receiveCaptureFile after the link was replaced", () => {
+  it("still delivers a photo sealed through the old link", async () => {
+    await replaceClaimLink(scope, fileId);
+    expect(await receiveCaptureFile(db, storage, token, exactHash, photo)).toEqual({ ok: true, status: "received" });
   });
 });
 

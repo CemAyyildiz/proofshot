@@ -11,7 +11,7 @@ import type { VerdictKind } from "@/components/verdict/copy";
 import { claimLinkState, getClaimFile, listCaptures, listDuplicateAlerts, listUploads } from "@/server/dal/claim-files";
 import { matchStrength } from "@/server/evidence/duplicates";
 import { getVerification } from "@/server/verify/verify";
-import { RevokeLink } from "./revoke-link";
+import { ReplaceLink, RevokeLink } from "./revoke-link";
 import { UploadForm } from "./upload-form";
 import { carrierScope } from "@/server/dal/scope";
 
@@ -68,13 +68,19 @@ export default async function ClaimFilePage({ params }: PageProps<"/console/clai
               <input readOnly value={url} aria-label="Claim Link" className="flex-1 rounded-md border border-line bg-background px-3 py-2 font-mono text-sm" />
               <CopyButton value={url} label="Copy link" />
             </div>
-            <RevokeLink claimFileId={file.id} />
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              <ReplaceLink claimFileId={file.id} active />
+              <RevokeLink claimFileId={file.id} />
+            </div>
           </>
         ) : (
-          <p className="text-sm">
-            This link is {state === "revoked" ? `revoked (${formatDateTime(file.link.revokedAt!)})` : `expired (${formatDateTime(file.link.expiresAt)})`}. It no
-            longer accepts photos.
-          </p>
+          <>
+            <p className="text-sm">
+              This link is {state === "revoked" ? `revoked (${formatDateTime(file.link.revokedAt!)})` : `expired (${formatDateTime(file.link.expiresAt)})`}. It no
+              longer accepts photos.
+            </p>
+            <ReplaceLink claimFileId={file.id} active={false} />
+          </>
         )}
       </section>
 

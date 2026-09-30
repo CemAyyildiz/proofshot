@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { issueMagicLink, redeemMagicLink } from "./auth/core";
-import { createClaimFile } from "./dal/claim-files";
+import { createClaimFile, replaceClaimLink } from "./dal/claim-files";
 import { captures, carriers, claimFiles, claimLinks, deviceKeys, duplicateAlerts, magicLinkTokens, rateLimits, sessions, uploads, verifications } from "./db/schema";
 import { DEMO_RETENTION_DAYS, pruneDemoData, pruneExpired } from "./maintenance";
 import { FsStorage, type Storage, captureKey } from "./storage";
@@ -63,6 +63,7 @@ describe("pruneDemoData", () => {
     }
 
     const oldDemo = await fileWithEvidence(demo, old);
+    await replaceClaimLink(demo, oldDemo.id, old); // a retired link must not block the prune
     const oldSandbox = await fileWithEvidence(sandbox, old);
     const newDemo = await fileWithEvidence(demo, recent);
     const oldReal = await fileWithEvidence(acme, old);

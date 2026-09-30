@@ -87,3 +87,19 @@ test("an adjuster finds a Claim File by reference among many", async ({ page }) 
   await page.getByRole("link", { name: "Clear" }).click();
   await expect(page).toHaveURL(/\/console$/);
 });
+
+test("a link sent to the wrong person can be replaced without losing the Claim File", async ({ page, browser }) => {
+  await signIn(page, "dana@harbor.demo");
+  const oldLink = await createClaimLink(page, `WRONG-RECIPIENT-${Date.now()}`);
+  await page.getByRole("button", { name: "Replace link" }).click();
+  await page.getByRole("group", { name: /Replace this link\?/ }).getByRole("button", { name: "Replace link" }).click();
+  await expect(page.getByRole("textbox", { name: "Claim Link" })).not.toHaveValue(oldLink);
+  const newLink = await page.getByRole("textbox", { name: "Claim Link" }).inputValue();
+  expect(newLink).toMatch(/\/c\/[A-Za-z0-9_-]{32}$/);
+
+  const phone = await (await browser.newContext()).newPage();
+  await phone.goto(oldLink);
+  await expect(phone.getByRole("heading", { name: "This link is no longer active" })).toBeVisible();
+  await phone.goto(newLink);
+  await expect(phone.getByRole("heading", { name: "Take photos of the damage" })).toBeVisible();
+});
