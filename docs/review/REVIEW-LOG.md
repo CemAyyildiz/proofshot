@@ -1417,3 +1417,46 @@ Done: all.
 **Next: Iteration 43 — Tests/CI, pass 9**: a mutation-testing pass on the Verdict engine (`packages/fingerprint`
 `verdict.ts`). Flip each threshold comparison and boundary (≥12 tiles, >8 shifted, T_match 31, T_tile 40) and confirm
 a test fails for each. Add boundary tests where none does.
+
+---
+
+## Iteration 43 — Tests/CI, pass 9: mutation testing the Verdict engine (2026-09-30)
+
+Method: I applied 26 single-point mutations to `packages/fingerprint/src/verdict.ts`, one at a time, and ran the
+package tests after each. The mutations covered every threshold comparison (≤ vs <), every default threshold ±1, the
+aspect check, the tile-count guard, the best-match tie-breaks, the "imported never yields Original" rule, and
+duplicate ordering.
+
+Findings:
+
+- **H1** 18 of 26 mutants survived. The rules that decide a Verdict (the whole-image distance ≤ 31, tile distance
+  ≤ 40, the 12-tile majority, the 8-tile geometry cap, the best-match ordering, and every default threshold) could all
+  change by one and no test failed. The existing tests use real images whose distances sit far from every threshold.
+  They prove the engine behaves sensibly, but not that it implements the published rules. Because the CLI and the
+  website must reproduce exactly these rules, that is a correctness gap for the core product, and it would let a
+  silent threshold regression through.
+- OK: 8 mutants were already killed, among them "imported yields Original", "exact match first", "sealed preferred
+  on a tie" and featureless-tile handling.
+
+Done.
+
+- `verdict-boundaries.test.ts` uses synthetic hashes with exact Hamming distances (`flip(h, n)`) and pins each
+  boundary on both sides:
+  - whole-image distance 31 matches, 32 does not;
+  - a tile at distance 40 is unchanged, at 41 it is altered;
+  - 12 aligned tiles match, 11 do not;
+  - 8 changed tiles give Altered, 9 give "check unavailable";
+  - the 2% aspect tolerance is inclusive, using 50:1 vs 51:1, which is exactly 0.02 in floating point, whereas
+    1020/1000 is not;
+  - 0.019 is inside the tolerance and 0.021 outside;
+  - a record without 16 tiles is never tile-compared;
+  - ordering is "more tiles first, then smaller distance", in both input orders and in `findMatches`.
+- Result: **26/26 mutants killed**. The runner is committed as `pnpm --filter @proofshot/fingerprint mutate`
+  (TypeScript, restores the source even on Ctrl-C, exits 1 on any survivor) and listed in the README.
+
+`pnpm check` is green. e2e: 22/22 in dev mode.
+
+**Next: Iteration 44 — Docs, pass 9**: `docs/architecture.md` against the code as it is now: the indexer re-scan,
+decode budget, `after()` mail, `__Host-` cookie and security model. Check the diagram is still accurate and trim
+anything stale. Also check `docs/traceability.md` maps every FR to tests that still exist (the test renames since
+iteration 15).

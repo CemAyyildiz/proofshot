@@ -115,6 +115,7 @@ E2E_PROD=1 pnpm e2e                # same suite against the production build
 pnpm screens                       # design screenshots of every surface → apps/web/test-results/screens
 pnpm --filter @proofshot/contracts coverage
 pnpm --filter @proofshot/contracts slither   # static analysis (needs uv)
+pnpm --filter @proofshot/fingerprint mutate  # mutation test of the Verdict rules: every mutant must be killed
 pnpm --filter @proofshot/benchmark bench   # SM-2 benchmark (needs benchmark/data)
 ```
 
