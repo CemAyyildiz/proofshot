@@ -54,6 +54,7 @@ test("the Public Verifier returns one honest Verdict per copy and a public recei
   await expect(visitor.getByText("Signing Window")).toBeVisible();
   await expect(visitor.getByText("a carrier", { exact: true })).toBeVisible();
   await expect(visitor.getByRole("heading", { name: "Verify it yourself" })).toBeVisible();
+  await visitor.getByRole("heading", { name: "Verify it yourself" }).click(); // collapsed by default
   // The command names the public RPC, never the app's own RPC_URL (which may carry a provider API key).
   await expect(visitor.getByText(`--rpc ${E2E_RPC} --registry`)).toBeVisible();
   expect(await visitor.content()).not.toContain("E2E-SECRET-KEY");

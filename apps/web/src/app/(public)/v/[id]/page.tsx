@@ -56,7 +56,7 @@ export default async function VerificationReceipt({ params }: PageProps<"/v/[id]
       </section>
       {record && <ReceiptDetails record={record} />}
       <VerifyYourself />
-      <Link href="/verify" className="text-sm underline underline-offset-4 print:hidden">
+      <Link href="/verify" className="inline-flex min-h-11 items-center self-start text-sm underline underline-offset-4 print:hidden">
         Verify another photo
       </Link>
     </main>
