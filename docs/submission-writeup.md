@@ -49,8 +49,8 @@ can check a photo without asking anyone.
 
 ## 6. Status
 
-Built in six days (2026-09-28 → 2026-10-03). There are no outside users, onboarding tests or practitioner interviews
-yet. They are the first step after the hackathon:
+Built from 2026-09-28. So far there are no outside users, onboarding tests or practitioner interviews. The targets
+are:
 
 - 60 Seals from 20 devices of people other than the builder (SM-3);
 - 5 unmoderated onboarding tests, with ≥ 80% sealing without help (SM-4);
