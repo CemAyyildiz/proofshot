@@ -20,7 +20,11 @@ const PRODUCED_LATER: Record<string, string> = {
   "benchmark/README.md": "written by the real-photo benchmark run",
 };
 
-const docs = ["README.md", ...tracked.filter((f) => f.startsWith("docs/") && f.endsWith(".md") && !f.includes("REVIEW-LOG"))];
+// docs/planning/ is the pre-build plan, kept as written: it names files that were planned and never needed.
+const docs = [
+  "README.md",
+  ...tracked.filter((f) => f.startsWith("docs/") && f.endsWith(".md") && !f.includes("REVIEW-LOG") && !f.startsWith("docs/planning/")),
+];
 
 function references(doc: string): string[] {
   const text = readFileSync(`${root}${doc}`, "utf8");

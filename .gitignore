@@ -17,8 +17,10 @@ contracts/broadcast/*/31337/
 
 # benchmark raw data: see benchmark/.gitignore (the manifest is committed)
 
-# BMAD render cache
-_bmad/render/
+# Local agent and BMAD tooling (planning docs that matter live in docs/planning/)
+.claude/
+_bmad/
+_bmad-output/
 
 # Owner-only checklist
 OWNER-TODO.html

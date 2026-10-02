@@ -1,8 +1,8 @@
 ---
 stepsCompleted: [1, 2, 3]
 inputDocuments:
-  - _bmad-output/planning-artifacts/prds/prd-proofshot-2026-09-28/prd.md
-  - _bmad-output/planning-artifacts/prds/prd-proofshot-2026-09-28/addendum.md
+  - docs/planning/prd.md
+  - docs/planning/addendum.md
 ---
 
 # proofshot - Epic Breakdown
