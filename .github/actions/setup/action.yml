@@ -9,7 +9,8 @@ runs:
         node-version-file: .nvmrc
         cache: pnpm
     - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1
+      # Pinned: forge fmt's style changes between releases, and `forge fmt --check` must agree with local runs.
       with:
-        version: stable
+        version: v1.3.2
     - run: pnpm install --frozen-lockfile
       shell: bash

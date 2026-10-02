@@ -56,7 +56,8 @@ jobs:
       # The deploy-time path: the migrate and seed scripts against an empty server, twice (both must be idempotent).
       - run: pnpm --filter web db:migrate && pnpm --filter web db:seed && pnpm --filter web db:migrate && pnpm --filter web db:seed
       # Every database test again through postgres-js with a connection pool, so concurrent queries really overlap.
-      - run: pnpm --filter web exec vitest run
+      # copy-wasm is what `pnpm test` runs first; without it every fingerprint fails and imports read as unreadable.
+      - run: pnpm --filter web copy-wasm && pnpm --filter web exec vitest run
         env:
           TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
 
