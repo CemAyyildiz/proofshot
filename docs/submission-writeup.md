@@ -1,7 +1,8 @@
 # Proofshot — submission write-up (draft)
 
-> Draft. ⏳ marks numbers that are not measured yet; fill them from the named source before submitting. Nothing here
-> is a projection.
+> Draft. Four ⏳ remain, all filled once the app is on mainnet: the Registry address, the first live Seal's gas, the
+> demo video and the repository link. Everything else is either measured or plainly marked as not measured. Nothing
+> here is a projection.
 
 **In one paragraph.** Proofshot seals insurance claim photos at the moment of capture. The policyholder opens a link,
 with no app and no wallet, and one Face ID prompt signs each photo's fingerprints with a passkey. A Monad contract
@@ -37,25 +38,29 @@ can check a photo without asking anyone.
 - The P-256 precompile lets the contract verify the passkey signature over the whole Capture Record:
   **100,340 gas per Seal** (Foundry, Osaka EVM) vs 326,571 without it. On the live chains, a keyless probe ran the same
   OpenZeppelin verification on Monad testnet and mainnet: passkey assertion accepted (13,853 gas), tampered one
-  rejected (`docs/spikes/spike-b-probe.json`). Live `seal()` on a deployed Registry: ⏳ `docs/spikes/spike-b-testnet.json`.
-- Seal latency p95 shutter → "Sealed": ⏳ (target ≤ 3 s, NFR-1). Generate `docs/latency.md` from the deployment
-  with `DATABASE_URL=… PROOFSHOT_NETWORK=mainnet pnpm --filter web report:latency`; quote the Claim Links row.
-- Cost per Seal: ≈ 0.010 MON at the 102 gwei observed on 2026-09-30 (100,340 gas); confirm with the live `seal()` gas.
+  rejected (`docs/spikes/spike-b-probe.json`). Gas of the first live `seal()` on the mainnet Registry: ⏳.
+- Cost per Seal: ≈ 0.010 MON at the 102 gwei observed on 2026-09-30 (100,340 gas).
+- Seal latency (shutter → "Sealed", target p95 ≤ 3 s, NFR-1) is recorded for every Seal, but no p95 is quoted: so far
+  the only Seals are the builder's own. `pnpm --filter web report:latency` computes it from a deployment.
 
 ## 5. Demo
 
 ⏳ video link. Script: `docs/demo-script.md`.
 
-## 6. Traction
+## 6. Status
 
-- Seals and distinct Device Keys on mainnet from people other than the builder: ⏳ (SM-3 target ≥ 60 / ≥ 20).
-- Unmoderated onboarding tests: ⏳ (SM-4 target ≥ 5, ≥ 80% seal without help).
-- Practitioner conversations: ⏳ (SM-6 target ≥ 5, quotes cleared).
+Built in six days (2026-09-28 → 2026-10-03). There are no outside users, onboarding tests or practitioner interviews
+yet. They are the first step after the hackathon:
+
+- 60 Seals from 20 devices of people other than the builder (SM-3);
+- 5 unmoderated onboarding tests, with ≥ 80% sealing without help (SM-4);
+- 5 conversations with claims and SIU staff, with quotes cleared (SM-6).
 
 ## 7. Accuracy
 
 The benchmark harness is public (`benchmark/`). On generated scenes it meets every SM-2 target (Derived Copy recall
-100%, Altered recall 100%, false Altered 0%, false match 0%). Real-photo results: ⏳ `benchmark/README.md`.
+100%, Altered recall 100%, false Altered 0%, false match 0%; `benchmark/README.synthetic.md`). It has not been run on
+real phone photos yet. The same harness takes any folder of originals, AI edits and look-alike scenes.
 Known limit, stated up front: crops beyond ~3% fall to No Record; a crop is never shown as a clean result.
 
 ## 8. Engineering quality

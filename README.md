@@ -15,7 +15,7 @@ Built for the Monad Metropolis hackathon, Track 04 (Trust, Identity & AI Infrast
 | Monad verifies the passkey signature itself, onchain | Keyless probe on **testnet and mainnet**: the same OpenZeppelin `WebAuthn.verify` the Registry calls accepts a valid assertion (13,853 gas) and rejects a tampered one ([probe output](docs/spikes/spike-b-probe.json), re-checked every six hours in CI) |
 | A Seal costs 100,340 gas (326,571 without the P-256 precompile) | `pnpm --filter @proofshot/contracts gas:seal` prints both (Osaka EVM, then Prague); [spike notes](docs/spikes/spike-b.md) |
 | Anyone can re-derive a Verdict without our servers | [Reproduce a Verdict yourself](#reproduce-a-verdict-yourself); e2e asserts the CLI and the website agree |
-| Still to measure | Live `seal()` gas and latency, real-photo accuracy: marked ⏳ in the [write-up](docs/submission-writeup.md) |
+| Not measured yet | Real-photo accuracy, Seal latency p95, outside users: stated in the [write-up](docs/submission-writeup.md) §4, §6, §7 |
 
 ## What it does
 

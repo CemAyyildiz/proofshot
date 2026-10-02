@@ -54,5 +54,5 @@ The same flows are in the demo video (script: `docs/demo-script.md`) and run loc
   (hardware attestation is the next milestone) and not what the scene shows. See `docs/threat-model.md`.
 - Crops beyond ~3% can't be matched by the whole-image fingerprint and come back **No Record**; a crop is never shown
   as a clean result.
-- Numbers still pending a funded deployment (live `seal()` gas and latency) and a real-photo benchmark are marked ⏳ in
-  `docs/submission-writeup.md`.
+- Not measured yet: accuracy on real phone photos, Seal latency p95, and use by anyone other than the builder
+  (`docs/submission-writeup.md` §4, §6, §7).
