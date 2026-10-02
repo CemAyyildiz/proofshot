@@ -60,7 +60,8 @@ are:
 
 The benchmark harness is public (`benchmark/`). On generated scenes it meets every SM-2 target (Derived Copy recall
 100%, Altered recall 100%, false Altered 0%, false match 0%; `benchmark/README.synthetic.md`). It has not been run on
-real phone photos yet. The same harness takes any folder of originals, AI edits and look-alike scenes.
+real phone photos yet. The same harness takes any folder of originals, AI edits and look-alike scenes, and writes
+its results to `benchmark/README.md`.
 Known limit, stated up front: crops beyond ~3% fall to No Record; a crop is never shown as a clean result.
 
 ## 8. Engineering quality

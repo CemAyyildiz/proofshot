@@ -16,7 +16,7 @@
     "@proofshot/fingerprint": "workspace:*",
     "@proofshot/shared": "workspace:*",
     "viem": "^2.56.9",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.5",
     "heic-decode": "^2.1.0"
   },
   "devDependencies": {
