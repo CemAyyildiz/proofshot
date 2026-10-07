@@ -25,6 +25,20 @@ hostnames need their own entry (`setRpIdHash` from the admin key).
 
 Mainnet: the same with `MONAD_MAINNET_RPC_URL`, `pnpm deploy:mainnet` and `pnpm verify:mainnet` (chain 143).
 
+**Fund the deployer for the gas limit, not the gas used.** Monad charges the gas *limit*, and the node checks the
+balance against `gas limit × max fee`. Forge's defaults pad the limit by 30% and double the fee cap, so the deploy
+(3.24M gas) asked for 0.85 MON up front at a 102 gwei gas price. With a tighter limit and cap it needs 0.41 MON up
+front and costs 0.35 MON:
+
+```bash
+pnpm deploy:mainnet --private-key $DEPLOYER_PRIVATE_KEY --gas-estimate-multiplier 105 --with-gas-price 120gwei
+```
+
+Run the same command without `--broadcast` first (`forge script script/DeployRegistry.s.sol --rpc-url monad_mainnet …`):
+it simulates the deploy and prints the amount required.
+
+The live mainnet Registry is recorded in [`contracts/deployments/143.json`](../contracts/deployments/143.json).
+
 ## 2. App
 
 **Host: a long-running Node server, not serverless functions.** Photos are uploaded to the app itself (sealed photos
@@ -38,6 +52,19 @@ each deploy, start, health check). Add a Postgres database and a Volume mounted 
 below with `STORAGE_DRIVER=fs` and `STORAGE_DIR=/data/storage`. Any comparable Node host works the same way:
 `pnpm install`, `pnpm --filter web build`, `pnpm --filter web db:migrate`, `pnpm --filter web start` (listens on
 `$PORT`).
+
+**On your own server** (how the live deployment runs: Ubuntu 24.04, Node 22, Postgres 17):
+
+- Run the app as an unprivileged user under systemd, bound to `127.0.0.1`: `ExecStartPre` runs
+  `tsx scripts/db.mts migrate` and `ExecStart` runs `next start -H 127.0.0.1 -p 3000` in `apps/web`, with the
+  variables below in a root-only `EnvironmentFile`.
+- Put Caddy in front for HTTPS. The app rate-limits on `x-real-ip`, so the proxy must overwrite it with the address
+  it saw: `reverse_proxy 127.0.0.1:3000 { header_up X-Real-IP {remote_host} }`. A proxy that forwards a client-sent
+  `X-Real-IP` lets one client bypass every rate limit.
+- Keep Postgres on localhost, allow only ports 22, 80 and 443 in the firewall, and put `STORAGE_DIR` outside the
+  code directory so a redeploy never touches evidence images.
+- The proxy must not cap request bodies: a single photo may be up to 20 MB and an import batch carries 10 images.
+  Caddy has no default cap; nginx's `client_max_body_size` default of 1 MB rejects every photo.
 
 Set these on the host (see `apps/web/.env.example`):
 

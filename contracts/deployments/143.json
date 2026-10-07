@@ -1,0 +1,12 @@
+{
+  "admin": "0x5A7a12f52d2A1496b6B777A642FfD84746018492",
+  "adminTransferDelaySeconds": 86400,
+  "chainId": 143,
+  "deployBlock": 111297137,
+  "deployer": "0x0A74B23B92fbc9d7E30DDE2631b7fCd619121d26",
+  "registry": "0xa6989c9f93d70526c1b982a5A408DF240575E433",
+  "relayer": "0x68158AA72DA6D4B5aE31DB48fe9B50563Ab96Ca0",
+  "rpIds": [
+    "proofshot.lykan.website"
+  ]
+}

@@ -1,7 +1,6 @@
 # Proofshot — submission write-up (draft)
 
-> Draft. Three ⏳ remain, all filled once the app is on mainnet: the Registry address, the first live Seal's gas and
-> the demo video. Everything else is either measured or plainly marked as not measured. Nothing
+> Draft. Two ⏳ remain: the first live Seal's gas and the demo video. Everything else is either measured or plainly marked as not measured. Nothing
 > here is a projection.
 
 **In one paragraph.** Proofshot seals insurance claim photos at the moment of capture. The policyholder opens a link,
@@ -93,6 +92,8 @@ chain ID and Registry address inside the signed payload; see `docs/security.md`)
 
 ## 11. Links
 
-- Registry: ⏳ address on Monad mainnet, with its source verified on MonadVision (`pnpm --filter @proofshot/contracts verify:mainnet`).
+- Registry on Monad mainnet: [`0xa6989c9f93d70526c1b982a5A408DF240575E433`](https://monadvision.com/address/0xa6989c9f93d70526c1b982a5A408DF240575E433),
+  source verified (full match on Monad's Sourcify). Deployment record: `contracts/deployments/143.json`.
+- Live app: https://proofshot.lykan.website
 - Repository: https://github.com/CemAyyildiz/proofshot
 - Reproduce a Verdict: README → "Reproduce a Verdict yourself".
