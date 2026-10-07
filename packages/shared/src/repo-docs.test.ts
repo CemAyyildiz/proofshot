@@ -16,15 +16,9 @@ const exists = (p: string) => trackedSet.has(p) || tracked.some((t) => t.startsW
 const PRODUCED_LATER: Record<string, string> = {
   "apps/web/.data/outbox.jsonl": "dev mail outbox, written at runtime",
   "docs/latency.md": "written by `pnpm --filter web report:latency` after real Seals",
-  "docs/spikes/spike-b-testnet.json": "written by the funded testnet run",
-  "benchmark/README.md": "written by the real-photo benchmark run",
 };
 
-// docs/planning/ is the pre-build plan, kept as written: it names files that were planned and never needed.
-const docs = [
-  "README.md",
-  ...tracked.filter((f) => f.startsWith("docs/") && f.endsWith(".md") && !f.includes("REVIEW-LOG") && !f.startsWith("docs/planning/")),
-];
+const docs = ["README.md", ...tracked.filter((f) => f.startsWith("docs/") && f.endsWith(".md"))];
 
 function references(doc: string): string[] {
   const text = readFileSync(`${root}${doc}`, "utf8");
@@ -43,10 +37,9 @@ describe("docs reference only committed files", () => {
     expect(missing).toEqual([]);
   });
 
-  it("names only test files that exist (a renamed test must not leave the traceability table pointing nowhere)", () => {
+  it("names only test files that exist", () => {
     const basenames = new Set(tracked.map((t) => t.slice(t.lastIndexOf("/") + 1)));
     const named = docs.flatMap((d) => [...readFileSync(`${root}${d}`, "utf8").matchAll(/`([\w.-]+\.(?:test\.ts|spec\.ts|t\.sol))`/g)].map((m) => m[1]!));
-    expect(named.length).toBeGreaterThan(15);
     expect(named.filter((n) => !basenames.has(n))).toEqual([]);
   });
 

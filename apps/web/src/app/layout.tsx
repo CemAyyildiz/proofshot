@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { connection } from "next/server";
+import { env } from "@/lib/env";
 import "./globals.css";
 
 // IBM Plex for reading: highly legible, with a mono for hashes, IDs and labels.
@@ -29,10 +31,19 @@ const plexMono = localFont({
   ],
 });
 
-export const metadata: Metadata = {
-  title: "Proofshot",
-  description: "Claim photos that prove themselves: sealed at capture, verifiable by anyone.",
-};
+const description = "Claim photos that prove themselves: sealed at capture, verifiable by anyone.";
+
+/** Read at request time, so the link-preview image URLs carry the server's APP_URL rather than the build's. */
+export async function generateMetadata(): Promise<Metadata> {
+  await connection();
+  return {
+    metadataBase: new URL(env().APP_URL),
+    title: "Proofshot",
+    description,
+    openGraph: { title: "Proofshot", description, siteName: "Proofshot", type: "website" },
+    twitter: { card: "summary_large_image", title: "Proofshot", description },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: [

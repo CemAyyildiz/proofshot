@@ -1,0 +1,1 @@
+Proofshot: claim photos that prove themselves. Sealed at capture with a passkey, checked onchain on Monad.

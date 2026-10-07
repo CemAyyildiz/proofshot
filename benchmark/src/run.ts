@@ -1,5 +1,5 @@
 /**
- * Spike A / SM-2 benchmark. Measures how the Verdict engine treats real-world copies of sealed photos.
+ * Accuracy benchmark. Measures how the Verdict engine treats real-world copies of sealed photos.
  *
  *   pnpm --filter @proofshot/benchmark bench              # real dataset in benchmark/data (see README)
  *   pnpm --filter @proofshot/benchmark bench:synthetic    # generated scenes; validates the harness only
@@ -119,7 +119,7 @@ async function main() {
       return { s, v, got: outcome(v), matchedOwn };
     });
 
-  // ── Threshold sweep for T_tile under the SM-C1 ceiling ──────────────────────────────────────────────────
+  // ── Threshold sweep for T_tile under the false-Altered ceiling ──────────────────────────────────────────────────
   const sweep = [];
   for (let tTile = 24; tTile <= 80; tTile += 4) {
     const r = evaluate({ ...DEFAULT_THRESHOLDS, tTile });
@@ -131,7 +131,7 @@ async function main() {
   }
   const eligible = sweep.filter((s) => s.falseAltered <= 0.05);
   // Highest Altered recall; ties go to fewer false Altered, then the most conservative (largest) T_tile, which
-  // protects honest policyholders (SM-C1) at no cost in recall.
+  // protects honest policyholders at no cost in recall.
   const chosen = (
     eligible.length
       ? [...eligible].sort((a, b) => b.alteredRecall - a.alteredRecall || a.falseAltered - b.falseAltered || b.tTile - a.tTile)[0]
@@ -171,17 +171,17 @@ async function main() {
   const sm2 = [
     ["Derived Copy recall, recompression & resize", pct(derivedRecall * 100, 100), "≥ 95%", derivedRecall >= 0.95],
     ["Altered recall, localized edits ≥ 5% area", pct(alteredRecall * 100, 100), "≥ 80%", alteredRecall >= 0.8],
-    ["SM-C1 false Altered on unedited copies", pct(falseAltered * 100, 100), "≤ 5%", falseAltered <= 0.05],
-    ["SM-C2 false match on different scenes", pct(falseMatch * 100, 100), "≤ 1%", falseMatch <= 0.01],
+    ["False Altered on unedited copies", pct(falseAltered * 100, 100), "≤ 5%", falseAltered <= 0.05],
+    ["False match on different scenes", pct(falseMatch * 100, 100), "≤ 1%", falseMatch <= 0.01],
     ["Crops shown as a clean result", String(cleanCrops), "0", cleanCrops === 0],
   ] as const;
 
   const synthetic = values.synthetic;
   const md = `# Proofshot verification benchmark${synthetic ? " — synthetic harness check" : ""}
 
-${synthetic ? "> **Synthetic data.** Generated vector scenes, not photographs. This run only shows that the harness works; it is **not** the SM-2 result. The published result comes from `pnpm bench` on real photos.\n\n" : ""}Dataset: ${ds.label}, ${results.length} verifications. Run ${new Date().toISOString()} in ${((Date.now() - t0) / 1000).toFixed(0)} s.
+${synthetic ? "> **Synthetic data.** Generated vector scenes, not photographs. This run only shows that the harness works; it is **not** the accuracy result. The published result comes from `pnpm bench` on real photos.\n\n" : ""}Dataset: ${ds.label}, ${results.length} verifications. Run ${new Date().toISOString()} in ${((Date.now() - t0) / 1000).toFixed(0)} s.
 
-## Result against SM-2 and counter-metrics
+## Result against the targets
 
 | Metric | Measured | Target | |
 |---|---|---|---|
@@ -195,7 +195,7 @@ Thresholds used: \`T_match\`=${thresholds.tMatch}, \`T_tile\`=${thresholds.tTile
 |---|---|---|---|---|
 ${rows.map((r) => `| ${r.kind} | ${r.n} | ${r.expected} | ${pct(r.ok, r.n)} | ${r.breakdown} |`).join("\n")}
 
-## \`T_tile\` sweep (SM-C1 ceiling 5%)
+## \`T_tile\` sweep (false Altered ceiling 5%)
 
 | T_tile | false Altered | Altered recall |
 |---|---|---|

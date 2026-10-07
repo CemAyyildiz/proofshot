@@ -17,11 +17,23 @@ contracts/broadcast/*/31337/
 
 # benchmark raw data: see benchmark/.gitignore (the manifest is committed)
 
-# Local agent and BMAD tooling (planning docs that matter live in docs/planning/)
+# Local agent tooling
 .claude/
 _bmad/
 _bmad-output/
 
-# Owner-only checklist
+# Working documents, kept on the owner's machine only: planning, review notes, submission and recording material
 OWNER-TODO.html
 design-review/
+CHANGELOG.md
+docs/planning/
+docs/review/
+docs/spikes/
+docs/demo-script.md
+docs/judges-guide.md
+docs/submission-writeup.md
+docs/traceability.md
+
+# Agent instruction files (Next.js re-creates AGENTS.md on `next dev`)
+AGENTS.md
+CLAUDE.md

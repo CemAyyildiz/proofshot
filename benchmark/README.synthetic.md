@@ -1,17 +1,17 @@
 # Proofshot verification benchmark — synthetic harness check
 
-> **Synthetic data.** Generated vector scenes, not photographs. This run only shows that the harness works; it is **not** the SM-2 result. The published result comes from `pnpm bench` on real photos.
+> **Synthetic data.** Generated vector scenes, not photographs. This run only shows that the harness works; it is **not** the accuracy result. The published result comes from `pnpm bench` on real photos.
 
 Dataset: synthetic (20 generated scenes, 2016×1512), 180 verifications. Run 2026-09-28T11:51:01.093Z in 65 s.
 
-## Result against SM-2 and counter-metrics
+## Result against the targets
 
 | Metric | Measured | Target | |
 |---|---|---|---|
 | Derived Copy recall, recompression & resize | 100.0% | ≥ 95% | ✅ |
 | Altered recall, localized edits ≥ 5% area | 100.0% | ≥ 80% | ✅ |
-| SM-C1 false Altered on unedited copies | 0.0% | ≤ 5% | ✅ |
-| SM-C2 false match on different scenes | 0.0% | ≤ 1% | ✅ |
+| False Altered on unedited copies | 0.0% | ≤ 5% | ✅ |
+| False match on different scenes | 0.0% | ≤ 1% | ✅ |
 | Crops shown as a clean result | 0 | 0 | ✅ |
 
 Thresholds used: `T_match`=31, `T_tile`=36 (chosen by the sweep below), tile-majority match ≥ 12/16, aspect tolerance 2%, more than 8 changed tiles ⇒ geometry change.
@@ -29,7 +29,7 @@ Thresholds used: `T_match`=31, `T_tile`=36 (chosen by the sweep below), tile-maj
 | edit | 40 | altered:failed | 100.0% | altered:failed 40 |
 | negative | 20 | no-record | 100.0% | no-record 20 |
 
-## `T_tile` sweep (SM-C1 ceiling 5%)
+## `T_tile` sweep (false Altered ceiling 5%)
 
 | T_tile | false Altered | Altered recall |
 |---|---|---|

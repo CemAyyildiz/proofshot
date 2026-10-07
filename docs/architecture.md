@@ -32,12 +32,12 @@ flowchart LR
 
 | Data | Where | Why |
 |---|---|---|
-| Image bytes | Carrier-scoped storage only (sent photos, Console uploads) | Evidence stays with the insurer (NFR-5) |
+| Image bytes | Carrier-scoped storage only (sent photos, Console uploads) | Evidence stays with the insurer |
 | Exact Hash, PDQ whole-image + 16 tile hashes, width/height | Registry events (public) | Anyone can re-check a copy |
 | Location | A salted commitment only; coordinates and salt stay on the device, the salt also goes to the carrier | Disclosure is always explicit |
 | Claim File | `claimRef = keccak256(claimFileId)` onchain; reference string only in the app DB | Opaque to the public |
 | Carrier | A random 32-byte pseudonymous ID onchain | Duplicate Alerts say "another carrier", never which |
-| Public Verifier uploads | Fingerprinted, never stored; only the outcome is kept for the receipt | FR-8 |
+| Public Verifier uploads | Fingerprinted, never stored; only the outcome is kept for the receipt | A check leaves no copy of the image behind |
 
 ## Key flows
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { env } from "@/lib/env";
 import { Wordmark } from "./logo";
 import { NavLinks } from "./nav-links";
@@ -16,7 +17,9 @@ export function SiteHeader() {
   );
 }
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  // The Registry link and network come from the server's environment, not the build's: a build runs without them.
+  await connection();
   const { network, REGISTRY_ADDRESS, PUBLIC_REPO_URL } = env();
   const links = [
     { href: "/verify", label: "Verify a photo" },

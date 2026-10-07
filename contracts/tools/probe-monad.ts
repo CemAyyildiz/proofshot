@@ -39,7 +39,7 @@ for (const net of [networks.testnet, networks.mainnet]) {
   console.log(net.name, JSON.stringify(results[net.name]));
 }
 if (!process.argv.includes("--no-write")) {
-  writeFileSync(new URL("../../docs/spikes/spike-b-probe.json", import.meta.url), JSON.stringify(results, null, 2) + "\n");
+  writeFileSync(new URL("../../docs/monad-p256-probe.json", import.meta.url), JSON.stringify(results, null, 2) + "\n");
 }
 
 // Canary: fail loudly if either network stops verifying passkeys natively or starts accepting a tampered signature.

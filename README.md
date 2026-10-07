@@ -8,14 +8,17 @@ without an account and without trusting Proofshot.
 
 Built for the Monad Metropolis hackathon, Track 04 (Trust, Identity & AI Infrastructure).
 
-**Judging? Start with the [5-minute judge's guide](docs/judges-guide.md).**
+- **Live on Monad mainnet:** https://proofshot.lykan.website — open **Try it** on a phone to seal a photo and then try
+  to fool the verifier. No sign-up, no wallet.
+- **Registry contract:** [`0xa6989c9f93d70526c1b982a5A408DF240575E433`](https://monadvision.com/address/0xa6989c9f93d70526c1b982a5A408DF240575E433),
+  source verified. Deployment record: [`contracts/deployments/143.json`](contracts/deployments/143.json).
 
 | Claim | Evidence |
 |---|---|
-| Monad verifies the passkey signature itself, onchain | Keyless probe on **testnet and mainnet**: the same OpenZeppelin `WebAuthn.verify` the Registry calls accepts a valid assertion (13,853 gas) and rejects a tampered one ([probe output](docs/spikes/spike-b-probe.json), re-checked every six hours in CI) |
-| A Seal costs 100,340 gas (326,571 without the P-256 precompile) | `pnpm --filter @proofshot/contracts gas:seal` prints both (Osaka EVM, then Prague); [spike notes](docs/spikes/spike-b.md) |
-| Anyone can re-derive a Verdict without our servers | [Reproduce a Verdict yourself](#reproduce-a-verdict-yourself); e2e asserts the CLI and the website agree |
-| Not measured yet | Real-photo accuracy, Seal latency p95, outside users: stated in the [write-up](docs/submission-writeup.md) §4, §6, §7 |
+| Monad verifies the passkey signature itself, onchain | A keyless probe on **testnet and mainnet**: the same OpenZeppelin `WebAuthn.verify` the Registry calls accepts a valid assertion (13,853 gas) and rejects a tampered one ([probe output](docs/monad-p256-probe.json), re-checked every six hours in CI) |
+| The `seal()` call costs 100,340 gas; 326,571 without the P-256 precompile | `pnpm --filter @proofshot/contracts gas:seal` prints both (Osaka EVM, then Prague) |
+| A live Seal is one 126,823 gas transaction, 0.013 MON | The [first Seal on mainnet](https://monadvision.com/tx/0x2f4dd8739a555fa874aba1e0890b3cb11cb3cf8d765770820d505745d04bb2b6) |
+| Anyone can re-derive a Verdict without our servers | [Reproduce a Verdict yourself](#reproduce-a-verdict-yourself); an end-to-end test asserts the CLI and the website agree |
 
 ## What it does
 
@@ -25,9 +28,6 @@ Built for the Monad Metropolis hackathon, Track 04 (Trust, Identity & AI Infrast
 | **Adjuster** (Carrier Console) | Every photo in a Claim File with its Verdict. Drops in an image that arrived by email and sees **Altered** with a map of the changed regions. |
 | **Investigator** | A **Duplicate Alert** when a photo matches one sealed in another claim — at another insurer too — without either insurer sharing a single photo. |
 | **Anyone** (Public Verifier) | Drops in any copy and gets exactly one Verdict: **Original**, **Derived Copy**, **Altered** (with a Tile Map) or **No Record**, plus a receipt they can re-check from public data. |
-
-Try it: the landing page's **Try it** flow seals a photo from your own phone and walks you through trying to fool
-the verifier.
 
 ## What a Seal proves — and what it does not
 
@@ -42,16 +42,13 @@ assumptions and the test behind every contract guarantee.
 ## Why Monad
 
 - **Passkeys verified onchain, cheaply.** Monad ships the P-256 signature precompile (EIP-7951), so the contract
-  verifies a WebAuthn assertion over the whole Capture Record for **100,340 gas per Seal** (vs 326,571 without the
-  precompile) — measured with Foundry on the Osaka EVM. A keyless probe confirmed on **Monad testnet and mainnet**
-  that the precompile is live and that the same OpenZeppelin verification accepts a passkey assertion (13,853 gas) and
-  rejects a tampered one; live `seal()` gas and latency are pending a funded key ([docs/spikes/spike-b.md](docs/spikes/spike-b.md)).
-- **Fast blocks and finality** are what make the "Sealed within 3 seconds" target (NFR-1) realistic: the average
-  block time measured over 10,000 blocks is 304 ms on testnet and 301 ms on mainnet (2026-09-30). The live
-  shutter-to-Sealed latency report is pending with the testnet run.
-- **Per-photo economics**: at that gas, sealing every photo individually is affordable, so each Receipt points at
-  its own transaction.
-- **A shared, neutral registry**: cross-insurer duplicate detection works on public fingerprints instead of a
+  verifies a WebAuthn assertion over the whole Capture Record in a 100,340 gas call, against 326,571 without the
+  precompile (Foundry, Osaka EVM).
+- **Fast blocks.** The average block time measured over 10,000 blocks is 301 ms on mainnet (2026-09-30). The capture
+  screen says "Sealed" only once the transaction's receipt is in.
+- **Per-photo economics.** At 0.013 MON per Seal, every photo gets its own transaction, and each receipt points at
+  it.
+- **A shared, neutral registry.** Cross-insurer duplicate detection works on public fingerprints instead of a
   vendor-held photo pool.
 
 ## How it works
@@ -118,7 +115,7 @@ pnpm screens                       # design screenshots of every surface → app
 pnpm --filter @proofshot/contracts coverage
 pnpm --filter @proofshot/contracts slither   # static analysis (needs uv)
 pnpm --filter @proofshot/fingerprint mutate  # mutation test of the Verdict rules: every mutant must be killed
-pnpm --filter @proofshot/benchmark bench   # SM-2 benchmark (needs benchmark/data)
+pnpm --filter @proofshot/benchmark bench   # accuracy benchmark (needs benchmark/data)
 ```
 
 End-to-end tests drive Chrome with a virtual platform authenticator and a fake camera, so every Seal carries a real
@@ -135,12 +132,14 @@ fails when `schema.ts` changes without a migration.
 A separate **Monad canary**
 (`monad-canary.yml`) re-runs the keyless passkey-verification probe against Monad testnet and mainnet every six hours,
 and opens (or updates) a GitHub issue when it fails. A test also keeps the docs honest: every repository path the
-README and `docs/` mention must be committed.
+README and `docs/` mention must exist.
 
-## Status and honest limits
+## Limits
 
-- **Accuracy benchmark**: the harness is done and passes every SM-2 target on generated scenes
-  ([benchmark/README.synthetic.md](benchmark/README.synthetic.md)); the real-photo run is pending.
+- **Accuracy** is measured on generated scenes only, where it meets every target
+  ([benchmark/README.synthetic.md](benchmark/README.synthetic.md)). It has not been run on real phone photos yet.
+- **Latency and use**: there is no latency percentile and no outside usage to report yet; the only Seals so far are
+  the builder's own.
 - **Crops**: the whole-image PDQ fingerprint recognises crops of about 2–3%. A copy cropped by 10% comes back
   **No Record**; a cropped copy is never shown as a clean result.
 - **Indexing** runs inside the app (viem log reader into Postgres); the chain is the source of truth.
@@ -164,5 +163,5 @@ README and `docs/` mention must be committed.
 | `packages/shared` | Network config, typed env, WebAuthn helpers, CaptureRecord encoding, Registry ABI |
 | `contracts` | Registry (Solidity, Foundry), deploy script, local dev chain |
 | `cli` | `proofshot-verify`: reproduce a Verdict from public data only |
-| `benchmark` | SM-2 accuracy benchmark |
-| `docs` | Architecture, threat model, security model, deploy runbook, requirement traceability, demo script, write-up draft, spikes, review log |
+| `benchmark` | Accuracy benchmark |
+| `docs` | [Architecture](docs/architecture.md), [threat model](docs/threat-model.md), [security model](docs/security.md), [deploy](docs/deploy.md) and [operations](docs/runbook.md) |

@@ -64,10 +64,9 @@ balance, a paused Registry, fees above the ceiling or missing email. Evidence im
 Claim Link tokens carry 192 random bits, never leave the origin in a `Referer`, and can be replaced by the Carrier
 (the old token then takes no new photos but still lets already-sealed ones be delivered). They are stored as-is,
 because the Console must show the link again, and like any capability URL they appear in the host's HTTP access logs;
-both are accepted for v1 and limited by the link's 14-day life and replaceability. Verification Receipts are kept so shared links stay valid (FR-9); each holds the checked file's SHA-256, size and
+both are accepted for v1 and limited by the link's 14-day life and replaceability. Verification Receipts are kept so shared links stay valid; each holds the checked file's SHA-256, size and
 Verdict only — never the image or its perceptual fingerprints — under an unguessable 72-bit id, and the Verifier says
-so before anyone checks a file. Details and the review history:
-[review/REVIEW-LOG.md](review/REVIEW-LOG.md).
+so before anyone checks a file.
 
 ## Deployment assumptions
 

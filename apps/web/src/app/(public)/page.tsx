@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import QRCode from "qrcode";
 import { ArrowRightIcon, CameraIcon, CheckIcon, CodeIcon, CopiesIcon, FingerprintIcon, MinusIcon, ShieldCheckIcon, WarningIcon } from "@/components/icons";
 import type { VerdictKind } from "@/components/verdict/copy";
@@ -46,6 +47,8 @@ const DOES_NOT_PROVE = [
 ];
 
 export default async function Home() {
+  // The QR code and links are built from the server's APP_URL; prerendering at build time would bake in localhost.
+  await connection();
   const { APP_URL, network, REGISTRY_ADDRESS, PUBLIC_REPO_URL } = env();
   const tryUrl = new URL("/try", APP_URL).toString();
   const qr = await QRCode.toString(tryUrl, { type: "svg", margin: 1, errorCorrectionLevel: "M" });
