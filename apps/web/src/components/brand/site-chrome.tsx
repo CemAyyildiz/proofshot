@@ -34,7 +34,7 @@ export function SiteFooter() {
             <span className="font-medium text-foreground">Proofshot — proof created at capture, checkable by anyone.</span> Photos
             never leave the carrier. Only fingerprints are public.
           </p>
-          <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted">Sealed on Monad {network.name}</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">Sealed on Monad {network.name}</p>
         </div>
         <nav aria-label="Footer" className="-mx-2 flex flex-wrap sm:max-w-md sm:justify-end">
           {links.map((l) => (

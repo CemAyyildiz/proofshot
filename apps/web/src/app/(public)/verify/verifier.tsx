@@ -163,7 +163,7 @@ export function Verifier() {
               <UploadIcon className="size-7" />
             </span>
             <span className="display text-2xl">Drop an image here, or choose a file</span>
-            <span className="font-mono text-xs uppercase tracking-[0.14em] text-muted">JPEG, PNG, WebP or HEIC, up to 20 MB</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted">JPEG, PNG, WebP or HEIC, up to 20 MB</span>
           </>
         )}
         <input
@@ -196,7 +196,7 @@ export function Verifier() {
 
 function FileRow({ file, preview, detail }: { file: File; preview?: string; detail?: string }) {
   return (
-    <span className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-3 text-sm">
+    <span className="flex items-center gap-3 rounded-3xl border border-line bg-surface p-3 text-sm">
       {preview ? (
         /* eslint-disable-next-line @next/next/no-img-element -- the viewer's own file, in-session only */
         <img src={preview} alt="" className="size-12 shrink-0 rounded-lg object-cover" />

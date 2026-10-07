@@ -67,7 +67,7 @@ export function VerdictBanner({ kind, alterationCheck, imported }: { kind: Verdi
         <VerdictIcon kind={kind} className="size-6" />
       </span>
       <span className="flex min-w-0 flex-col">
-        <span className="font-mono text-[0.7rem] font-medium uppercase tracking-[0.14em]">Verdict</span>
+        <span className="text-[0.7rem] font-semibold uppercase tracking-wider">Verdict</span>
         <span className="display text-3xl sm:text-4xl">{VERDICT_LABEL[kind]}</span>
         {alterationCheck === "unavailable" && <span className="text-sm">· check unavailable</span>}
         {imported && <span className="text-sm">· imported (unsigned)</span>}

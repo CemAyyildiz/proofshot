@@ -19,11 +19,11 @@ export function VerdictPanel({ view, headingLevel = 2 }: { view: VerdictView; he
         <p className="text-lg font-medium leading-snug">{copy.summary}</p>
         <dl className="grid gap-4 border-t border-line pt-4 text-sm sm:grid-cols-2">
           <div className="flex flex-col gap-1">
-            <dt className="font-mono text-xs font-medium uppercase tracking-[0.14em] text-muted">What this means</dt>
+            <dt className="text-xs font-semibold uppercase tracking-wider text-muted">What this means</dt>
             <dd>{copy.means}</dd>
           </div>
           <div className="flex flex-col gap-1">
-            <dt className="font-mono text-xs font-medium uppercase tracking-[0.14em] text-muted">What it does not mean</dt>
+            <dt className="text-xs font-semibold uppercase tracking-wider text-muted">What it does not mean</dt>
             <dd>{copy.doesNotMean}</dd>
           </div>
         </dl>

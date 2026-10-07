@@ -14,11 +14,11 @@ const plexSans = localFont({
     { path: "./fonts/ibm-plex-sans-latin-700-normal.woff2", weight: "700" },
   ],
 });
-// Archivo (SIL OFL 1.1, see ./fonts/OFL-Archivo.txt): the display face for headings, one variable file.
-const archivo = localFont({
-  variable: "--font-archivo",
+// Outfit (SIL OFL 1.1, see ./fonts/OFL-Outfit.txt): the display face for headings, one variable file.
+const outfit = localFont({
+  variable: "--font-outfit",
   display: "swap",
-  src: [{ path: "./fonts/archivo-latin-wght-normal.woff2", weight: "100 900" }],
+  src: [{ path: "./fonts/outfit-latin-wght-normal.woff2", weight: "100 900" }],
 });
 const plexMono = localFont({
   variable: "--font-plex-mono",
@@ -36,14 +36,14 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f0e8" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0c0e" },
+    { media: "(prefers-color-scheme: light)", color: "#fbfaf9" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e0a1f" },
   ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${plexSans.variable} ${plexMono.variable} ${archivo.variable} h-full antialiased`}>
+    <html lang="en" className={`${plexSans.variable} ${plexMono.variable} ${outfit.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

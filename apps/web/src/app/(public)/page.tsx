@@ -78,7 +78,7 @@ export default async function Home() {
   return (
     <main className="flex flex-1 flex-col">
       <section className="ink relative overflow-hidden">
-        <div className="grid-bg absolute inset-0" aria-hidden="true" />
+        <div className="glow-bg absolute inset-0" aria-hidden="true" />
         <div className="relative mx-auto grid w-full max-w-6xl items-center gap-10 px-4 pb-14 pt-10 sm:pb-20 sm:pt-16 lg:grid-cols-[1.15fr_1fr] lg:gap-14">
           <div className="flex flex-col gap-6">
             <p className="eyebrow">Capture provenance for insurance claims</p>
@@ -118,7 +118,7 @@ export default async function Home() {
             <VerdictExample />
           </div>
         </div>
-        <ul className="relative mx-auto grid w-full max-w-6xl gap-px border-t border-line px-4 font-mono text-xs uppercase tracking-[0.14em] text-muted sm:grid-cols-3">
+        <ul className="relative mx-auto grid w-full max-w-6xl gap-px border-t border-line px-4 text-xs font-semibold uppercase tracking-wider text-muted sm:grid-cols-3">
           <li className="py-4">Signed with a passkey · no app, no wallet</li>
           <li className="py-4 sm:text-center">Signature checked onchain, on Monad</li>
           <li className="py-4 sm:text-right">Any copy can be checked by anyone</li>
@@ -135,7 +135,7 @@ export default async function Home() {
         </div>
         <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {VERDICTS.map(({ kind, bg, body }) => (
-            <li key={kind} className={`flex min-h-52 flex-col justify-between gap-5 rounded-2xl p-4 text-verdict-fg sm:min-h-44 sm:p-5 ${bg}`}>
+            <li key={kind} className={`flex min-h-52 flex-col justify-between gap-5 rounded-3xl p-4 text-verdict-fg sm:min-h-44 sm:p-5 ${bg}`}>
               <span className="grid size-11 place-items-center rounded-full border-2 border-current">
                 <VerdictIcon kind={kind} className="size-6" />
               </span>
@@ -156,11 +156,11 @@ export default async function Home() {
               How it works
             </h2>
           </div>
-          <ol className="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3">
+          <ol className="grid gap-px overflow-hidden rounded-3xl border border-line bg-line sm:grid-cols-3">
             {STEPS.map(({ icon: Icon, title, body }, i) => (
               <li key={title} className="flex flex-col gap-4 bg-background p-6">
                 <div className="flex items-center justify-between">
-                  <span className="display text-6xl" aria-hidden="true">
+                  <span className="display text-6xl text-brand" aria-hidden="true">
                     0{i + 1}
                   </span>
                   <span className="grid size-11 place-items-center rounded-full bg-brand text-brand-fg">
@@ -221,7 +221,7 @@ export default async function Home() {
               ))}
             </ul>
           </div>
-          <div className="flex flex-col gap-4 rounded-2xl border-2 border-dashed border-line p-6">
+          <div className="flex flex-col gap-4 rounded-3xl border-2 border-dashed border-line p-6">
             <h3 className="display text-2xl">It does not prove</h3>
             <ul className="flex flex-col gap-3 text-foreground/80">
               {DOES_NOT_PROVE.map((t) => (

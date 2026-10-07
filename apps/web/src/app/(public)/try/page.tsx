@@ -14,7 +14,7 @@ const STEPS = [
 export default function TryPage() {
   return (
     <main className="ink relative flex flex-1 flex-col overflow-hidden">
-      <div className="grid-bg absolute inset-0" aria-hidden="true" />
+      <div className="glow-bg absolute inset-0" aria-hidden="true" />
       <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-8 px-4 py-10">
         <div className="flex flex-col gap-4">
           <p className="eyebrow">Proofshot demo · about a minute</p>

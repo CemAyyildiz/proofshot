@@ -67,7 +67,7 @@ export function CaptureApp({ token, carrierName, reference, validUntil, sandbox 
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 px-4 pb-8 pt-3">
         <div className="flex min-h-11 items-center justify-between">
           <Wordmark />
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 font-mono text-[0.7rem] font-medium uppercase tracking-[0.14em] text-muted">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-wider text-muted">
             <LockIcon className="size-3.5" />
             Sealed at capture
           </span>
@@ -78,7 +78,7 @@ export function CaptureApp({ token, carrierName, reference, validUntil, sandbox 
             <p className="eyebrow [overflow-wrap:anywhere]">{carrierName}</p>
           ) : (
             <>
-              <p className="font-mono text-xs font-medium uppercase tracking-[0.14em] text-muted">Requested by</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted">Requested by</p>
               <p className="text-lg font-semibold [overflow-wrap:anywhere]">{carrierName}</p>
             </>
           )}

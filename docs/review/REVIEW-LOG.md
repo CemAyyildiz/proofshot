@@ -2714,22 +2714,27 @@ usability findings but kept a grey, text-heavy page with no identity.
 
 Direction, chosen with ui-ux-pro-max and checked against real screenshots (`SCREENS=1`):
 
-- **Palette**: ink and warm paper with one signal colour, the yellow of an evidence marker. Primary actions are ink
-  on paper and yellow on ink. Verdict colours stay reserved for Verdicts and are now the same saturated set in both
-  schemes, always with white text.
-- **Type**: Archivo (vendored, OFL) for poster headings; IBM Plex Sans for reading; Plex Mono for labels and hashes.
-- **Motifs**: viewfinder corners, the 4×4 comparison grid as a backdrop, and a "SEALED" stamp that lands on the
-  viewfinder when a Seal is recorded.
+- **Palette**: Monad's own: off-white, deep indigo and Monad purple (`#836EF9`). Actions use a purple one step
+  deeper (`#7059F0`) so white text on them passes 4.5:1. Verdict colours stay reserved for Verdicts and are the same
+  saturated set in both schemes, always with white text.
+- **Type**: Outfit (vendored, OFL) for headings, a rounded geometric face; IBM Plex Sans for reading; Plex Mono only
+  for hashes and addresses.
+- **Motifs**: viewfinder corners (also the logo: a viewfinder closing on a check), a soft purple light behind the
+  dark bands, pill labels, and a "SEALED" stamp that lands on the viewfinder when a Seal is recorded.
 - **`.ink`** applies the dark palette to one part of a page in either colour scheme: the landing hero, the demo
   intro, the whole capture flow and the footer.
+
+The first version of this pass used black and an evidence-marker yellow with heavy grotesque headings. The owner
+pointed out that it was the identity of another of their products (Proofwork), so it was replaced the same day with
+the Monad palette, a different heading face, different labels and a new mark.
 
 Changes by surface:
 
 - **Landing**: an ink hero with the example Verdict; a new "Four Verdicts" section, one coloured block per Verdict
-  in the verifier's own words; numbered steps; a yellow closing band that leads to the demo.
+  in the verifier's own words; numbered steps; a purple closing band that leads to the demo.
 - **Verdicts**: a result's headline is a full-width band in the Verdict colour with the icon and the name at
   display size, instead of a small pill. Pills remain in lists.
-- **Capture**: dark like a camera app, with a yellow shutter, viewfinder corners and the stamp. The guide after the
+- **Capture**: dark like a camera app, with a purple shutter, viewfinder corners and the stamp. The guide after the
   first Seal is a numbered card.
 - **Save to Photos (iPhone)**: a download in Safari goes to Files. On touch devices whose share sheet accepts files,
   the guide now offers "Save to Photos" (the share sheet's "Save Image"), and keeps the download link for the exact

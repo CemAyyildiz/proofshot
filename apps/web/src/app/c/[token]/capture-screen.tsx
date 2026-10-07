@@ -268,7 +268,7 @@ export function CaptureScreen({
   return (
     <section aria-label="Camera" className="flex flex-col gap-3">
       {linkClosed && (
-        <div role="alert" className="rounded-2xl border border-danger bg-surface p-4 text-sm">
+        <div role="alert" className="rounded-3xl border border-danger bg-surface p-4 text-sm">
           <p className="font-semibold">This link is no longer active</p>
           <p className="text-muted">
             New photos can&apos;t be sealed with it. Photos already sealed stay valid and can still be sent. Ask your
@@ -277,7 +277,7 @@ export function CaptureScreen({
         </div>
       )}
       {!linkClosed && limitNotice && (
-        <div role="alert" className="rounded-2xl border border-danger bg-surface p-4 text-sm">
+        <div role="alert" className="rounded-3xl border border-danger bg-surface p-4 text-sm">
           <p className="font-semibold">No more photos can be sealed right now</p>
           <p className="text-muted">
             {limitNotice} Photos already sealed stay valid and can still be sent.
@@ -289,7 +289,7 @@ export function CaptureScreen({
         <video ref={videoRef} playsInline muted autoPlay className="aspect-[3/4] w-full object-cover" aria-label="Camera preview" />
         {camera.state === "on" && <Viewfinder inset="inset-4" />}
         {camera.state === "on" && (
-          <span aria-hidden="true" className="absolute left-4 top-4 ml-7 mt-0.5 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-2 py-0.5 font-mono text-[0.65rem] font-medium uppercase tracking-[0.14em] text-white backdrop-blur">
+          <span aria-hidden="true" className="absolute left-4 top-4 ml-7 mt-0.5 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-white backdrop-blur">
             <span className="size-1.5 rounded-full bg-brand" />
             Live
           </span>

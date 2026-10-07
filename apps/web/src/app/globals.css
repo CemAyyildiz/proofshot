@@ -1,19 +1,20 @@
 @import "tailwindcss";
 
-/* Evidence lab: ink and paper with one signal colour, the yellow of an evidence marker. Verdict colours are
-   reserved for Verdicts (PRD §12); the brand yellow never stands for one. */
+/* Monad's palette: off-white, deep indigo and Monad purple. Verdict colours are reserved for Verdicts (PRD §12);
+   the purple never stands for one. */
 :root {
-  --background: #f3f0e8;
+  --background: #fbfaf9;
   --surface: #ffffff;
-  --surface-2: #e9e5d9;
-  --foreground: #111214;
-  --muted: #55585f;
-  --line: #d6d1c4;
-  /* Primary actions: ink on paper, yellow on ink. */
-  --accent: #111214;
+  --surface-2: #f0edfb;
+  --foreground: #14102a;
+  --muted: #5c5873;
+  --line: #e0dcef;
+  /* Actions: a purple one step deeper than Monad's, so white text on it passes 4.5:1. */
+  --accent: #7059f0;
   --accent-fg: #ffffff;
-  --brand: #ffd60a;
-  --brand-fg: #111214;
+  /* Monad purple, for marks, dots and large type only. */
+  --brand: #836ef9;
+  --brand-fg: #ffffff;
   --danger: #b3261e;
   /* Verdict colours — used for Verdicts only. All ≥ 4.5:1 against their text colour. */
   --verdict-original: #12703a;
@@ -25,20 +26,17 @@
 
 /* The dark palette. `.ink` applies it to one part of a page (the hero, the camera, the footer) in either scheme. */
 .ink {
-  --background: #0b0c0e;
-  --surface: #15171a;
-  --surface-2: #1e2125;
-  --foreground: #f3f1ea;
-  --muted: #a3a7ae;
-  --line: #2d3036;
-  --accent: #ffd60a;
-  --accent-fg: #111214;
+  --background: #0e0a1f;
+  --surface: #17122d;
+  --surface-2: #211a3f;
+  --foreground: #f6f4ff;
+  --muted: #a9a4c4;
+  --line: #2e2650;
   --danger: #ff9a8f;
   --verdict-original: #17803f;
   --verdict-derived: #2563d9;
   --verdict-altered: #d0340f;
   --verdict-none: #565b64;
-  --verdict-fg: #ffffff;
   background: var(--background);
   color: var(--foreground);
 }
@@ -46,37 +44,34 @@
 /* Screen only: a receipt printed from a dark-mode browser still prints on the light palette. */
 @media screen and (prefers-color-scheme: dark) {
   :root {
-    --background: #0b0c0e;
-    --surface: #15171a;
-    --surface-2: #1e2125;
-    --foreground: #f3f1ea;
-    --muted: #a3a7ae;
-    --line: #2d3036;
-    --accent: #ffd60a;
-    --accent-fg: #111214;
+    --background: #0e0a1f;
+    --surface: #17122d;
+    --surface-2: #211a3f;
+    --foreground: #f6f4ff;
+    --muted: #a9a4c4;
+    --line: #2e2650;
     --danger: #ff9a8f;
     --verdict-original: #17803f;
     --verdict-derived: #2563d9;
     --verdict-altered: #d0340f;
     --verdict-none: #565b64;
-    --verdict-fg: #ffffff;
   }
-  /* The hero and footer sit one step above the page so they still read as their own bands. */
+  /* The hero and footer sit one step below the page so they still read as their own bands. */
   .ink {
-    --background: #050506;
-    --surface: #131417;
+    --background: #080516;
+    --surface: #140f28;
   }
 }
 
-/* On a yellow band, actions and focus rings are ink. */
+/* On a purple band, text is white and the action is a white button. */
 .on-brand {
-  --accent: #111214;
-  --accent-fg: #ffffff;
-  --foreground: #111214;
-  --muted: #3b3d42;
-  --line: rgb(17 18 20 / 0.25);
-  background: var(--brand);
-  color: var(--brand-fg);
+  --accent: #ffffff;
+  --accent-fg: #14102a;
+  --foreground: #ffffff;
+  --muted: #ece8ff;
+  --line: rgb(255 255 255 / 0.35);
+  background: #6a50ee;
+  color: #ffffff;
 }
 
 @theme inline {
@@ -98,7 +93,7 @@
   --color-verdict-fg: var(--verdict-fg);
   --font-sans: var(--font-plex-sans);
   --font-mono: var(--font-plex-mono);
-  --font-display: var(--font-archivo);
+  --font-display: var(--font-outfit);
 }
 
 body {
@@ -171,15 +166,15 @@ button {
 
 /* The stamp's face. Its word is CSS content, so it is never read out twice or matched as page text. */
 .seal-stamp {
-  border: 4px solid var(--brand);
-  border-radius: 14px;
-  padding: 6px 16px;
-  background: rgb(0 0 0 / 0.55);
-  color: var(--brand);
+  border: 3px solid #ffffff;
+  border-radius: 16px;
+  padding: 8px 18px;
+  background: rgb(112 89 240 / 0.92);
+  color: #ffffff;
   font-family: var(--font-display), system-ui, sans-serif;
-  font-weight: 800;
-  font-size: 2rem;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  font-size: 1.9rem;
+  letter-spacing: 0.1em;
   line-height: 1;
 }
 .seal-stamp::after {
@@ -215,35 +210,33 @@ button {
   .mono {
     @apply font-mono text-[0.9em] tabular-nums;
   }
-  /* A label above a heading: mono capitals behind a small evidence-marker square. */
+  /* A label above a heading: a small pill with a purple dot. */
   .eyebrow {
-    @apply inline-flex items-center gap-2 font-mono text-xs font-medium uppercase tracking-[0.14em] text-muted;
+    @apply inline-flex w-fit items-center gap-2 self-start rounded-full border border-line px-3 py-1 text-[0.8rem] font-medium text-muted;
   }
   .eyebrow::before {
     content: "";
-    @apply size-2 shrink-0 bg-brand;
+    @apply size-1.5 shrink-0 rounded-full bg-brand;
   }
-  /* Poster headings. */
+  /* Headings: a rounded geometric face, set large and close. */
   .display {
     font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
-    @apply font-extrabold leading-[1.02] tracking-[-0.03em];
+    @apply font-semibold leading-[1.06] tracking-[-0.025em];
   }
   .card {
-    @apply rounded-2xl border border-line bg-surface;
+    @apply rounded-3xl border border-line bg-surface;
   }
-  /* Marker-pen highlight for the words that carry a headline. */
+  /* The words that carry a headline, on Monad purple. Headings only: white on it needs large type. */
   .mark {
-    @apply bg-brand px-[0.12em] text-brand-fg;
+    @apply rounded-[0.2em] bg-brand px-[0.14em] text-brand-fg;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
   }
-  /* The 4 by 4 grid every photo is compared on, as a backdrop. */
-  .grid-bg {
-    background-image:
-      linear-gradient(to right, color-mix(in srgb, var(--foreground) 9%, transparent) 1px, transparent 1px),
-      linear-gradient(to bottom, color-mix(in srgb, var(--foreground) 9%, transparent) 1px, transparent 1px);
-    background-size: 56px 56px;
-    mask-image: radial-gradient(ellipse 90% 80% at 70% 20%, #000 20%, transparent 75%);
+  /* A soft purple light behind the dark bands. */
+  .glow-bg {
+    background:
+      radial-gradient(60% 55% at 85% 0%, rgb(131 110 249 / 0.38), transparent 70%),
+      radial-gradient(45% 40% at 0% 100%, rgb(160 5 93 / 0.22), transparent 70%);
   }
 }
 

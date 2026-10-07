@@ -39,7 +39,7 @@ export function VerdictExample() {
           <TileMap src={SRC} alteredTiles={[6]} width={800} height={600} alt="Illustrated car door with a dent painted in after sealing" />
         </div>
         <figcaption id="example-caption" className="text-sm text-muted">
-          <span className="font-mono text-xs uppercase tracking-[0.14em]">Example result · </span>
+          <span className="text-xs font-semibold uppercase tracking-wider">Example result · </span>
           What the Public Verifier shows for a sealed photo that was edited later. Illustration, not a real claim.
         </figcaption>
       </div>
