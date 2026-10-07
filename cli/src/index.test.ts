@@ -46,6 +46,39 @@ suite("readRegistry", () => {
   });
 });
 
+suite("readRegistry over a long history", () => {
+  it("reads many ranges at once and returns the records in chain order, with progress up to 100%", async () => {
+    const logs = [900n, 15n, 430n, 431n, 77n].map((blockNumber, i) => ({ blockNumber, eventName: "CaptureSealed", args: { ...sealedArgs, exactHash: hash(100 + i) } }));
+    const client = fakeClient(logs, 999n, 100n);
+    const seen: bigint[] = [];
+    const { entries } = await readRegistry(client, "0x5FbDB2315678afecb367f032d93F642f64180aa3", 0n, 1000n, { concurrency: 4, onProgress: (done) => seen.push(done) });
+    expect(entries.map((e) => e.blockNumber)).toEqual([15n, 77n, 430n, 431n, 900n]);
+    expect(seen.at(-1)).toBe(1000n);
+  });
+
+  it("starts where it is told to, and reads nothing when that is past the head", async () => {
+    const client = fakeClient([{ blockNumber: 10n, eventName: "CaptureSealed", args: sealedArgs }, { blockNumber: 60n, eventName: "CaptureSealed", args: { ...sealedArgs, exactHash: hash(55) } }], 70n);
+    expect((await readRegistry(client, "0x5FbDB2315678afecb367f032d93F642f64180aa3", 50n, 100n)).entries.map((e) => e.blockNumber)).toEqual([60n]);
+    expect((await readRegistry(client, "0x5FbDB2315678afecb367f032d93F642f64180aa3", 71n, 100n)).entries).toEqual([]);
+  });
+
+  it("asks again when a later range is refused once (a rate limit), instead of failing the whole read", async () => {
+    const client = fakeClient([{ blockNumber: 150n, eventName: "CaptureSealed", args: sealedArgs }], 299n, 100n);
+    const inner = client.getContractEvents;
+    let refused = false;
+    client.getContractEvents = (async (q: { fromBlock: bigint; toBlock: bigint }) => {
+      if (q.fromBlock === 100n && !refused) {
+        refused = true;
+        throw new Error("429 too many requests");
+      }
+      return inner(q as never);
+    }) as typeof inner;
+    const { entries } = await readRegistry(client, "0x5FbDB2315678afecb367f032d93F642f64180aa3", 0n, 100n, { concurrency: 2 });
+    expect(refused).toBe(true);
+    expect(entries.map((e) => e.blockNumber)).toEqual([150n]);
+  });
+});
+
 suite("describe", () => {
   const result: CliResult = {
     verdict: "original",

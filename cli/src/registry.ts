@@ -8,34 +8,73 @@ export interface RegistryLog {
   revocations: Map<string, bigint>;
 }
 
+export interface ReadOptions {
+  /** Ranges read at the same time. Public RPCs limit requests per second; 4 stays under Monad's. */
+  concurrency?: number;
+  /** Called after each range with the number of blocks read so far and the total. */
+  onProgress?: (done: bigint, total: bigint) => void;
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 /**
  * Every Capture Record and Imported Record of a Registry, plus every Device Key revocation, read straight from chain
  * events — no Proofshot API. Block timestamps are filled in lazily by the caller for the matched record only.
+ *
+ * Public RPCs cap the block range of one log query (Monad's: 100 blocks), so a Registry's history is read as many
+ * small ranges, several at a time. The first range finds a size the RPC accepts.
  */
-export async function readRegistry(
-  client: PublicClient,
-  registry: Hex,
-  fromBlock: bigint,
-  range: bigint,
-  onProgress?: (done: bigint, head: bigint) => void,
-): Promise<RegistryLog> {
+export async function readRegistry(client: PublicClient, registry: Hex, fromBlock: bigint, range: bigint, opts: ReadOptions = {}): Promise<RegistryLog> {
   const head = await client.getBlockNumber();
   const entries: RegistryEntry[] = [];
   const revocations = new Map<string, bigint>();
-  let from = fromBlock;
+  if (fromBlock > head) return { entries, revocations };
+  const read = (from: bigint, to: bigint) => client.getContractEvents({ address: registry, abi: registryAbi, fromBlock: from, toBlock: to, strict: true });
+  type Logs = Awaited<ReturnType<typeof read>>;
+  const end = (from: bigint, step: bigint) => (from + step - 1n < head ? from + step - 1n : head);
+
+  // The first range settles the step: wide if the RPC allows it, else 100 blocks, else halving down to one.
   let step = range;
-  while (from <= head) {
-    const to = from + step - 1n < head ? from + step - 1n : head;
-    let logs;
+  let first: Logs;
+  for (;;) {
     try {
-      logs = await client.getContractEvents({ address: registry, abi: registryAbi, fromBlock: from, toBlock: to, strict: true });
+      first = await read(fromBlock, end(fromBlock, step));
+      break;
     } catch (e) {
-      if (step > 1n) {
-        step = step / 2n; // RPC refused the range; retry smaller
-        continue;
-      }
-      throw e;
+      if (step <= 1n) throw e;
+      step = step > 100n ? 100n : step / 2n;
     }
+  }
+
+  const starts: bigint[] = [];
+  for (let from = fromBlock + step; from <= head; from += step) starts.push(from);
+  const chunks: Logs[] = new Array(starts.length);
+  const total = head - fromBlock + 1n;
+  let done = end(fromBlock, step) - fromBlock + 1n;
+  opts.onProgress?.(done, total);
+  let next = 0;
+  const worker = async () => {
+    for (let i = next++; i < starts.length; i = next++) {
+      const from = starts[i]!;
+      const to = end(from, step);
+      // A refused request this late is a rate limit or a blip, not the range: wait and ask again.
+      for (let attempt = 0; ; attempt++) {
+        try {
+          chunks[i] = await read(from, to);
+          break;
+        } catch (e) {
+          if (attempt >= 5) throw e;
+          await sleep(300 * 2 ** attempt);
+        }
+      }
+      done += to - from + 1n;
+      opts.onProgress?.(done, total);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(opts.concurrency ?? 4, starts.length)) }, worker));
+
+  // In chain order, whatever order the ranges came back in.
+  for (const logs of [first, ...chunks]) {
     for (const l of logs) {
       if (l.eventName === "DeviceKeyRevoked") {
         const a = l.args as { keyId: string; atBlock: bigint };
@@ -69,8 +108,6 @@ export async function readRegistry(
           : { ...base, kind: "imported" },
       );
     }
-    onProgress?.(to, head);
-    from = to + 1n;
   }
   return { entries, revocations };
 }

@@ -125,8 +125,10 @@ export async function ReceiptDetails({ record }: { record: RegistryEntry }) {
 /** For the technically minded: collapsed so it doesn't bury the result for everyone else. */
 export function VerifyYourself() {
   // The public RPC, never the app's own RPC_URL: a provider URL often carries an API key.
-  const { network, REGISTRY_ADDRESS, publicRpcUrl } = env();
-  const command = `pnpm install\npnpm --filter proofshot-verify start ./photo.jpg --rpc ${publicRpcUrl} --registry ${REGISTRY_ADDRESS ?? "<registry address>"}`;
+  const { network, REGISTRY_ADDRESS, REGISTRY_DEPLOY_BLOCK, publicRpcUrl } = env();
+  // Starting at the deploy block spares the reader every block from before the Registry existed.
+  const from = REGISTRY_DEPLOY_BLOCK > 0n ? ` --from-block ${REGISTRY_DEPLOY_BLOCK}` : "";
+  const command = `pnpm install\npnpm --filter proofshot-verify start ./photo.jpg --rpc ${publicRpcUrl} --registry ${REGISTRY_ADDRESS ?? "<registry address>"}${from}`;
   return (
     <details className="group rounded-xl border border-line bg-surface text-sm print:hidden">
       <summary className="flex min-h-11 items-center justify-between gap-3 px-4 py-2">

@@ -1,6 +1,13 @@
 {
   "name": "proofshot",
+  "description": "Claim photos that prove themselves: sealed with a passkey at capture, verified onchain on Monad, checkable by anyone.",
   "private": true,
+  "license": "MIT",
+  "homepage": "https://proofshot.lykan.website",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CemAyyildiz/proofshot.git"
+  },
   "packageManager": "pnpm@10.13.1",
   "engines": {
     "node": ">=22"

@@ -2,10 +2,14 @@
 /**
  * proofshot-verify — reproduce a Proofshot Verdict from public data only (FR-10).
  *
- *   proofshot-verify <image> --rpc <url> --registry <address> [--from-block <n>] [--range <n>] [--json]
+ *   proofshot-verify <image> --rpc <url> --registry <address> [--from-block <n>] [--range <n>] [--concurrency <n>] [--json]
  *
  * Fingerprints the image locally (SHA-256 + PDQ, same code as the Public Verifier), reads the Registry's events
  * from the chain, and applies the published Verdict rules.
+ *
+ * `--from-block` defaults to the deploy block of a Registry this repository knows, else 0. Reading takes one request
+ * per 100 blocks on a public RPC, so it grows with the Registry's age: an RPC that serves wider log ranges, with a
+ * larger `--range`, is faster.
  */
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
@@ -14,6 +18,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { DEFAULT_THRESHOLDS, type Verdict, computeVerdict } from "@proofshot/fingerprint";
 import { fingerprintFile, setPdqWasmPath } from "@proofshot/fingerprint/node";
+import { knownDeployBlock } from "@proofshot/shared";
 import { createPublicClient, http, type Hex } from "viem";
 import { readRegistry } from "./registry";
 
@@ -21,7 +26,7 @@ import { readRegistry } from "./registry";
 const bundledWasm = join(dirname(fileURLToPath(import.meta.url)), "pdq.wasm");
 if (existsSync(bundledWasm)) setPdqWasmPath(bundledWasm);
 
-const USAGE = "usage: proofshot-verify <image> --rpc <url> --registry <address> [--from-block <n>] [--range <n>] [--json]";
+const USAGE = "usage: proofshot-verify <image> --rpc <url> --registry <address> [--from-block <n>] [--range <n>] [--concurrency <n>] [--json]";
 
 export interface CliResult {
   verdict: Verdict["kind"];
@@ -46,15 +51,16 @@ export interface CliResult {
   thresholds: typeof DEFAULT_THRESHOLDS;
 }
 
-export async function run(argv: string[]): Promise<CliResult> {
+export async function run(argv: string[], onProgress?: (done: bigint, total: bigint) => void): Promise<CliResult> {
   const { values, positionals } = parseArgs({
     args: argv,
     allowPositionals: true,
     options: {
       rpc: { type: "string" },
       registry: { type: "string" },
-      "from-block": { type: "string", default: "0" },
+      "from-block": { type: "string" },
       range: { type: "string", default: "1000" },
+      concurrency: { type: "string", default: "4" },
       json: { type: "boolean", default: false },
       quiet: { type: "boolean", default: false },
     },
@@ -66,7 +72,11 @@ export async function run(argv: string[]): Promise<CliResult> {
   // `pnpm --filter proofshot-verify start photo.jpg` runs inside cli/; resolve the path from where the user typed it.
   const imagePath = resolve(process.env.INIT_CWD ?? process.cwd(), image);
   const [fp, chainId] = await Promise.all([fingerprintFile(await readFile(imagePath)), client.getChainId()]);
-  const { entries, revocations } = await readRegistry(client, values.registry as Hex, BigInt(values["from-block"]), BigInt(values.range));
+  const fromBlock = values["from-block"] !== undefined ? BigInt(values["from-block"]) : (knownDeployBlock(chainId, values.registry) ?? 0n);
+  const { entries, revocations } = await readRegistry(client, values.registry as Hex, fromBlock, BigInt(values.range), {
+    concurrency: Number(values.concurrency),
+    onProgress,
+  });
   const v = computeVerdict(fp, entries, DEFAULT_THRESHOLDS);
 
   let matched: CliResult["matched"] = null;
@@ -122,8 +132,16 @@ export function describe(r: CliResult): string {
 
 const invokedDirectly = process.argv[1] && /proofshot-verify|cli[/\\](src|dist)[/\\]index\.[jt]s$/.test(process.argv[1]);
 if (invokedDirectly) {
-  run(process.argv.slice(2))
-    .then((r) => console.log(process.argv.includes("--json") ? JSON.stringify(r, null, 2) : describe(r)))
+  // Progress goes to stderr, and only to a terminal: piped output and --json stay clean.
+  const live = process.stderr.isTTY && !process.argv.includes("--quiet");
+  const progress = live
+    ? (done: bigint, total: bigint) => process.stderr.write(`\rReading the Registry from the chain… ${Number((done * 100n) / total)}% of ${total} blocks`)
+    : undefined;
+  run(process.argv.slice(2), progress)
+    .then((r) => {
+      if (live) process.stderr.write("\n");
+      console.log(process.argv.includes("--json") ? JSON.stringify(r, null, 2) : describe(r));
+    })
     .catch((e: Error) => {
       console.error(e.message);
       process.exitCode = 2;
