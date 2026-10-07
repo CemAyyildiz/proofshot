@@ -27,6 +27,8 @@ export async function SiteFooter() {
     { href: "/console", label: "Carrier Console" },
     ...(PUBLIC_REPO_URL ? [{ href: PUBLIC_REPO_URL, label: "Source code" }] : []),
     ...(network.explorerUrl && REGISTRY_ADDRESS ? [{ href: `${network.explorerUrl}/address/${REGISTRY_ADDRESS}`, label: "Registry contract" }] : []),
+    { href: "/contact", label: "Contact" },
+    { href: "/privacy", label: "Privacy" },
   ];
   return (
     <footer className="ink mt-auto print:hidden">

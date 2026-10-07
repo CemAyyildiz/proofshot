@@ -47,6 +47,12 @@ export default async function SignInPage({ searchParams }: PageProps<"/console/s
           </form>
         </section>
       )}
+      <p className="text-sm text-muted">
+        Want a workspace for your claims team?{" "}
+        <Link href="/contact" className="font-semibold text-foreground underline decoration-brand decoration-2 underline-offset-4">
+          Talk to us
+        </Link>
+      </p>
     </main>
   );
 }

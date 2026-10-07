@@ -241,17 +241,22 @@ export default async function Home() {
       </section>
 
       <section aria-labelledby="cta-heading" className="on-brand">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-14 sm:flex-row sm:items-center sm:justify-between sm:py-16">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-14 lg:flex-row lg:items-center lg:justify-between sm:py-16">
           <div className="flex flex-col gap-2">
             <h2 id="cta-heading" className="display text-4xl sm:text-5xl">
               Seal a photo. Then try to fool it.
             </h2>
             <p className="text-lg">About a minute on your phone. No sign-up, nothing to install.</p>
           </div>
-          <Link href="/try" className="btn-primary shrink-0 px-8 text-lg">
-            Open the demo
-            <ArrowRightIcon className="size-5" />
-          </Link>
+          <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+            <Link href="/try" className="btn-primary px-8 text-lg">
+              Open the demo
+              <ArrowRightIcon className="size-5" />
+            </Link>
+            <Link href="/contact" className="btn-secondary text-lg">
+              For insurers: talk to us
+            </Link>
+          </div>
         </div>
       </section>
     </main>

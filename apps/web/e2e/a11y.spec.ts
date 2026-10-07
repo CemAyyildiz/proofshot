@@ -48,7 +48,7 @@ async function auditScheme(page: Page, name: string) {
 }
 
 test("public pages meet WCAG 2.1 AA (automated)", async ({ page }) => {
-  for (const path of ["/", "/verify", "/try", "/console/sign-in"]) {
+  for (const path of ["/", "/verify", "/try", "/console/sign-in", "/contact", "/privacy", "/no-such-page"]) {
     await page.goto(path);
     await audit(page, path);
   }

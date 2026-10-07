@@ -64,6 +64,7 @@ export default defineConfig({
         SIGNIN_LIMIT_PER_CLIENT: "1000",
         DEMO_CLAIM_FILES_PER_VISITOR: "1000",
         MAIL_DEV_OUTBOX: "1",
+        CONTACT_TO: "owner@proofshot.test",
         DEMO_ACCESS: "1",
         PROOFSHOT_NETWORK: "local",
         // Shaped like a provider URL with an API key, to prove the app never shows RPC_URL to the public.

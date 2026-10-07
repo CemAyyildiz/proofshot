@@ -49,6 +49,8 @@ export const serverEnvSchema = z.object({
   APP_URL: z.url().default("http://localhost:3000"),
   RESEND_API_KEY: z.string().min(1).optional(),
   MAIL_FROM: z.string().min(3).default("Proofshot <login@proofshot.app>"),
+  /** Where messages from the contact form are delivered. Unset: the form is replaced by a notice. */
+  CONTACT_TO: z.email().optional(),
   /** Sign-in links per address per hour (raised only in automated tests). */
   /** Shared secret the hosting scheduler sends to /api/cron/maintenance. Unset: the route is disabled. */
   CRON_SECRET: z.string().min(16).optional(),
