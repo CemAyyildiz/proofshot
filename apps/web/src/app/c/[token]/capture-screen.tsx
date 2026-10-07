@@ -1,9 +1,10 @@
 "use client";
 
 import type { Fingerprint } from "@proofshot/fingerprint/browser";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { ConfirmAction } from "@/components/confirm-action";
-import { CheckIcon, SendIcon, WarningIcon } from "@/components/icons";
+import { Viewfinder } from "@/components/brand/viewfinder";
+import { ArrowRightIcon, CheckIcon, SendIcon, ShareIcon, WarningIcon } from "@/components/icons";
 import { type StoredCapture, deleteCapture, listCaptures, putCapture } from "@/lib/capture-store";
 import type { StoredDeviceKey } from "@/lib/passkey";
 import { GENERIC_SEAL_MESSAGE, SealError, currentLocationIfAllowed, fingerprintCapture, grabFrame, signAndSeal, warmUpFingerprinting } from "@/lib/seal-pipeline";
@@ -211,10 +212,25 @@ export function CaptureScreen({
   const doneCount = sealedCount + captures.filter((c) => c.status === "sent").length;
   const sent = captures.filter((c) => c.status === "sent");
 
+  // Flash the Seal stamp over the viewfinder each time a photo taken in this visit seals.
+  const [lastSealed, setLastSealed] = useState<string | null>(null);
+  const stamped = useRef(new Set<string>());
+  useEffect(() => {
+    const fresh = captures.find((c) => c.status === "sealed" && c.sealMs !== undefined && !stamped.current.has(c.id));
+    if (!fresh) return;
+    stamped.current.add(fresh.id);
+    setLastSealed(fresh.id);
+    const t = setTimeout(() => setLastSealed(null), 1400);
+    return () => clearTimeout(t);
+  }, [captures]);
+
   if (sentView) {
     return (
       <section aria-labelledby="sent-heading" className="flex flex-col gap-4">
-        <h2 id="sent-heading" className="text-xl font-semibold">
+        <span aria-hidden="true" className="grid size-14 place-items-center rounded-full bg-brand text-brand-fg">
+          <CheckIcon className="size-7" />
+        </span>
+        <h2 id="sent-heading" className="display text-3xl">
           Sent to your insurer
         </h2>
         {sentView.skipped > 0 && (
@@ -228,8 +244,8 @@ export function CaptureScreen({
         <p className="text-sm text-muted">Keep these receipt links. Anyone can use them to check your photos are genuine.</p>
         <ul className="grid grid-cols-2 gap-3">
           {sent.map((c) => (
-            <li key={c.id} className="flex flex-col gap-1 rounded-md border border-line bg-surface p-2">
-              <Thumb blob={c.blob} className="aspect-[4/3] w-full rounded object-cover" />
+            <li key={c.id} className="card flex flex-col gap-1 p-2">
+              <Thumb blob={c.blob} className="aspect-[4/3] w-full rounded-xl object-cover" />
               <span className="inline-flex items-center gap-1 text-sm font-semibold">
                 <CheckIcon className="size-4 shrink-0" />
                 Sealed {new Date(c.createdAt).toLocaleTimeString("en-GB")}
@@ -242,7 +258,7 @@ export function CaptureScreen({
             </li>
           ))}
         </ul>
-        <button type="button" className="rounded-md border border-line px-4 py-3" onClick={() => setSentView(null)}>
+        <button type="button" className="btn-secondary" onClick={() => setSentView(null)}>
           Take more photos
         </button>
       </section>
@@ -252,7 +268,7 @@ export function CaptureScreen({
   return (
     <section aria-label="Camera" className="flex flex-col gap-3">
       {linkClosed && (
-        <div role="alert" className="rounded-md border border-danger bg-surface p-3 text-sm">
+        <div role="alert" className="rounded-2xl border border-danger bg-surface p-4 text-sm">
           <p className="font-semibold">This link is no longer active</p>
           <p className="text-muted">
             New photos can&apos;t be sealed with it. Photos already sealed stay valid and can still be sent. Ask your
@@ -261,7 +277,7 @@ export function CaptureScreen({
         </div>
       )}
       {!linkClosed && limitNotice && (
-        <div role="alert" className="rounded-md border border-danger bg-surface p-3 text-sm">
+        <div role="alert" className="rounded-2xl border border-danger bg-surface p-4 text-sm">
           <p className="font-semibold">No more photos can be sealed right now</p>
           <p className="text-muted">
             {limitNotice} Photos already sealed stay valid and can still be sent.
@@ -269,8 +285,17 @@ export function CaptureScreen({
         </div>
       )}
       {/* Width follows the height budget so the viewfinder, shutter and count fit one screen in any orientation. */}
-      <div className="relative mx-auto w-full overflow-hidden rounded-xl bg-black" style={{ maxWidth: "min(100%, calc(58svh * 3 / 4))" }}>
+      <div className="relative mx-auto w-full overflow-hidden rounded-3xl bg-black ring-1 ring-line" style={{ maxWidth: "min(100%, calc(58svh * 3 / 4))" }}>
         <video ref={videoRef} playsInline muted autoPlay className="aspect-[3/4] w-full object-cover" aria-label="Camera preview" />
+        {camera.state === "on" && <Viewfinder inset="inset-4" />}
+        {camera.state === "on" && (
+          <span aria-hidden="true" className="absolute left-4 top-4 ml-7 mt-0.5 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-2 py-0.5 font-mono text-[0.65rem] font-medium uppercase tracking-[0.14em] text-white backdrop-blur">
+            <span className="size-1.5 rounded-full bg-brand" />
+            Live
+          </span>
+        )}
+        {/* The Seal landing, where the eye already is. Decorative: the status line under each photo says it in words. */}
+        {lastSealed && <span key={lastSealed} aria-hidden="true" className="seal-stamp stamp-in absolute inset-0 m-auto h-fit w-fit" />}
         {camera.state === "starting" && <p className="absolute inset-0 grid place-items-center text-white">Starting camera…</p>}
         {(camera.state === "denied" || camera.state === "unavailable") && (
           <div role="alert" className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/85 p-6 text-center text-white">
@@ -279,7 +304,7 @@ export function CaptureScreen({
                 ? "Proofshot needs your camera to take sealed photos. Allow camera access for this site in your browser settings, then try again."
                 : "No camera was found on this device. Open this link on your phone."}
             </p>
-            <button type="button" className="rounded-md bg-white px-4 py-2 font-medium text-black" onClick={retryCamera}>
+            <button type="button" className="min-h-11 rounded-full bg-white px-5 py-2 font-semibold text-black" onClick={retryCamera}>
               Try again
             </button>
           </div>
@@ -303,16 +328,16 @@ export function CaptureScreen({
           onClick={shoot}
           disabled={camera.state !== "on" || inFlightCount >= MAX_IN_FLIGHT || stopped}
           aria-label="Take photo"
-          className="grid size-20 place-items-center rounded-full border-4 border-foreground bg-transparent active:scale-95 disabled:opacity-40"
+          className="group grid size-20 place-items-center rounded-full border-4 border-foreground bg-transparent disabled:opacity-40"
         >
-          <span className="size-15 rounded-full bg-foreground" />
+          <span className="size-15 rounded-full bg-brand transition-transform duration-100 group-active:scale-90" />
         </button>
         <div className="flex justify-end">
           {/* Hidden until there is something to send. */}
           {!sandbox && sealedCount > 0 && (
             <button
               type="button"
-              className="btn-primary px-3 text-sm"
+              className="btn-primary min-h-11 px-4 text-sm"
               disabled={sending}
               onClick={sendToInsurer}
               aria-label={sending ? "Sending…" : `Send ${sealedCount} sealed photo${sealedCount === 1 ? "" : "s"} to insurer`}
@@ -331,13 +356,13 @@ export function CaptureScreen({
               <div className="relative">
                 <Thumb
                   blob={c.blob}
-                  className={`aspect-[3/4] w-full rounded object-cover ring-2 transition-[box-shadow] ${
+                  className={`aspect-[3/4] w-full rounded-xl object-cover ring-2 transition-[box-shadow] ${
                     // Sealed is a status, not a Verdict: the accent colour, never the Verdict greens (PRD §12).
                     c.status === "sealed" || c.status === "sent" ? "ring-accent" : c.status === "failed" ? "ring-danger" : "ring-transparent"
                   }`}
                 />
                 {(c.status === "sealed" || c.status === "sent") && (
-                  <span aria-hidden="true" className="seal-pop absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-accent text-accent-fg shadow">
+                  <span aria-hidden="true" className="seal-pop absolute right-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-accent text-accent-fg shadow">
                     <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12.5l4.5 4.5L19 7" />
                     </svg>
@@ -411,10 +436,22 @@ function Thumb({ blob, className }: { blob: Blob; className: string }) {
   return <img src={url} alt="" className={className} />;
 }
 
+/** Share sheets that accept files: on an iPhone this is the way into Photos ("Save Image"); a download goes to Files. */
+const noSubscription = () => () => {};
+const canShareFiles = () => {
+  try {
+    return typeof navigator.share === "function" && typeof navigator.canShare === "function" && navigator.canShare({ files: [new File([""], "a.jpg", { type: "image/jpeg" })] });
+  } catch {
+    return false;
+  }
+};
+
 /** FR-18: after the first Seal, walk the visitor through trying to fool the verifier. */
 function TryToFoolIt({ capture }: { capture?: StoredCapture }) {
   const url = useMemo(() => (capture ? URL.createObjectURL(capture.blob) : null), [capture]);
   useEffect(() => () => (url ? URL.revokeObjectURL(url) : undefined), [url]);
+  // Touch devices only: a desktop share sheet has nowhere useful to put a photo.
+  const shareable = useSyncExternalStore(noSubscription, () => window.matchMedia("(pointer: coarse)").matches && canShareFiles(), () => false);
   // On a phone the guide lands below the viewfinder, out of sight: bring it into view once, when the first Seal lands.
   const ref = useRef<HTMLElement>(null);
   const shown = Boolean(capture && url);
@@ -424,30 +461,66 @@ function TryToFoolIt({ capture }: { capture?: StoredCapture }) {
     ref.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
   }, [shown]);
   if (!capture || !url) return <p className="text-sm text-muted">Take a photo. It&apos;s sealed as soon as you confirm.</p>;
+  const filename = `proofshot-${capture.createdAt}.jpg`;
+  const step = "display w-8 shrink-0 text-2xl text-brand";
   return (
-    <section ref={ref} aria-labelledby="fool-heading" className="flex scroll-mb-4 flex-col gap-3 rounded-md border border-line bg-surface p-4">
-      <h2 id="fool-heading" className="text-lg font-semibold">
+    <section ref={ref} aria-labelledby="fool-heading" className="card rise-in flex scroll-mb-4 flex-col gap-1 p-5">
+      <p className="eyebrow">Sealed. Your turn</p>
+      <h2 id="fool-heading" className="display text-3xl">
         Now try to fool it
       </h2>
-      <ol className="ml-5 list-decimal space-y-2 text-sm">
-        <li>
-          <a href={url} download={`proofshot-${capture.createdAt}.jpg`} className="font-medium underline underline-offset-4">
-            Save your sealed photo
-          </a>
+      <ol className="mt-2 flex flex-col">
+        <li className="flex gap-3 border-t border-line py-4">
+          <span className={step} aria-hidden="true">
+            1
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
+            {shareable && (
+              <>
+                <button
+                  type="button"
+                  className="btn-primary self-start"
+                  onClick={() =>
+                    navigator
+                      .share({ files: [new File([capture.blob], filename, { type: "image/jpeg" })] })
+                      .catch(() => undefined /* the person closed the sheet */)
+                  }
+                >
+                  <ShareIcon className="size-5" />
+                  Save to Photos
+                </button>
+                <p className="text-sm text-muted">Choose &ldquo;Save Image&rdquo; in the share sheet. Or keep the exact file:</p>
+              </>
+            )}
+            <a href={url} download={filename} className="inline-flex min-h-11 items-center self-start font-semibold underline decoration-brand decoration-2 underline-offset-4">
+              Save your sealed photo
+            </a>
+          </div>
         </li>
-        <li>
-          Change it: paint over a detail, or send it to yourself on WhatsApp and save the copy. (A crop beyond a thin
-          edge comes back &ldquo;No Record&rdquo;, a known limit.)
+        <li className="flex gap-3 border-t border-line py-4">
+          <span className={step} aria-hidden="true">
+            2
+          </span>
+          <p className="flex-1">
+            Change it: paint over a detail, or send it to yourself on WhatsApp and save the copy. (A crop beyond a thin
+            edge comes back &ldquo;No Record&rdquo;, a known limit.)
+          </p>
         </li>
-        <li>
-          <a href="/verify" target="_blank" rel="noopener" className="font-medium underline underline-offset-4">
-            Drop the copy into the verifier
-          </a>{" "}
-          and see what it says.
+        <li className="flex gap-3 border-t border-line py-4">
+          <span className={step} aria-hidden="true">
+            3
+          </span>
+          <p className="flex-1">
+            <a href="/verify" target="_blank" rel="noopener" className="inline-flex min-h-11 items-center gap-1.5 font-semibold underline decoration-brand decoration-2 underline-offset-4">
+              Drop the copy into the verifier
+              <ArrowRightIcon className="size-4" />
+            </a>{" "}
+            and see what it says.
+          </p>
         </li>
       </ol>
       {capture.receiptUrl && (
-        <a href={capture.receiptUrl} className="text-sm text-muted underline underline-offset-4">
+        <a href={capture.receiptUrl} className="inline-flex min-h-11 items-center self-start text-sm text-muted underline underline-offset-4">
           View this photo&apos;s seal receipt
         </a>
       )}

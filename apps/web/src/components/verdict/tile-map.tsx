@@ -18,7 +18,7 @@ export function TileMap({
   const regions = alteredTiles.map((i) => `row ${Math.floor(i / 4) + 1}, column ${(i % 4) + 1}`);
   return (
     <figure className="flex flex-col gap-2">
-      <div className="relative w-full overflow-hidden rounded-md" style={{ aspectRatio: `${width} / ${height}` }}>
+      <div className="relative w-full overflow-hidden rounded-xl bg-black" style={{ aspectRatio: `${width} / ${height}` }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- the viewer's own file, shown in-session only */}
         <img src={src} alt={alt} className="absolute inset-0 size-full object-fill" />
         <div className="absolute inset-0 grid grid-cols-4 grid-rows-4" aria-hidden="true">
@@ -27,10 +27,10 @@ export function TileMap({
             return (
               <div
                 key={i}
-                className={n >= 0 ? "relative border-[3px] border-verdict-altered" : "border border-white/25"}
+                className={n >= 0 ? "relative border-[3px] border-verdict-altered" : "border border-white/20"}
                 style={
                   n >= 0
-                    ? { backgroundImage: "repeating-linear-gradient(45deg, rgb(154 43 18 / 0.35) 0 6px, transparent 6px 12px)" }
+                    ? { backgroundImage: "repeating-linear-gradient(45deg, color-mix(in srgb, var(--verdict-altered) 45%, transparent) 0 6px, transparent 6px 12px)" }
                     : undefined
                 }
               >

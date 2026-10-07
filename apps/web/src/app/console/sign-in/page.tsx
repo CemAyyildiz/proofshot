@@ -20,11 +20,11 @@ export default async function SignInPage({ searchParams }: PageProps<"/console/s
       </Link>
       <div>
         <p className="eyebrow">Carrier Console</p>
-        <h1 className="mt-1 text-2xl font-semibold">Sign in</h1>
+        <h1 className="display mt-1 text-3xl sm:text-4xl">Sign in</h1>
       </div>
       <SignInForm />
       {demo && (
-        <section aria-labelledby="demo-heading" className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4">
+        <section aria-labelledby="demo-heading" className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
           <h2 id="demo-heading" className="font-semibold">
             Explore the demo Console
           </h2>

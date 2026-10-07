@@ -2705,3 +2705,36 @@ Findings, with the fix for each:
   - Fixed: pills don't wrap.
 
 `pnpm check` is green. e2e in production mode: 29/29.
+
+## Design pass 2: a visual identity (owner feedback after the first real-phone test)
+
+The owner sealed and verified a photo on an iPhone against the mainnet deployment. The flow worked; the feedback was
+that the interface looked bad and that the saved photo went to Files instead of Photos. The first pass had fixed
+usability findings but kept a grey, text-heavy page with no identity.
+
+Direction, chosen with ui-ux-pro-max and checked against real screenshots (`SCREENS=1`):
+
+- **Palette**: ink and warm paper with one signal colour, the yellow of an evidence marker. Primary actions are ink
+  on paper and yellow on ink. Verdict colours stay reserved for Verdicts and are now the same saturated set in both
+  schemes, always with white text.
+- **Type**: Archivo (vendored, OFL) for poster headings; IBM Plex Sans for reading; Plex Mono for labels and hashes.
+- **Motifs**: viewfinder corners, the 4×4 comparison grid as a backdrop, and a "SEALED" stamp that lands on the
+  viewfinder when a Seal is recorded.
+- **`.ink`** applies the dark palette to one part of a page in either colour scheme: the landing hero, the demo
+  intro, the whole capture flow and the footer.
+
+Changes by surface:
+
+- **Landing**: an ink hero with the example Verdict; a new "Four Verdicts" section, one coloured block per Verdict
+  in the verifier's own words; numbered steps; a yellow closing band that leads to the demo.
+- **Verdicts**: a result's headline is a full-width band in the Verdict colour with the icon and the name at
+  display size, instead of a small pill. Pills remain in lists.
+- **Capture**: dark like a camera app, with a yellow shutter, viewfinder corners and the stamp. The guide after the
+  first Seal is a numbered card.
+- **Save to Photos (iPhone)**: a download in Safari goes to Files. On touch devices whose share sheet accepts files,
+  the guide now offers "Save to Photos" (the share sheet's "Save Image"), and keeps the download link for the exact
+  file.
+- **Verifier, receipts, Console, sign-in**: the new tokens, display headings and one radius scale.
+
+axe found three contrast failures on the way (a 90%-opacity label on the Altered band, the dark Altered red with
+white text, and faint step numerals); all fixed. `pnpm check` is green. e2e in production mode: 29/29.

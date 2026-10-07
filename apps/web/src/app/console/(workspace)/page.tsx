@@ -24,7 +24,7 @@ export default async function ConsoleHome({ searchParams }: PageProps<"/console"
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">Claim Files</h1>
+        <h1 className="display text-3xl sm:text-4xl">Claim Files</h1>
         <p className="text-sm text-muted">Create a Claim File to get a link the policyholder uses to send sealed photos.</p>
       </div>
       <CreateClaimForm />
@@ -37,7 +37,7 @@ export default async function ConsoleHome({ searchParams }: PageProps<"/console"
               name="q"
               defaultValue={q}
               placeholder="Claim reference"
-              className="min-h-11 rounded-md border border-line bg-surface px-3 py-2"
+              className="min-h-11 rounded-xl border border-line bg-surface px-3 py-2"
             />
           </label>
           <button type="submit" className="btn-secondary">
@@ -51,11 +51,11 @@ export default async function ConsoleHome({ searchParams }: PageProps<"/console"
         </form>
       )}
       {files.length === 0 && (q || page > 1) ? (
-        <p className="rounded-md border border-dashed border-line p-8 text-center text-muted">
+        <p className="rounded-xl border border-dashed border-line p-8 text-center text-muted">
           {q ? <>No Claim Files match &ldquo;{q}&rdquo;.</> : "No more Claim Files."}
         </p>
       ) : files.length === 0 ? (
-        <div className="rounded-md border border-dashed border-line p-8 text-center text-muted">
+        <div className="rounded-xl border border-dashed border-line p-8 text-center text-muted">
           No Claim Files yet. Create one above to get a Claim Link for the policyholder.
         </div>
       ) : (
@@ -66,7 +66,7 @@ export default async function ConsoleHome({ searchParams }: PageProps<"/console"
               const link = claimLinkState(f.link);
               return (
                 <li key={f.id}>
-                  <Link href={`/console/claims/${f.id}`} className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3 active:bg-background">
+                  <Link href={`/console/claims/${f.id}`} className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3 active:bg-background">
                     <span className="flex items-center justify-between gap-3">
                       <span className="truncate font-medium">{f.reference}</span>
                       <StatusPill status={f.status} />
@@ -90,7 +90,7 @@ export default async function ConsoleHome({ searchParams }: PageProps<"/console"
               );
             })}
           </ul>
-          <div className="hidden overflow-x-auto rounded-md border border-line bg-surface sm:block">
+          <div className="hidden overflow-x-auto rounded-xl border border-line bg-surface sm:block">
             <table className="w-full min-w-[40rem] text-sm">
               <caption className="sr-only">{q ? `Claim Files matching “${q}”, newest first` : "Claim Files, newest first"}</caption>
               <thead className="border-b border-line text-left text-xs uppercase tracking-wide text-muted">

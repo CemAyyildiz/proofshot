@@ -1,5 +1,5 @@
 import { TileMap } from "@/components/verdict/tile-map";
-import { VerdictBadge } from "@/components/verdict/verdict-badge";
+import { VerdictBanner } from "@/components/verdict/verdict-badge";
 
 /**
  * An illustrated car panel (not a real claim photo) with a dent painted into one region. The landing page shows it with
@@ -31,16 +31,18 @@ const SRC = `data:image/svg+xml;utf8,${encodeURIComponent(SCENE)}`;
 
 export function VerdictExample() {
   return (
-    <figure className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 shadow-sm sm:p-5" aria-labelledby="example-caption">
-      <div className="flex items-center justify-between gap-3">
-        <VerdictBadge kind="altered" />
-        <span className="text-xs font-medium uppercase tracking-wider text-muted">Example result</span>
+    <figure className="card relative flex flex-col overflow-hidden shadow-2xl shadow-black/40" aria-labelledby="example-caption">
+      <VerdictBanner kind="altered" />
+      <div className="flex flex-col gap-3 p-4 sm:p-5">
+        <p className="font-medium leading-snug">Matches a photo sealed 12 Sept 2026, 14:05, but 1 of 16 regions was changed after sealing.</p>
+        <div className="relative">
+          <TileMap src={SRC} alteredTiles={[6]} width={800} height={600} alt="Illustrated car door with a dent painted in after sealing" />
+        </div>
+        <figcaption id="example-caption" className="text-sm text-muted">
+          <span className="font-mono text-xs uppercase tracking-[0.14em]">Example result · </span>
+          What the Public Verifier shows for a sealed photo that was edited later. Illustration, not a real claim.
+        </figcaption>
       </div>
-      <p className="font-medium">Matches a photo sealed 12 Sept 2026, 14:05, but 1 of 16 regions was changed after sealing.</p>
-      <TileMap src={SRC} alteredTiles={[6]} width={800} height={600} alt="Illustrated car door with a dent painted in after sealing" />
-      <figcaption id="example-caption" className="text-sm text-muted">
-        What the Public Verifier shows for a sealed photo that was edited later. Illustration, not a real claim.
-      </figcaption>
     </figure>
   );
 }

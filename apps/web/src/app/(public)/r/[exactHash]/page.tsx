@@ -21,7 +21,7 @@ export default async function CaptureReceipt({ params }: PageProps<"/r/[exactHas
       <header className="flex flex-col gap-3">
         <p className="eyebrow">Seal Receipt</p>
         <PrintedReceiptUrl path={`/r/${hash}`} />
-        <h1 className="text-2xl font-semibold">Sealed photo</h1>
+        <h1 className="display text-3xl sm:text-4xl">Sealed photo</h1>
         <div>
           <VerdictBadge kind="original" />
         </div>

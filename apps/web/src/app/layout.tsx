@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 
-// IBM Plex: an institutional, highly legible family (insurance/finance), with a mono for hashes and IDs.
+// IBM Plex for reading: highly legible, with a mono for hashes, IDs and labels.
 // IBM Plex (SIL OFL 1.1, see ./fonts/OFL-*.txt), vendored so builds never depend on reaching Google Fonts.
 const plexSans = localFont({
   variable: "--font-plex-sans",
@@ -13,6 +13,12 @@ const plexSans = localFont({
     { path: "./fonts/ibm-plex-sans-latin-600-normal.woff2", weight: "600" },
     { path: "./fonts/ibm-plex-sans-latin-700-normal.woff2", weight: "700" },
   ],
+});
+// Archivo (SIL OFL 1.1, see ./fonts/OFL-Archivo.txt): the display face for headings, one variable file.
+const archivo = localFont({
+  variable: "--font-archivo",
+  display: "swap",
+  src: [{ path: "./fonts/archivo-latin-wght-normal.woff2", weight: "100 900" }],
 });
 const plexMono = localFont({
   variable: "--font-plex-mono",
@@ -30,14 +36,14 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f6f4" },
-    { media: "(prefers-color-scheme: dark)", color: "#121315" },
+    { media: "(prefers-color-scheme: light)", color: "#f3f0e8" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0c0e" },
   ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${plexSans.variable} ${plexMono.variable} h-full antialiased`}>
+    <html lang="en" className={`${plexSans.variable} ${plexMono.variable} ${archivo.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

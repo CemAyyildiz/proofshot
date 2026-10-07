@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LogoMark } from "@/components/brand/logo";
-import { CameraIcon, LockIcon } from "@/components/icons";
+import { Wordmark } from "@/components/brand/logo";
+import { CameraIcon, LockIcon, SendIcon } from "@/components/icons";
 import { CaptureScreen } from "./capture-screen";
 import { SUPPORTED_BROWSERS, createPasskey, loadDeviceKey, passkeySupported, saveDeviceKey, type StoredDeviceKey } from "@/lib/passkey";
 
@@ -63,75 +63,78 @@ export function CaptureApp({ token, carrierName, reference, validUntil, sandbox 
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 px-4 pb-8 pt-4">
-      <div className="flex items-center justify-between text-sm text-muted">
-        <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-          <LogoMark className="size-5" /> Proofshot
-        </span>
-      </div>
-      {/* Who is asking comes first: it is the one thing a policyholder can check against what they expect. */}
-      <header>
-        {sandbox ? (
-          <p className="eyebrow [overflow-wrap:anywhere]">{carrierName}</p>
-        ) : (
-          <>
-            <p className="text-sm text-muted">Requested by</p>
-            <p className="text-lg font-semibold [overflow-wrap:anywhere]">{carrierName}</p>
-          </>
-        )}
-        <h1 className="mt-1 text-2xl font-semibold">{sandbox ? "Take a photo of anything nearby" : "Take photos of the damage"}</h1>
-        {!sandbox && (
-          <>
-            <p className="text-muted [overflow-wrap:anywhere]">Claim {reference}</p>
-            {validUntil && <p className="text-sm text-muted">Link valid until {validUntil}</p>}
-          </>
-        )}
-      </header>
-
-      {step.name === "checking" && <p className="text-muted">Getting ready…</p>}
-
-      {step.name === "unsupported" && (
-        <p role="alert" className="rounded-md border border-line bg-surface p-4">
-          This browser can&apos;t seal photos. Open this link in {SUPPORTED_BROWSERS}.
-        </p>
-      )}
-
-      {(step.name === "intro" || step.name === "enrolling" || step.name === "enroll-error") && (
-        <section className="flex flex-col gap-4">
-          <ol className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-4">
-            <li className="flex gap-3">
-              <LockIcon className="mt-0.5 size-5 shrink-0 text-muted" />
-              <span>Confirm with Face ID, your fingerprint or your phone&apos;s PIN. Nothing to install.</span>
-            </li>
-            <li className="flex gap-3">
-              <CameraIcon className="mt-0.5 size-5 shrink-0 text-muted" />
-              <span>Take the photos here. Each one is sealed the moment you take it.</span>
-            </li>
-            <li className="flex gap-3">
-              <svg viewBox="0 0 24 24" className="mt-0.5 size-5 shrink-0 text-muted" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M4 12l16-8-6 16-2.5-6.5z" />
-              </svg>
-              <span>{sandbox ? "Then try to fool the verifier with a changed copy." : `Send them to ${carrierName}. Only they receive your photos.`}</span>
-            </li>
-          </ol>
-          {step.name === "enroll-error" && (
-            <p role="alert" className="text-danger">
-              {step.message}
-            </p>
+    <main className="ink flex flex-1 flex-col">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 px-4 pb-8 pt-3">
+        <div className="flex min-h-11 items-center justify-between">
+          <Wordmark />
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 font-mono text-[0.7rem] font-medium uppercase tracking-[0.14em] text-muted">
+            <LockIcon className="size-3.5" />
+            Sealed at capture
+          </span>
+        </div>
+        {/* Who is asking comes first: it is the one thing a policyholder can check against what they expect. */}
+        <header className="flex flex-col gap-1">
+          {sandbox ? (
+            <p className="eyebrow [overflow-wrap:anywhere]">{carrierName}</p>
+          ) : (
+            <>
+              <p className="font-mono text-xs font-medium uppercase tracking-[0.14em] text-muted">Requested by</p>
+              <p className="text-lg font-semibold [overflow-wrap:anywhere]">{carrierName}</p>
+            </>
           )}
-          <button type="button" className="btn-primary min-h-12 text-base" onClick={enroll} disabled={step.name === "enrolling"}>
-            {step.name === "enrolling" ? "Setting up…" : "Continue"}
-          </button>
+          <h1 className="display mt-1 text-3xl">{sandbox ? "Take a photo of anything nearby" : "Take photos of the damage"}</h1>
           {!sandbox && (
-            <p className="text-sm text-muted">
-              Not expecting this link? Don&apos;t continue. Contact {carrierName} using the details on your policy, not
-              the message that brought you here.
-            </p>
+            <>
+              <p className="text-muted [overflow-wrap:anywhere]">Claim {reference}</p>
+              {validUntil && <p className="text-sm text-muted">Link valid until {validUntil}</p>}
+            </>
           )}
-        </section>
-      )}
+        </header>
 
-      {step.name === "ready" && <CaptureScreen token={token} deviceKey={step.key} carrierName={carrierName} sandbox={sandbox} />}
+        {step.name === "checking" && <p className="text-muted">Getting ready…</p>}
+
+        {step.name === "unsupported" && (
+          <p role="alert" className="card p-4">
+            This browser can&apos;t seal photos. Open this link in {SUPPORTED_BROWSERS}.
+          </p>
+        )}
+
+        {(step.name === "intro" || step.name === "enrolling" || step.name === "enroll-error") && (
+          <section className="flex flex-1 flex-col gap-5">
+            <ol className="flex flex-col">
+              {[
+                { icon: LockIcon, text: "Confirm with Face ID, your fingerprint or your phone's PIN. Nothing to install." },
+                { icon: CameraIcon, text: "Take the photos here. Each one is sealed the moment you take it." },
+                { icon: SendIcon, text: sandbox ? "Then try to fool the verifier with a changed copy." : `Send them to ${carrierName}. Only they receive your photos.` },
+              ].map(({ icon: Icon, text }, i) => (
+                <li key={i} className="flex items-start gap-4 border-t border-line py-4 last:border-b">
+                  <span className="display w-9 shrink-0 text-3xl text-brand" aria-hidden="true">
+                    {i + 1}
+                  </span>
+                  <span className="flex-1 pt-0.5">{text}</span>
+                  <Icon className="mt-1 size-5 shrink-0 text-muted" />
+                </li>
+              ))}
+            </ol>
+            {step.name === "enroll-error" && (
+              <p role="alert" className="text-danger">
+                {step.message}
+              </p>
+            )}
+            <button type="button" className="btn-primary min-h-14 text-lg" onClick={enroll} disabled={step.name === "enrolling"}>
+              {step.name === "enrolling" ? "Setting up…" : "Continue"}
+            </button>
+            {!sandbox && (
+              <p className="text-sm text-muted">
+                Not expecting this link? Don&apos;t continue. Contact {carrierName} using the details on your policy, not
+                the message that brought you here.
+              </p>
+            )}
+          </section>
+        )}
+
+        {step.name === "ready" && <CaptureScreen token={token} deviceKey={step.key} carrierName={carrierName} sandbox={sandbox} />}
+      </div>
     </main>
   );
 }

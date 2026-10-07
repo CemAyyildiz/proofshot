@@ -7,7 +7,7 @@ export default function PublicError({ error, retry }: { error: Error & { digest?
   useEffect(() => console.error(error), [error]);
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-4 px-4 py-16">
-      <h1 className="text-2xl font-semibold">We can&apos;t show this right now</h1>
+      <h1 className="display text-3xl sm:text-4xl">We can&apos;t show this right now</h1>
       <p className="text-muted">
         The public registry or our servers didn&apos;t respond, so we can&apos;t give a Verdict or receipt that we can stand behind.
         Nothing is wrong with your photo. Try again in a minute.

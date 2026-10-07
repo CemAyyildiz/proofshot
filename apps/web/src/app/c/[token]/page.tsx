@@ -12,9 +12,11 @@ export default async function ClaimLinkPage({ params }: PageProps<"/c/[token]">)
 
   if (!link || link.state !== "active") {
     return (
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-3 px-4 py-16">
-        <h1 className="text-2xl font-semibold">This link is no longer active</h1>
-        <p className="text-muted">Ask your insurer to send you a new link.</p>
+      <main className="ink flex flex-1 flex-col">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-3 px-4 py-16">
+          <h1 className="display text-3xl">This link is no longer active</h1>
+          <p className="text-muted">Ask your insurer to send you a new link.</p>
+        </div>
       </main>
     );
   }

@@ -20,7 +20,7 @@ export function ConsoleNav() {
             key={n.href}
             href={n.href}
             aria-current={current ? "page" : undefined}
-            className={`relative inline-flex min-h-11 items-center rounded-md px-2.5 hover:bg-background hover:text-foreground ${
+            className={`relative inline-flex min-h-11 items-center rounded-xl px-2.5 hover:bg-background hover:text-foreground ${
               current ? "font-medium text-foreground after:absolute after:inset-x-2.5 after:-bottom-px after:h-0.5 after:rounded-full after:bg-foreground" : "text-muted"
             }`}
           >

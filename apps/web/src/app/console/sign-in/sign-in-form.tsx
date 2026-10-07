@@ -8,7 +8,7 @@ export function SignInForm() {
 
   if (state.status === "sent") {
     return (
-      <p role="status" className="rounded-md border border-line bg-surface p-4">
+      <p role="status" className="rounded-xl border border-line bg-surface p-4">
         If that address belongs to a Carrier workspace, a sign-in link is on its way. It works once and expires in 15
         minutes.
       </p>
@@ -26,7 +26,7 @@ export function SignInForm() {
         type="email"
         autoComplete="email"
         required
-        className="rounded-md border border-line bg-surface px-3 py-2"
+        className="rounded-xl border border-line bg-surface px-3 py-2"
         aria-invalid={state.status === "invalid"}
         aria-describedby={state.status === "invalid" ? "email-error" : undefined}
       />

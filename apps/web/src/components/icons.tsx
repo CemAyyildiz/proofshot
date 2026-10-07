@@ -74,3 +74,20 @@ export const SendIcon = ({ className }: P) => (
     <path d="M11.5 13.5L20 4" />
   </svg>
 );
+export const ArrowRightIcon = ({ className }: P) => (
+  <svg {...base(className)}>
+    <path d="M5 12h14m-6-6l6 6-6 6" />
+  </svg>
+);
+export const ShareIcon = ({ className }: P) => (
+  <svg {...base(className)}>
+    <path d="M12 15V3m0 0L8 7m4-4l4 4" />
+    <path d="M5 11v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8" />
+  </svg>
+);
+export const UploadIcon = ({ className }: P) => (
+  <svg {...base(className)}>
+    <path d="M12 16V4m0 0L8 8m4-4l4 4" />
+    <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+  </svg>
+);

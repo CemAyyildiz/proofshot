@@ -45,7 +45,7 @@ export function ConfirmAction({
       <button
         type="button"
         disabled={busy}
-        className={`rounded-md px-3 py-1.5 font-medium ${tone === "danger" ? "bg-danger text-surface" : "bg-accent text-accent-fg"} disabled:opacity-50`}
+        className={`rounded-xl px-3 py-1.5 font-medium ${tone === "danger" ? "bg-danger text-surface" : "bg-accent text-accent-fg"} disabled:opacity-50`}
         onClick={async () => {
           setBusy(true);
           setFailed(false);
@@ -63,7 +63,7 @@ export function ConfirmAction({
       >
         {confirmLabel}
       </button>
-      <button ref={cancelRef} type="button" className="rounded-md border border-line px-3 py-1.5" onClick={() => setOpen(false)}>
+      <button ref={cancelRef} type="button" className="rounded-xl border border-line px-3 py-1.5" onClick={() => setOpen(false)}>
         Cancel
       </button>
       {failed && (

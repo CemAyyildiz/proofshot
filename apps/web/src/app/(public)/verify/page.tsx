@@ -8,11 +8,11 @@ export const metadata: Metadata = {
 
 export default function VerifyPage() {
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-10">
-      <header className="flex flex-col gap-2">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-7 px-4 py-10 sm:py-14">
+      <header className="flex flex-col gap-3">
         <p className="eyebrow">Public Verifier</p>
-        <h1 className="text-3xl font-semibold">Verify a photo</h1>
-        <p className="text-foreground/80">
+        <h1 className="display text-5xl sm:text-6xl">Verify a photo</h1>
+        <p className="text-lg text-foreground/80">
           Drop in any copy of a claim photo, even one forwarded over a messaging app. You&apos;ll see whether it was
           sealed, when, and whether anything was changed. No account needed, and your image is not kept.
         </p>

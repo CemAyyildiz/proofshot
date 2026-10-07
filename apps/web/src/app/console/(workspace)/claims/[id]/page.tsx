@@ -55,18 +55,18 @@ export default async function ClaimFilePage({ params, searchParams }: PageProps<
         <Link href="/console" className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted hover:text-foreground">
           <ArrowLeftIcon /> All Claim Files
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold [overflow-wrap:anywhere]">{file.reference}</h1>
+        <h1 className="display mt-2 text-3xl sm:text-4xl [overflow-wrap:anywhere]">{file.reference}</h1>
         <p className="text-sm text-muted">Created {formatDate(file.createdAt)} · {evidence.length + uploaded.length} item{evidence.length + uploaded.length === 1 ? "" : "s"}{alerts.length ? ` · ${alerts.length} Duplicate Alert${alerts.length === 1 ? "" : "s"}` : ""}</p>
       </div>
 
-      <section className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4" aria-labelledby="link-heading">
+      <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4" aria-labelledby="link-heading">
         <h2 id="link-heading" className="font-semibold">
           Claim Link
         </h2>
         {state === "active" ? (
           <>
             {replaced && (
-              <p id="link-status" role="status" className="rounded-md border border-line bg-background px-3 py-2 text-sm font-medium">
+              <p id="link-status" role="status" className="rounded-xl border border-line bg-background px-3 py-2 text-sm font-medium">
                 New link issued. Copy it and send it to the policyholder; earlier links no longer accept photos.
               </p>
             )}
@@ -75,7 +75,7 @@ export default async function ClaimFilePage({ params, searchParams }: PageProps<
               expires {formatDateTime(file.link.expiresAt)}.
             </p>
             <div className="flex flex-col gap-2 sm:flex-row">
-              <input readOnly value={url} aria-label="Claim Link" className="flex-1 rounded-md border border-line bg-background px-3 py-2 font-mono text-sm" />
+              <input readOnly value={url} aria-label="Claim Link" className="flex-1 rounded-xl border border-line bg-background px-3 py-2 font-mono text-sm" />
               {/* Keyed by token: a new link remounts the button, so a "Copied" state never carries over to it. */}
               <div className="grid grid-cols-2 gap-2 empty:hidden sm:flex [&>*]:w-full sm:[&>*]:w-auto">
                 <CopyButton key={file.link.token} value={url} label="Copy link" autoFocus={replaced} describedBy={replaced ? "link-status" : undefined} />
@@ -109,7 +109,7 @@ export default async function ClaimFilePage({ params, searchParams }: PageProps<
               <li
                 key={item.exactHash}
                 id={`alerts-${item.anchor}`}
-                className="flex scroll-mt-4 gap-3 rounded-md border border-l-4 border-line border-l-foreground bg-surface p-3 text-sm"
+                className="flex scroll-mt-4 gap-3 rounded-xl border border-l-4 border-line border-l-foreground bg-surface p-3 text-sm"
               >
                 <WarningIcon className="mt-0.5 size-5 shrink-0" />
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -161,13 +161,13 @@ export default async function ClaimFilePage({ params, searchParams }: PageProps<
         </h2>
         <UploadForm claimFileId={file.id} />
         {evidence.length === 0 && uploaded.length === 0 ? (
-          <p className="rounded-md border border-dashed border-line p-6 text-center text-muted">
+          <p className="rounded-xl border border-dashed border-line p-6 text-center text-muted">
             No photos yet. Send the Claim Link above to the policyholder, or upload a photo you received by email.
           </p>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {evidence.map((c, i) => (
-              <li key={c.id} id={`photo-${i + 1}`} className="flex scroll-mt-4 flex-col gap-2 rounded-md border border-line bg-surface p-3 text-sm">
+              <li key={c.id} id={`photo-${i + 1}`} className="flex scroll-mt-4 flex-col gap-2 rounded-xl border border-line bg-surface p-3 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-medium">Policyholder photo {i + 1}</span>
                   {c.sentAt ? <VerdictBadge kind="original" /> : <span className="text-muted">Sealed, not sent yet</span>}
@@ -189,7 +189,7 @@ export default async function ClaimFilePage({ params, searchParams }: PageProps<
               const v = uploadVerifications.get(u.id);
               const src = `/api/console/claims/${file.id}/images/upload/${u.id}`;
               return (
-                <li key={u.id} id={`upload-${i + 1}`} className="flex scroll-mt-4 flex-col gap-2 rounded-md border border-line bg-surface p-3 text-sm">
+                <li key={u.id} id={`upload-${i + 1}`} className="flex scroll-mt-4 flex-col gap-2 rounded-xl border border-line bg-surface p-3 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-medium">Team upload {i + 1}</span>
                     <VerdictBadge kind={u.verdict as VerdictKind} alterationCheck={v?.alterationCheck} imported={v?.matchedKind === "imported"} />

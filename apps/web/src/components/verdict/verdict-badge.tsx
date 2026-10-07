@@ -7,15 +7,15 @@ const STYLE: Record<VerdictKind, string> = {
   "no-record": "bg-verdict-none",
 };
 
-const LABEL: Record<VerdictKind, string> = {
+export const VERDICT_LABEL: Record<VerdictKind, string> = {
   original: "Original",
   "derived-copy": "Derived Copy",
   altered: "Altered",
   "no-record": "No Record",
 };
 
-function Icon({ kind }: { kind: VerdictKind }) {
-  const common = { width: 16, height: 16, viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: 2, "aria-hidden": true };
+export function VerdictIcon({ kind, className = "size-4" }: { kind: VerdictKind; className?: string }) {
+  const common = { className, viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: 2, "aria-hidden": true };
   switch (kind) {
     case "original":
       return (
@@ -51,10 +51,27 @@ function Icon({ kind }: { kind: VerdictKind }) {
 export function VerdictBadge({ kind, alterationCheck, imported }: { kind: VerdictKind; alterationCheck?: AlterationCheck; imported?: boolean }) {
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold text-verdict-fg ${STYLE[kind]}`}>
-      <Icon kind={kind} />
-      {LABEL[kind]}
+      <VerdictIcon kind={kind} />
+      {VERDICT_LABEL[kind]}
       {alterationCheck === "unavailable" && <span className="font-normal">· check unavailable</span>}
       {imported && <span className="font-normal">· imported (unsigned)</span>}
     </span>
+  );
+}
+
+/** The Verdict as the headline of a result: a full-width band in the Verdict colour, readable at arm's length. */
+export function VerdictBanner({ kind, alterationCheck, imported }: { kind: VerdictKind; alterationCheck?: AlterationCheck; imported?: boolean }) {
+  return (
+    <div className={`flex items-center gap-3 px-5 py-4 text-verdict-fg ${STYLE[kind]}`}>
+      <span className="grid size-11 shrink-0 place-items-center rounded-full border-2 border-current">
+        <VerdictIcon kind={kind} className="size-6" />
+      </span>
+      <span className="flex min-w-0 flex-col">
+        <span className="font-mono text-[0.7rem] font-medium uppercase tracking-[0.14em]">Verdict</span>
+        <span className="display text-3xl sm:text-4xl">{VERDICT_LABEL[kind]}</span>
+        {alterationCheck === "unavailable" && <span className="text-sm">· check unavailable</span>}
+        {imported && <span className="text-sm">· imported (unsigned)</span>}
+      </span>
+    </div>
   );
 }

@@ -21,8 +21,8 @@ export function NavLinks() {
             key={n.href}
             href={n.href}
             aria-current={current ? "page" : undefined}
-            className={`relative inline-flex min-h-11 items-center whitespace-nowrap rounded-md px-2.5 hover:bg-background hover:text-foreground sm:px-3 ${
-              current ? "font-medium text-foreground after:absolute after:inset-x-2.5 after:-bottom-px after:h-0.5 after:rounded-full after:bg-foreground" : "text-muted"
+            className={`inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-3 font-medium sm:px-4 ${
+              current ? "bg-foreground text-background" : "text-muted hover:text-foreground"
             }`}
           >
             <span className="sm:hidden">{n.short}</span>

@@ -44,7 +44,7 @@ export default async function VerificationReceipt({ params }: PageProps<"/v/[id]
         <h2 id="checked-heading" className="font-semibold">
           File checked
         </h2>
-        <dl className="grid gap-x-6 gap-y-2 rounded-md border border-line bg-surface p-4 text-sm sm:grid-cols-[max-content_1fr]">
+        <dl className="grid gap-x-6 gap-y-2 rounded-xl border border-line bg-surface p-4 text-sm sm:grid-cols-[max-content_1fr]">
           <dt className="font-medium">Exact Hash (SHA-256)</dt>
           <dd className="break-all font-mono text-muted">{v.submittedExactHash}</dd>
           <dt className="font-medium">Dimensions</dt>

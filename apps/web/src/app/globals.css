@@ -1,50 +1,95 @@
 @import "tailwindcss";
 
-/* Evidence-grade calm: neutral institutional palette. Verdict colours are reserved for Verdicts (PRD §12). */
+/* Evidence lab: ink and paper with one signal colour, the yellow of an evidence marker. Verdict colours are
+   reserved for Verdicts (PRD §12); the brand yellow never stands for one. */
 :root {
-  --background: #f6f6f4;
+  --background: #f3f0e8;
   --surface: #ffffff;
-  --foreground: #1b1d21;
-  --muted: #5d6169;
-  --line: #d9dad6;
-  --accent: #1f3a5f;
+  --surface-2: #e9e5d9;
+  --foreground: #111214;
+  --muted: #55585f;
+  --line: #d6d1c4;
+  /* Primary actions: ink on paper, yellow on ink. */
+  --accent: #111214;
   --accent-fg: #ffffff;
-  --danger: #a3261f;
-  /* Verdict colours — used for Verdicts only. All ≥ 4.5:1 against white text. */
-  --verdict-original: #1d6b3a;
-  --verdict-derived: #1f4f8a;
-  --verdict-altered: #9a2b12;
+  --brand: #ffd60a;
+  --brand-fg: #111214;
+  --danger: #b3261e;
+  /* Verdict colours — used for Verdicts only. All ≥ 4.5:1 against their text colour. */
+  --verdict-original: #12703a;
+  --verdict-derived: #1a56b8;
+  --verdict-altered: #c2300f;
   --verdict-none: #4b4f57;
   --verdict-fg: #ffffff;
+}
+
+/* The dark palette. `.ink` applies it to one part of a page (the hero, the camera, the footer) in either scheme. */
+.ink {
+  --background: #0b0c0e;
+  --surface: #15171a;
+  --surface-2: #1e2125;
+  --foreground: #f3f1ea;
+  --muted: #a3a7ae;
+  --line: #2d3036;
+  --accent: #ffd60a;
+  --accent-fg: #111214;
+  --danger: #ff9a8f;
+  --verdict-original: #17803f;
+  --verdict-derived: #2563d9;
+  --verdict-altered: #d0340f;
+  --verdict-none: #565b64;
+  --verdict-fg: #ffffff;
+  background: var(--background);
+  color: var(--foreground);
 }
 
 /* Screen only: a receipt printed from a dark-mode browser still prints on the light palette. */
 @media screen and (prefers-color-scheme: dark) {
   :root {
-    --background: #121315;
-    --surface: #1b1c1f;
-    --foreground: #ececea;
-    --muted: #a3a6ad;
-    --line: #34363b;
-    --accent: #9db8dc;
-    --accent-fg: #0e1a2b;
-    --danger: #f19a92;
-    --verdict-original: #7fd39c;
-    --verdict-derived: #9cc2f2;
-    --verdict-altered: #f5a38c;
-    --verdict-none: #c3c6cc;
-    --verdict-fg: #121315;
+    --background: #0b0c0e;
+    --surface: #15171a;
+    --surface-2: #1e2125;
+    --foreground: #f3f1ea;
+    --muted: #a3a7ae;
+    --line: #2d3036;
+    --accent: #ffd60a;
+    --accent-fg: #111214;
+    --danger: #ff9a8f;
+    --verdict-original: #17803f;
+    --verdict-derived: #2563d9;
+    --verdict-altered: #d0340f;
+    --verdict-none: #565b64;
+    --verdict-fg: #ffffff;
   }
+  /* The hero and footer sit one step above the page so they still read as their own bands. */
+  .ink {
+    --background: #050506;
+    --surface: #131417;
+  }
+}
+
+/* On a yellow band, actions and focus rings are ink. */
+.on-brand {
+  --accent: #111214;
+  --accent-fg: #ffffff;
+  --foreground: #111214;
+  --muted: #3b3d42;
+  --line: rgb(17 18 20 / 0.25);
+  background: var(--brand);
+  color: var(--brand-fg);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-accent: var(--accent);
   --color-accent-fg: var(--accent-fg);
+  --color-brand: var(--brand);
+  --color-brand-fg: var(--brand-fg);
   --color-danger: var(--danger);
   --color-verdict-original: var(--verdict-original);
   --color-verdict-derived: var(--verdict-derived);
@@ -53,6 +98,7 @@
   --color-verdict-fg: var(--verdict-fg);
   --font-sans: var(--font-plex-sans);
   --font-mono: var(--font-plex-mono);
+  --font-display: var(--font-archivo);
 }
 
 body {
@@ -103,6 +149,53 @@ button {
   animation: seal-pop 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 
+/* The Seal lands on the photo like a rubber stamp: large, tilted, then settled. */
+@keyframes stamp-in {
+  0% {
+    transform: scale(2.2) rotate(-18deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(0.94) rotate(-8deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(-8deg);
+    opacity: 1;
+  }
+}
+.stamp-in {
+  animation: stamp-in 320ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  transform: rotate(-8deg);
+}
+
+/* The stamp's face. Its word is CSS content, so it is never read out twice or matched as page text. */
+.seal-stamp {
+  border: 4px solid var(--brand);
+  border-radius: 14px;
+  padding: 6px 16px;
+  background: rgb(0 0 0 / 0.55);
+  color: var(--brand);
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 2rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+.seal-stamp::after {
+  content: "SEALED";
+}
+
+@keyframes rise-in {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+}
+.rise-in {
+  animation: rise-in 360ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -114,16 +207,43 @@ button {
 
 @layer components {
   .btn-primary {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-medium text-accent-fg hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-accent px-6 py-2.5 font-semibold text-accent-fg hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-secondary {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-line bg-surface px-4 py-2.5 font-medium hover:border-foreground/40 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-foreground/30 px-6 py-2.5 font-semibold hover:border-foreground active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
   }
   .mono {
     @apply font-mono text-[0.9em] tabular-nums;
   }
+  /* A label above a heading: mono capitals behind a small evidence-marker square. */
   .eyebrow {
-    @apply text-xs font-semibold uppercase tracking-widest text-muted;
+    @apply inline-flex items-center gap-2 font-mono text-xs font-medium uppercase tracking-[0.14em] text-muted;
+  }
+  .eyebrow::before {
+    content: "";
+    @apply size-2 shrink-0 bg-brand;
+  }
+  /* Poster headings. */
+  .display {
+    font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+    @apply font-extrabold leading-[1.02] tracking-[-0.03em];
+  }
+  .card {
+    @apply rounded-2xl border border-line bg-surface;
+  }
+  /* Marker-pen highlight for the words that carry a headline. */
+  .mark {
+    @apply bg-brand px-[0.12em] text-brand-fg;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  /* The 4 by 4 grid every photo is compared on, as a backdrop. */
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, color-mix(in srgb, var(--foreground) 9%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in srgb, var(--foreground) 9%, transparent) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 90% 80% at 70% 20%, #000 20%, transparent 75%);
   }
 }
 

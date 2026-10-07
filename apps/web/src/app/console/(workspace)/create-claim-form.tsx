@@ -17,7 +17,7 @@ export function CreateClaimForm() {
           placeholder="e.g. AUTO-2026-0042"
           maxLength={80}
           required
-          className="min-h-11 rounded-md border border-line bg-surface px-3 py-2"
+          className="min-h-11 rounded-xl border border-line bg-surface px-3 py-2"
           aria-invalid={Boolean(state.error)}
           aria-describedby={state.error ? "reference-error" : undefined}
         />

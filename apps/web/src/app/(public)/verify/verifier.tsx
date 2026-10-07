@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { AlterationCheck, VerdictKind } from "@/components/verdict/copy";
-import { CheckIcon } from "@/components/icons";
+import { Viewfinder } from "@/components/brand/viewfinder";
+import { ArrowRightIcon, CheckIcon, UploadIcon } from "@/components/icons";
 import { TileMap } from "@/components/verdict/tile-map";
 import { VerdictPanel } from "@/components/verdict/verdict-panel";
 
@@ -106,7 +107,7 @@ export function Verifier() {
           <TileMap src={preview.url} alteredTiles={r.alteredTiles} width={preview.width} height={preview.height} />
         ) : r.verdict === "altered" ? (
           // This browser can't display the file (e.g. HEIC outside Safari): keep the regions as text.
-          <p className="rounded-md border border-line bg-surface p-3 text-sm">
+          <p className="card p-4 text-sm">
             {r.alteredTiles.length} of 16 regions differ from the sealed photo (row, column on a 4×4 grid):{" "}
             {r.alteredTiles.map((i) => `${Math.floor(i / 4) + 1},${(i % 4) + 1}`).join("; ")}. This browser can&apos;t display
             the file itself to draw the map.
@@ -115,6 +116,7 @@ export function Verifier() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link href={r.receiptUrl} className="btn-primary">
             Open Verification Receipt
+            <ArrowRightIcon className="size-5" />
           </Link>
           <button type="button" onClick={reset} className="btn-secondary">
             Check another image
@@ -139,8 +141,8 @@ export function Verifier() {
           const f = e.dataTransfer.files[0];
           if (f && state.name !== "checking") void check(f);
         }}
-        className={`flex min-h-48 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-center has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent ${
-          dragging ? "border-accent bg-surface" : "border-line bg-surface/50 hover:border-foreground/30"
+        className={`relative flex min-h-72 cursor-pointer flex-col items-center justify-center gap-3 rounded-3xl border p-8 text-center has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent ${
+          dragging ? "border-foreground bg-surface-2" : "border-line bg-surface hover:border-foreground/40"
         }`}
       >
         {state.name === "checking" ? (
@@ -156,12 +158,12 @@ export function Verifier() {
           </span>
         ) : (
           <>
-            <svg viewBox="0 0 24 24" className="size-8 text-muted" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-              <path d="M12 16V4m0 0l-4 4m4-4l4 4" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" strokeLinecap="round" />
-            </svg>
-            <span className="font-medium">Drop an image here, or choose a file</span>
-            <span className="text-sm text-muted">JPEG, PNG, WebP or HEIC, up to 20 MB</span>
+            <Viewfinder inset="inset-4" />
+            <span className="grid size-16 place-items-center rounded-full bg-brand text-brand-fg" aria-hidden="true">
+              <UploadIcon className="size-7" />
+            </span>
+            <span className="display text-2xl">Drop an image here, or choose a file</span>
+            <span className="font-mono text-xs uppercase tracking-[0.14em] text-muted">JPEG, PNG, WebP or HEIC, up to 20 MB</span>
           </>
         )}
         <input
@@ -194,12 +196,12 @@ export function Verifier() {
 
 function FileRow({ file, preview, detail }: { file: File; preview?: string; detail?: string }) {
   return (
-    <span className="flex items-center gap-3 rounded-md border border-line bg-surface p-3 text-sm">
+    <span className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-3 text-sm">
       {preview ? (
         /* eslint-disable-next-line @next/next/no-img-element -- the viewer's own file, in-session only */
-        <img src={preview} alt="" className="size-12 shrink-0 rounded object-cover" />
+        <img src={preview} alt="" className="size-12 shrink-0 rounded-lg object-cover" />
       ) : (
-        <span className="size-12 shrink-0 rounded bg-line" aria-hidden="true" />
+        <span className="size-12 shrink-0 rounded-lg bg-line" aria-hidden="true" />
       )}
       <span className="flex min-w-0 flex-col">
         <span className="truncate font-medium">{file.name}</span>

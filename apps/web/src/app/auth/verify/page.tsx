@@ -20,7 +20,7 @@ export default async function VerifyPage({ searchParams }: PageProps<"/auth/veri
       <p className="eyebrow">Carrier Console</p>
       {valid ? (
         <form action={completeSignIn} className="flex flex-col gap-4">
-          <h1 className="text-2xl font-semibold">Continue to your workspace</h1>
+          <h1 className="display text-3xl sm:text-4xl">Continue to your workspace</h1>
           <input type="hidden" name="token" value={token} />
           <button type="submit" className="btn-primary">
             Sign in
@@ -28,7 +28,7 @@ export default async function VerifyPage({ searchParams }: PageProps<"/auth/veri
         </form>
       ) : (
         <div className="flex flex-col gap-4">
-          <h1 className="text-2xl font-semibold">This sign-in link is no longer valid</h1>
+          <h1 className="display text-3xl sm:text-4xl">This sign-in link is no longer valid</h1>
           <p>Links work once and expire after 15 minutes.</p>
           <Link href="/console/sign-in" className="btn-primary text-center">
             Request a new link

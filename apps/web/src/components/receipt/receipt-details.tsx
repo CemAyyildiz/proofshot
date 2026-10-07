@@ -33,7 +33,7 @@ type Row = [string, React.ReactNode];
 function Rows({ rows, technical = false }: { rows: Row[]; technical?: boolean }) {
   return (
     <dl
-      className={`grid gap-x-6 rounded-md border border-line bg-surface p-4 sm:grid-cols-[max-content_1fr] ${
+      className={`grid gap-x-6 rounded-xl border border-line bg-surface p-4 sm:grid-cols-[max-content_1fr] ${
         technical ? "gap-y-2 text-xs" : "gap-y-3 text-sm"
       }`}
     >
@@ -128,7 +128,7 @@ export function VerifyYourself() {
   const { network, REGISTRY_ADDRESS, publicRpcUrl } = env();
   const command = `pnpm install\npnpm --filter proofshot-verify start ./photo.jpg --rpc ${publicRpcUrl} --registry ${REGISTRY_ADDRESS ?? "<registry address>"}`;
   return (
-    <details className="group rounded-md border border-line bg-surface text-sm print:hidden">
+    <details className="group rounded-xl border border-line bg-surface text-sm print:hidden">
       <summary className="flex min-h-11 items-center justify-between gap-3 px-4 py-2">
         <h2 id="diy-heading" className="font-semibold">
           Verify it yourself

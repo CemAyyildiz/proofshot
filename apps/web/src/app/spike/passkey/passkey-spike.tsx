@@ -117,17 +117,17 @@ export function PasskeySpike() {
 
   return (
     <div className="flex flex-col gap-3">
-      <button className="rounded-md bg-black px-4 py-3 text-white" onClick={create}>
+      <button className="rounded-xl bg-black px-4 py-3 text-white" onClick={create}>
         {key ? "Create a new passkey" : "Create passkey"}
       </button>
-      <button className="rounded-md border px-4 py-3 disabled:opacity-40" onClick={signSeal} disabled={!key}>
+      <button className="rounded-xl border px-4 py-3 disabled:opacity-40" onClick={signSeal} disabled={!key}>
         Sign test Seal
       </button>
       {key && <p className="break-all font-mono text-xs opacity-60">qx {key.qx}</p>}
       {error && <p className="text-sm text-red-700">{error}</p>}
       {output && (
         <>
-          <button className="rounded-md border px-4 py-2 text-sm" onClick={() => navigator.clipboard.writeText(output)}>
+          <button className="rounded-xl border px-4 py-2 text-sm" onClick={() => navigator.clipboard.writeText(output)}>
             Copy fixture JSON
           </button>
           <pre className="max-h-96 overflow-auto rounded bg-neutral-100 p-3 text-xs text-black">{output}</pre>
