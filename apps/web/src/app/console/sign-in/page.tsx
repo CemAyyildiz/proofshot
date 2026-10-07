@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Wordmark } from "@/components/brand/logo";
 import { redirect } from "next/navigation";
 import { enterDemo } from "@/app/auth/actions";
+import { demoSamples } from "@/lib/demo-samples";
 import { env } from "@/lib/env";
 import { getSession } from "@/server/auth/session";
 import { SignInForm } from "./sign-in-form";
@@ -12,6 +13,7 @@ export const metadata: Metadata = { title: "Sign in · Proofshot Console" };
 export default async function SignInPage({ searchParams }: PageProps<"/console/sign-in">) {
   if (await getSession()) redirect("/console");
   const demo = env().DEMO_ACCESS === "1";
+  const guided = demoSamples(env().network.chainId, env().REGISTRY_ADDRESS).length > 0;
   const { demo: demoState } = await searchParams;
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-4 py-16">
@@ -29,8 +31,10 @@ export default async function SignInPage({ searchParams }: PageProps<"/console/s
             Explore the demo Console
           </h2>
           <p className="text-sm text-muted">
-            No email needed. Two demo carriers share one registry, so you can see a Duplicate Alert across carriers. Demo
-            data is shared with other visitors.
+            {guided
+              ? "No email needed. Pick an insurer, and a short guide with sample images walks you through a Verdict and a Duplicate Alert."
+              : "No email needed. Two demo carriers share one registry, so you can see a Duplicate Alert across carriers."}{" "}
+            Demo data is shared with other visitors.
           </p>
           {demoState === "limited" && (
             <p role="alert" className="text-sm text-danger">

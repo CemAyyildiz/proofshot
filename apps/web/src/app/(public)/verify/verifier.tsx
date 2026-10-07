@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { AlterationCheck, VerdictKind } from "@/components/verdict/copy";
 import { Viewfinder } from "@/components/brand/viewfinder";
+import { SamplePicker } from "@/components/demo/sample-picker";
 import { ArrowRightIcon, CheckIcon, UploadIcon } from "@/components/icons";
 import { TileMap } from "@/components/verdict/tile-map";
 import { VerdictPanel } from "@/components/verdict/verdict-panel";
+import { DEMO_SAMPLES_SEALED_ON, type DemoSample } from "@/lib/demo-samples";
 
 interface Result {
   id: string;
@@ -41,7 +43,7 @@ function postWithProgress(url: string, body: FormData, onProgress: (fraction: nu
   });
 }
 
-export function Verifier() {
+export function Verifier({ samples = [] }: { samples?: DemoSample[] }) {
   const [state, setState] = useState<State>({ name: "idle" });
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -179,6 +181,24 @@ export function Verifier() {
           }}
         />
       </label>
+
+      {samples.length > 0 && state.name !== "checking" && (
+        <section aria-labelledby="samples-heading" className="mt-4 flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <h2 id="samples-heading" className="display text-2xl">
+              No photo at hand? Try a sample
+            </h2>
+            <p className="text-foreground/80">
+              An illustrated car photo that was sealed on Monad mainnet on {DEMO_SAMPLES_SEALED_ON.sealedOn}, and copies
+              made from it.{" "}
+              <Link href={DEMO_SAMPLES_SEALED_ON.receipt} className="font-semibold underline decoration-brand decoration-2 underline-offset-4">
+                See its Seal Receipt
+              </Link>
+            </p>
+          </div>
+          <SamplePicker samples={samples} onPick={(f) => void check(f)} />
+        </section>
+      )}
 
       {state.name === "error" && (
         <div role="alert" className="flex flex-wrap items-center gap-3">

@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { WarningIcon } from "@/components/icons";
+import { demoSamples } from "@/lib/demo-samples";
+import { env } from "@/lib/env";
 import { formatDate } from "@/lib/format";
+import { requireSession } from "@/server/auth/session";
 import { claimLinkState, listClaimFiles } from "@/server/dal/claim-files";
 import { carrierScope } from "@/server/dal/scope";
 import { CreateClaimForm } from "./create-claim-form";
@@ -20,6 +23,8 @@ export default async function ConsoleHome({ searchParams }: PageProps<"/console"
   const rows = await listClaimFiles(await carrierScope(), { q, limit: PAGE_SIZE + 1, offset: (page - 1) * PAGE_SIZE });
   const files = rows.slice(0, PAGE_SIZE);
   const hasOlder = rows.length > PAGE_SIZE;
+  // The guide refers to the sample images, so it is shown where they are: to demo insurers on the deployment that sealed them.
+  const guide = (await requireSession()).isDemo && demoSamples(env().network.chainId, env().REGISTRY_ADDRESS).length > 0;
   const pageHref = (n: number) => `/console?${new URLSearchParams({ ...(q ? { q } : {}), ...(n > 1 ? { page: String(n) } : {}) })}`;
   return (
     <div className="flex flex-col gap-6">
@@ -27,6 +32,36 @@ export default async function ConsoleHome({ searchParams }: PageProps<"/console"
         <h1 className="display text-3xl sm:text-4xl">Claim Files</h1>
         <p className="text-sm text-muted">Create a Claim File to get a link the policyholder uses to send sealed photos.</p>
       </div>
+      {guide && (
+        <section aria-labelledby="guide-heading" className="card flex flex-col gap-4 p-5">
+          <div className="flex flex-col gap-1">
+            <p className="eyebrow">Demo guide · about two minutes</p>
+            <h2 id="guide-heading" className="display text-2xl">
+              See what an adjuster sees
+            </h2>
+          </div>
+          <ol className="flex flex-col">
+            {[
+              { title: "Create a Claim File", body: "Type any reference below, for example HAIL-2026-0931, and open the file." },
+              { title: "Upload a sample image", body: "Under Evidence, choose “An edited copy”. It comes back Altered, with the changed region marked on the photo." },
+              { title: "Read the Duplicate Alert", body: "The sample was sealed in another insurer's claim, so this file is flagged. Neither insurer saw the other's photo, customer or claim." },
+            ].map((step, i) => (
+              <li key={step.title} className="flex gap-4 border-t border-line py-3 last:border-b">
+                <span className="display w-6 shrink-0 text-2xl text-brand" aria-hidden="true">
+                  {i + 1}
+                </span>
+                <span className="flex flex-col gap-0.5">
+                  <span className="font-semibold">{step.title}</span>
+                  <span className="text-foreground/80">{step.body}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+          <p className="text-sm text-muted">
+            Have a phone? Send yourself a file&apos;s Claim Link, take a photo with it and watch it arrive here, sealed.
+          </p>
+        </section>
+      )}
       <CreateClaimForm />
       {(files.length > 0 || q || page > 1) && (
         <form role="search" action="/console" className="flex flex-wrap items-end gap-2">

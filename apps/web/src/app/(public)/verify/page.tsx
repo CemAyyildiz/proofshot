@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
+import { demoSamples } from "@/lib/demo-samples";
+import { env } from "@/lib/env";
 import { Verifier } from "./verifier";
 
 export const metadata: Metadata = {
@@ -6,7 +9,9 @@ export const metadata: Metadata = {
   description: "Check whether a photo was sealed with Proofshot, whether it was altered, and when it was sealed. No account needed.",
 };
 
-export default function VerifyPage() {
+export default async function VerifyPage() {
+  await connection(); // which Registry this deployment reads is known at request time, not at build time
+  const { network, REGISTRY_ADDRESS } = env();
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-7 px-4 py-10 sm:py-14">
       <header className="flex flex-col gap-3">
@@ -17,7 +22,7 @@ export default function VerifyPage() {
           sealed, when, and whether anything was changed. No account needed, and your image is not kept.
         </p>
       </header>
-      <Verifier />
+      <Verifier samples={demoSamples(network.chainId, REGISTRY_ADDRESS)} />
       <p className="text-sm text-muted">
         Each check creates a receipt link you can share: it records the file&apos;s SHA-256 fingerprint, its size and
         the result — never the image. Only people you give the link to can open it.

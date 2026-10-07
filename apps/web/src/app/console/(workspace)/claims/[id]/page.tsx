@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CopyButton } from "@/components/copy-button";
 import { ShareButton } from "@/components/share-button";
+import { demoSamples } from "@/lib/demo-samples";
 import { env } from "@/lib/env";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { ArrowLeftIcon, WarningIcon } from "@/components/icons";
@@ -14,6 +15,7 @@ import { matchStrength } from "@/server/evidence/duplicates";
 import { getVerification } from "@/server/verify/verify";
 import { ReplaceLink, RevokeLink } from "./revoke-link";
 import { UploadForm } from "./upload-form";
+import { requireSession } from "@/server/auth/session";
 import { carrierScope } from "@/server/dal/scope";
 
 export const metadata: Metadata = { title: "Claim File · Proofshot Console" };
@@ -23,6 +25,8 @@ export default async function ClaimFilePage({ params, searchParams }: PageProps<
   // Set by the link actions' redirect, so the page can say what just happened and focus the next step.
   const { link: justDone } = await searchParams;
   const scope = await carrierScope();
+  // Sample images are for the shared demo insurers only; a real Carrier never sees them.
+  const samples = (await requireSession()).isDemo ? demoSamples(env().network.chainId, env().REGISTRY_ADDRESS).filter((x) => x.id !== "unrelated") : [];
   const file = await getClaimFile(scope, id);
   if (!file) notFound();
   const [evidence, uploaded, alerts] = await Promise.all([
@@ -159,7 +163,7 @@ export default async function ClaimFilePage({ params, searchParams }: PageProps<
         <h2 id="evidence-heading" className="font-semibold">
           Evidence
         </h2>
-        <UploadForm claimFileId={file.id} />
+        <UploadForm claimFileId={file.id} samples={samples} />
         {evidence.length === 0 && uploaded.length === 0 ? (
           <p className="rounded-xl border border-dashed border-line p-6 text-center text-muted">
             No photos yet. Send the Claim Link above to the policyholder, or upload a photo you received by email.

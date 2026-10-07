@@ -2,8 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { SamplePicker } from "@/components/demo/sample-picker";
+import type { DemoSample } from "@/lib/demo-samples";
 
-export function UploadForm({ claimFileId }: { claimFileId: string }) {
+export function UploadForm({ claimFileId, samples = [] }: { claimFileId: string; samples?: DemoSample[] }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<{ busy: boolean; error?: string }>({ busy: false });
@@ -52,6 +54,14 @@ export function UploadForm({ claimFileId }: { claimFileId: string }) {
         <p role="alert" className="text-sm text-danger">
           {state.error}
         </p>
+      )}
+      {samples.length > 0 && (
+        <div className="flex flex-col gap-2 rounded-xl border border-dashed border-line p-3">
+          <p className="text-sm">
+            <span className="font-semibold">Demo:</span> <span className="text-muted">no photo at hand? Upload a sample. Each one is a copy of a photo sealed in another insurer&apos;s claim.</span>
+          </p>
+          <SamplePicker compact samples={samples} disabled={state.busy} onPick={(f) => void upload(f)} />
+        </div>
       )}
     </div>
   );
