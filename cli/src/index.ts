@@ -7,9 +7,9 @@
  * Fingerprints the image locally (SHA-256 + PDQ, same code as the Public Verifier), reads the Registry's events
  * from the chain, and applies the published Verdict rules.
  *
- * `--from-block` defaults to the deploy block of a Registry this repository knows, else 0. Reading takes one request
- * per 100 blocks on a public RPC, so it grows with the Registry's age: an RPC that serves wider log ranges, with a
- * larger `--range`, is faster.
+ * `--from-block` defaults to the deploy block of a Registry this repository knows, else 0. The whole history is read,
+ * so the time grows with the Registry's age and depends on how many blocks the RPC serves per log query: Monad's
+ * rpc2.monad.xyz serves 10,000, rpc.monad.xyz 100.
  */
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
@@ -59,7 +59,7 @@ export async function run(argv: string[], onProgress?: (done: bigint, total: big
       rpc: { type: "string" },
       registry: { type: "string" },
       "from-block": { type: "string" },
-      range: { type: "string", default: "1000" },
+      range: { type: "string", default: "10000" },
       concurrency: { type: "string", default: "4" },
       json: { type: "boolean", default: false },
       quiet: { type: "boolean", default: false },

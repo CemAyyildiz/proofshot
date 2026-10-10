@@ -185,7 +185,7 @@ The Verdict engine is open source and the Registry is public. Given any image:
 ```bash
 pnpm install
 pnpm --filter proofshot-verify start ./photo.jpg \
-  --rpc https://rpc.monad.xyz \
+  --rpc https://rpc2.monad.xyz \
   --registry 0xa6989c9f93d70526c1b982a5A408DF240575E433
 ```
 
@@ -195,9 +195,12 @@ For a Seal it also prints the Signing Window, the device key and whether that ke
 machine-readable output.
 
 Try it on a sample: `apps/web/public/demo/edited-copy.jpg` comes back **Altered**, region 10, as it does on the
-website. The CLI reads the Registry's whole history, which the public RPC serves 100 blocks at a time: about 20
-seconds on the day this was written, and longer as the chain grows. An RPC that allows wider log queries, with
-`--range`, is faster.
+website.
+
+The CLI reads the Registry's whole history, so the time depends on how many blocks the RPC serves per log query.
+Monad's `rpc2.monad.xyz` serves 10,000 and took 32 seconds on 2026-10-10, three days after the Registry was deployed;
+that grows by roughly ten seconds for every day of chain history. `rpc.monad.xyz` serves 100 blocks per query and
+takes far longer.
 
 ## Run it locally
 

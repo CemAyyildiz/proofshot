@@ -21,8 +21,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * Every Capture Record and Imported Record of a Registry, plus every Device Key revocation, read straight from chain
  * events — no Proofshot API. Block timestamps are filled in lazily by the caller for the matched record only.
  *
- * Public RPCs cap the block range of one log query (Monad's: 100 blocks), so a Registry's history is read as many
- * small ranges, several at a time. The first range finds a size the RPC accepts.
+ * Public RPCs cap the block range of one log query, so a Registry's history is read as many ranges, several at a
+ * time. The first range finds a size the RPC accepts.
  */
 export async function readRegistry(client: PublicClient, registry: Hex, fromBlock: bigint, range: bigint, opts: ReadOptions = {}): Promise<RegistryLog> {
   const head = await client.getBlockNumber();
@@ -33,7 +33,8 @@ export async function readRegistry(client: PublicClient, registry: Hex, fromBloc
   type Logs = Awaited<ReturnType<typeof read>>;
   const end = (from: bigint, step: bigint) => (from + step - 1n < head ? from + step - 1n : head);
 
-  // The first range settles the step: wide if the RPC allows it, else 100 blocks, else halving down to one.
+  // The first range settles the step. Public RPCs differ widely (Monad's serve 100, 1,000 or 10,000 blocks per
+  // query), so step down through those sizes before halving.
   let step = range;
   let first: Logs;
   for (;;) {
@@ -42,7 +43,7 @@ export async function readRegistry(client: PublicClient, registry: Hex, fromBloc
       break;
     } catch (e) {
       if (step <= 1n) throw e;
-      step = step > 100n ? 100n : step / 2n;
+      step = step > 1_000n ? 1_000n : step > 100n ? 100n : step / 2n;
     }
   }
 
